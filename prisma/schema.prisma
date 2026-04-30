@@ -1,0 +1,98 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model BtwTarief {
+  id           Int       @id @default(autoincrement())
+  naam         String
+  percentage   Float
+  geldigVanaf  DateTime
+  geldigTot    DateTime?
+  bron         String
+
+  transacties   Transactie[]
+  factuurRegels FactuurRegel[]
+
+  createdAt    DateTime  @default(now())
+}
+
+model BtwSyncLog {
+  id        Int      @id @default(autoincrement())
+  bron      String
+  succes    Boolean
+  melding   String
+  ruweData  String?
+  checkedAt DateTime @default(now())
+}
+
+model Transactie {
+  id            Int      @id @default(autoincrement())
+  type          String
+  omschrijving  String
+  bedrag        Float
+  invoerwijze   String
+
+  btwTariefId   Int
+  btwTarief     BtwTarief @relation(fields: [btwTariefId], references: [id])
+  btwPercentage Float
+
+  bedragExcl    Float
+  btwBedrag     Float
+  bedragIncl    Float
+
+  datum         DateTime
+  categorie     String?
+  notitie       String?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Factuur {
+  id             Int            @id @default(autoincrement())
+  factuurNummer  String         @unique
+  klantNaam      String
+  klantAdres     String?
+  datum          DateTime
+  vervalDatum    DateTime
+  status         String         @default("concept")
+  opmerkingen    String?
+
+  regels         FactuurRegel[]
+
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+}
+
+model FactuurRegel {
+  id            Int       @id @default(autoincrement())
+  factuurId     Int
+  factuur       Factuur   @relation(fields: [factuurId], references: [id], onDelete: Cascade)
+
+  omschrijving  String
+  aantal        Float
+  prijsPerStuk  Float
+
+  btwTariefId   Int
+  btwTarief     BtwTarief @relation(fields: [btwTariefId], references: [id])
+  btwPercentage Float
+
+  bedragExcl    Float
+  btwBedrag     Float
+  bedragIncl    Float
+
+  volgorde      Int       @default(0)
+}
+
+model Instelling {
+  id     Int    @id @default(autoincrement())
+  key    String @unique
+  value  String
+}
