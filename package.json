@@ -73,14 +73,18 @@
       }
     ],
     "win": {
-      "target": "portable",
+      "target": "nsis",
       "signAndEditExecutable": false
+    },
+    "nsis": {
+      "oneClick": true,
+      "allowToChangeInstallationDirectory": false,
+      "deleteAppDataOnUninstall": false
     },
     "publish": {
       "provider": "github",
       "owner": "HesselVisser13",
-      "repo": "factuur-app-electron",
-      "private": true
+      "repo": "factuur-app-electron"
     }
   }
 }
