@@ -9,6 +9,7 @@ import { registerBtwAangifteHandlers } from './ipc/btw-aangifte.ipc'
 import { registerBtwTarievenHandlers } from './ipc/btw-tarieven.ipc'
 import { registerInstellingenHandlers } from './ipc/instellingen.ipc'
 import { runMigrations } from './db/migrate'
+import { initLogger, log } from './logger'
 
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
@@ -29,16 +30,15 @@ function createWindow(): void {
 }
 
 app.whenReady().then(() => {
+  initLogger()
   electronApp.setAppUserModelId('nl.factuurapp.btw')
 
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window)
   })
 
-  // Database migraties draaien
   runMigrations()
 
-  // Registreer IPC handlers
   registerTransactieHandlers()
   registerBtwAangifteHandlers()
   registerBtwTarievenHandlers()
@@ -46,9 +46,9 @@ app.whenReady().then(() => {
 
   createWindow()
 
-  // Auto-updater (alleen in productie)
   if (!is.dev) {
     autoUpdater.checkForUpdatesAndNotify()
+    autoUpdater.logger = log
   }
 
   app.on('activate', () => {

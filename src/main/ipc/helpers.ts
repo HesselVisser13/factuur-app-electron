@@ -2,6 +2,7 @@
 
 import type { IpcResult } from '../../shared/types'
 import { ZodSchema } from 'zod'
+import { log } from '../logger'
 
 export function createHandler<T>(handler: (...args: any[]) => Promise<T>) {
   return async (...args: any[]): Promise<IpcResult<T>> => {
@@ -10,7 +11,7 @@ export function createHandler<T>(handler: (...args: any[]) => Promise<T>) {
       return { success: true, data }
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Onbekende fout'
-      console.error('[IPC Error]', message)
+      log.error('[IPC Error]', message, error)
       return { success: false, error: message }
     }
   }

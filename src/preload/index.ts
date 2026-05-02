@@ -1,6 +1,7 @@
 // src/preload/index.ts
 
 import { contextBridge, ipcRenderer } from 'electron'
+import { IPC_CHANNELS } from '../shared/ipc-channels'
 
 async function invoke<T>(channel: string, ...args: any[]): Promise<T> {
   const result = await ipcRenderer.invoke(channel, ...args)
@@ -12,26 +13,26 @@ async function invoke<T>(channel: string, ...args: any[]): Promise<T> {
     return result.data as T
   }
 
-  // Fallback voor handlers die geen IpcResult teruggeven
   return result as T
 }
 
 const api = {
   // Transacties
-  getTransacties: (van: string, tot: string) => invoke('transacties:getByPeriode', van, tot),
-  createTransactie: (input: any) => invoke('transacties:create', input),
-  deleteTransactie: (id: number) => invoke('transacties:delete', id),
+  getTransacties: (van: string, tot: string) =>
+    invoke(IPC_CHANNELS.TRANSACTIES_GET_BY_PERIODE, van, tot),
+  createTransactie: (input: any) => invoke(IPC_CHANNELS.TRANSACTIES_CREATE, input),
+  deleteTransactie: (id: number) => invoke(IPC_CHANNELS.TRANSACTIES_DELETE, id),
 
   // BTW-aangifte
   getBtwAangifte: (kwartaal: number, jaar: number) =>
-    invoke('btwAangifte:genereer', kwartaal, jaar),
+    invoke(IPC_CHANNELS.BTW_AANGIFTE_GENEREER, kwartaal, jaar),
 
   // BTW-tarieven
-  getBtwTarieven: () => invoke('btwTarieven:getActief'),
+  getBtwTarieven: () => invoke(IPC_CHANNELS.BTW_TARIEVEN_GET_ACTIEF),
 
   // Instellingen
-  getInstellingen: () => invoke('instellingen:getAll'),
-  saveInstellingen: (data: Record<string, string>) => invoke('instellingen:save', data)
+  getInstellingen: () => invoke(IPC_CHANNELS.INSTELLINGEN_GET_ALL),
+  saveInstellingen: (data: Record<string, string>) => invoke(IPC_CHANNELS.INSTELLINGEN_SAVE, data)
 }
 
 contextBridge.exposeInMainWorld('api', api)
