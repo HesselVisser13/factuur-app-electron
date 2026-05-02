@@ -8,6 +8,7 @@ import { registerTransactieHandlers } from './ipc/transacties.ipc'
 import { registerBtwAangifteHandlers } from './ipc/btw-aangifte.ipc'
 import { registerBtwTarievenHandlers } from './ipc/btw-tarieven.ipc'
 import { registerInstellingenHandlers } from './ipc/instellingen.ipc'
+import { runMigrations } from './db/migrate'
 
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
@@ -33,6 +34,9 @@ app.whenReady().then(() => {
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window)
   })
+
+  // Database migraties draaien
+  runMigrations()
 
   // Registreer IPC handlers
   registerTransactieHandlers()

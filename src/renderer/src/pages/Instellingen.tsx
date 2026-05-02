@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 
 interface FormData {
+  [key: string]: string
   bedrijfsnaam: string
   eigenaar_naam: string
   kvk_nummer: string

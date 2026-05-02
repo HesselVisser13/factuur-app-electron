@@ -1,14 +1,14 @@
 // src/main/ipc/btw-tarieven.ipc.ts
 
 import { ipcMain } from 'electron'
-import { getDatabase } from '../db/client'
+import { createHandler } from './helpers'
+import { btwTariefService } from '../services/btw-tarief.service'
 
 export function registerBtwTarievenHandlers() {
-  ipcMain.handle('btwTarieven:getActief', async () => {
-    const prisma = getDatabase()
-    return prisma.btwTarief.findMany({
-      where: { geldigTot: null },
-      orderBy: { percentage: 'desc' }
+  ipcMain.handle(
+    'btwTarieven:getActief',
+    createHandler(async () => {
+      return btwTariefService.getActief()
     })
-  })
+  )
 }

@@ -25,18 +25,6 @@ export interface Transactie {
   notitie: string | null
 }
 
-export interface TransactieInput {
-  type: 'inkomst' | 'uitgave'
-  omschrijving: string
-  bedrag: number
-  invoerwijze: 'exclusief' | 'inclusief'
-  btwTariefId: number
-  btwPercentage: number
-  datum: string
-  categorie?: string
-  notitie?: string
-}
-
 export interface BtwAangifteRegel {
   tariefNaam: string
   percentage: number
@@ -53,4 +41,11 @@ export interface BtwAangifte {
   totaalVerschuldigd: number
   totaalVoorbelasting: number
   afTeDragen: number
+}
+
+// IPC response wrapper
+export interface IpcResult<T> {
+  success: boolean
+  data?: T
+  error?: string
 }

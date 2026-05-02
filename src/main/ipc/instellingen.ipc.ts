@@ -1,32 +1,24 @@
 // src/main/ipc/instellingen.ipc.ts
 
 import { ipcMain } from 'electron'
-import { getDatabase } from '../db/client'
+import { createHandler, validate } from './helpers'
+import { instellingenService } from '../services/instellingen.service'
+import { InstellingenSchema } from '../../shared/schemas'
 
 export function registerInstellingenHandlers() {
-  ipcMain.handle('instellingen:getAll', async () => {
-    const prisma = getDatabase()
-    const instellingen = await prisma.instelling.findMany()
+  ipcMain.handle(
+    'instellingen:getAll',
+    createHandler(async () => {
+      return instellingenService.getAll()
+    })
+  )
 
-    // Omzetten naar key-value object
-    const result: Record<string, string> = {}
-    for (const instelling of instellingen) {
-      result[instelling.key] = instelling.value
-    }
-    return result
-  })
-
-  ipcMain.handle('instellingen:save', async (_event, data: Record<string, string>) => {
-    const prisma = getDatabase()
-
-    for (const [key, value] of Object.entries(data)) {
-      await prisma.instelling.upsert({
-        where: { key },
-        update: { value },
-        create: { key, value }
-      })
-    }
-
-    return true
-  })
+  ipcMain.handle(
+    'instellingen:save',
+    createHandler(async (_event, data: unknown) => {
+      const validated = validate(InstellingenSchema, data)
+      await instellingenService.save(validated)
+      return true
+    })
+  )
 }
