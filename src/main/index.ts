@@ -7,6 +7,7 @@ import { autoUpdater } from 'electron-updater'
 import { registerTransactieHandlers } from './ipc/transacties.ipc'
 import { registerBtwAangifteHandlers } from './ipc/btw-aangifte.ipc'
 import { registerBtwTarievenHandlers } from './ipc/btw-tarieven.ipc'
+import { registerInstellingenHandlers } from './ipc/instellingen.ipc'
 
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
@@ -37,6 +38,7 @@ app.whenReady().then(() => {
   registerTransactieHandlers()
   registerBtwAangifteHandlers()
   registerBtwTarievenHandlers()
+  registerInstellingenHandlers()
 
   createWindow()
 

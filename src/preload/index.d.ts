@@ -10,6 +10,8 @@ declare global {
       deleteTransactie: (id: number) => Promise<void>
       getBtwAangifte: (kwartaal: number, jaar: number) => Promise<BtwAangifte>
       getBtwTarieven: () => Promise<BtwTarief[]>
+      getInstellingen: () => Promise<Record<string, string>>
+      saveInstellingen: (data: Record<string, string>) => Promise<boolean>
     }
   }
 }

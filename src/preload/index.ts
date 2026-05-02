@@ -15,7 +15,11 @@ const api = {
     ipcRenderer.invoke('btwAangifte:genereer', kwartaal, jaar),
 
   // BTW-tarieven
-  getBtwTarieven: () => ipcRenderer.invoke('btwTarieven:getActief')
+  getBtwTarieven: () => ipcRenderer.invoke('btwTarieven:getActief'),
+
+  // Instellingen
+  getInstellingen: () => ipcRenderer.invoke('instellingen:getAll'),
+  saveInstellingen: (data: Record<string, string>) => ipcRenderer.invoke('instellingen:save', data)
 }
 
 contextBridge.exposeInMainWorld('api', api)

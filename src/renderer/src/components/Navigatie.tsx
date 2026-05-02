@@ -5,7 +5,8 @@ import { Link, useLocation } from 'react-router-dom'
 const links = [
   { href: '/', label: '📊 Dashboard' },
   { href: '/transacties', label: '💶 Transacties' },
-  { href: '/btw-aangifte', label: '🏛️ BTW-aangifte' }
+  { href: '/btw-aangifte', label: '🏛️ BTW-aangifte' },
+  { href: '/instellingen', label: '⚙️ Instellingen' }
 ]
 
 export function Navigatie() {

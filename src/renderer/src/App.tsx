@@ -5,6 +5,7 @@ import { Navigatie } from './components/Navigatie'
 import { Dashboard } from './pages/Dashboard'
 import { Transacties } from './pages/Transacties'
 import { BtwAangifte } from './pages/BtwAangifte'
+import { Instellingen } from './pages/Instellingen'
 
 export default function App() {
   return (
@@ -16,6 +17,7 @@ export default function App() {
             <Route path="/" element={<Dashboard />} />
             <Route path="/transacties" element={<Transacties />} />
             <Route path="/btw-aangifte" element={<BtwAangifte />} />
+            <Route path="/instellingen" element={<Instellingen />} />
           </Routes>
         </main>
       </div>
