@@ -1,16 +1,21 @@
 // src/renderer/src/utils/formatters.ts
 
-export function formatBedrag(bedrag: number): string {
+export function formatCurrency(bedrag: number): string {
   return new Intl.NumberFormat('nl-NL', {
     style: 'currency',
     currency: 'EUR'
   }).format(bedrag)
 }
 
-export function formatDatumKort(datum: Date): string {
+export function formatDate(datum: Date | string): string {
+  const d = typeof datum === 'string' ? new Date(datum) : datum
   return new Intl.DateTimeFormat('nl-NL', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric'
-  }).format(datum)
+  }).format(d)
 }
+
+// Backwards compatibility aliases (kunnen later verwijderd worden)
+export const formatBedrag = formatCurrency
+export const formatDatumKort = formatDate

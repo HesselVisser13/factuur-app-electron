@@ -4,7 +4,8 @@ import { useState } from 'react'
 import { useApi } from '../hooks/useApi'
 import { ErrorMessage } from '../components/ErrorMessage'
 import { TransactieForm } from '../components/TransactieForm'
-import { formatBedrag, formatDatumKort } from '../utils/formatters'
+import { formatCurrency, formatDate } from '../utils/formatters'
+import { transactiesApi, btwTarievenApi } from '../api'
 import type { Transactie, BtwTarief } from '../../../shared/types'
 
 export function Transacties() {
@@ -18,14 +19,16 @@ export function Transacties() {
     loading,
     error,
     refetch
-  } = useApi<Transactie[]>(() => window.api.getTransacties(van, tot), [van, tot])
+  } = useApi<Transactie[]>(() => transactiesApi.list(van, tot), [van, tot])
+
+  const { data: tarieven } = useApi<BtwTarief[]>(() => btwTarievenApi.getActief(), [])
 
   async function handleDelete(id: number) {
     if (!confirm('Weet je zeker dat je deze transactie wilt verwijderen?')) {
       return
     }
     try {
-      await window.api.deleteTransactie(id)
+      await transactiesApi.delete(id)
       refetch()
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Verwijderen mislukt')
@@ -49,7 +52,7 @@ export function Transacties() {
         </button>
       </div>
 
-      {showForm && <TransactieForm onSuccess={handleCreated} />}
+      {showForm && tarieven && <TransactieForm tarieven={tarieven} onSuccess={handleCreated} />}
 
       {/* Periode filter */}
       <div className="bg-white rounded-xl border border-gray-200 p-4 flex gap-4 items-end">
@@ -73,9 +76,7 @@ export function Transacties() {
         </div>
       </div>
 
-      {/* Transacties */}
       {loading && <div className="text-center py-12 text-gray-500">Laden...</div>}
-
       {error && <ErrorMessage message={error} onRetry={refetch} />}
 
       {!loading && !error && transacties && (
@@ -111,21 +112,21 @@ export function Transacties() {
               ) : (
                 transacties.map((t) => (
                   <tr key={t.id} className="border-b border-gray-100 hover:bg-gray-50">
-                    <td className="px-4 py-3 text-sm text-gray-600">
-                      {formatDatumKort(new Date(t.datum))}
-                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600">{formatDate(t.datum)}</td>
                     <td className="px-4 py-3 text-sm">
                       <span
-                        className={`inline-block w-2 h-2 rounded-full mr-2 ${t.type === 'inkomst' ? 'bg-green-500' : 'bg-red-500'}`}
+                        className={`inline-block w-2 h-2 rounded-full mr-2 ${
+                          t.type === 'inkomst' ? 'bg-green-500' : 'bg-red-500'
+                        }`}
                       />
                       {t.omschrijving}
                     </td>
-                    <td className="px-4 py-3 text-sm text-right">{formatBedrag(t.bedragExcl)}</td>
+                    <td className="px-4 py-3 text-sm text-right">{formatCurrency(t.bedragExcl)}</td>
                     <td className="px-4 py-3 text-sm text-right">
-                      {formatBedrag(t.btwBedrag)} ({t.btwPercentage}%)
+                      {formatCurrency(t.btwBedrag)} ({t.btwPercentage}%)
                     </td>
                     <td className="px-4 py-3 text-sm text-right font-medium">
-                      {formatBedrag(t.bedragIncl)}
+                      {formatCurrency(t.bedragIncl)}
                     </td>
                     <td className="px-4 py-3 text-right">
                       <button

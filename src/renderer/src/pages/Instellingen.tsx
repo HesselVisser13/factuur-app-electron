@@ -1,6 +1,7 @@
 // src/renderer/src/pages/Instellingen.tsx
 
 import { useEffect, useState } from 'react'
+import { instellingenApi } from '../api'
 
 interface FormData {
   [key: string]: string
@@ -41,7 +42,7 @@ export function Instellingen() {
   const [saved, setSaved] = useState(false)
 
   useEffect(() => {
-    window.api.getInstellingen().then((data) => {
+    instellingenApi.getAll().then((data) => {
       setForm({
         bedrijfsnaam: data.bedrijfsnaam || '',
         eigenaar_naam: data.eigenaar_naam || '',

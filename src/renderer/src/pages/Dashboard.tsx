@@ -2,7 +2,8 @@
 
 import { useApi } from '../hooks/useApi'
 import { ErrorMessage } from '../components/ErrorMessage'
-import { formatBedrag } from '../utils/formatters'
+import { formatCurrency } from '../utils/formatters'
+import { btwAangifteApi } from '../api'
 import type { BtwAangifte } from '../../../shared/types'
 
 export function Dashboard() {
@@ -11,7 +12,7 @@ export function Dashboard() {
   const jaar = now.getFullYear()
 
   const { data, loading, error, refetch } = useApi<BtwAangifte>(
-    () => window.api.getBtwAangifte(kwartaal, jaar),
+    () => btwAangifteApi.genereer(kwartaal, jaar),
     [kwartaal, jaar]
   )
 
@@ -29,17 +30,17 @@ export function Dashboard() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card
             label="Omzet (excl. BTW)"
-            value={formatBedrag(data.regels.reduce((sum, r) => sum + r.omzet, 0))}
+            value={formatCurrency(data.regels.reduce((sum, r) => sum + r.omzet, 0))}
             color="blue"
           />
           <Card
             label="Uitgaven (excl. BTW)"
-            value={formatBedrag(data.regels.reduce((sum, r) => sum + r.inkoop, 0))}
+            value={formatCurrency(data.regels.reduce((sum, r) => sum + r.inkoop, 0))}
             color="gray"
           />
           <Card
             label="BTW af te dragen"
-            value={formatBedrag(data.afTeDragen)}
+            value={formatCurrency(data.afTeDragen)}
             color={data.afTeDragen >= 0 ? 'red' : 'green'}
           />
         </div>

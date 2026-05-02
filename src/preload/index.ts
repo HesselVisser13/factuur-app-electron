@@ -2,8 +2,10 @@
 
 import { contextBridge, ipcRenderer } from 'electron'
 import { IPC_CHANNELS } from '../shared/ipc-channels'
+import type { TransactieInput } from '../shared/schemas'
+import type { BtwAangifte, BtwTarief, Transactie } from '../shared/types'
 
-async function invoke<T>(channel: string, ...args: any[]): Promise<T> {
+async function invoke<T>(channel: string, ...args: unknown[]): Promise<T> {
   const result = await ipcRenderer.invoke(channel, ...args)
 
   if (result && typeof result === 'object' && 'success' in result) {
@@ -18,21 +20,25 @@ async function invoke<T>(channel: string, ...args: any[]): Promise<T> {
 
 const api = {
   // Transacties
-  getTransacties: (van: string, tot: string) =>
+  getTransacties: (van: string, tot: string): Promise<Transactie[]> =>
     invoke(IPC_CHANNELS.TRANSACTIES_GET_BY_PERIODE, van, tot),
-  createTransactie: (input: any) => invoke(IPC_CHANNELS.TRANSACTIES_CREATE, input),
-  deleteTransactie: (id: number) => invoke(IPC_CHANNELS.TRANSACTIES_DELETE, id),
+  createTransactie: (input: TransactieInput): Promise<Transactie> =>
+    invoke(IPC_CHANNELS.TRANSACTIES_CREATE, input),
+  deleteTransactie: (id: number): Promise<void> => invoke(IPC_CHANNELS.TRANSACTIES_DELETE, id),
 
   // BTW-aangifte
-  getBtwAangifte: (kwartaal: number, jaar: number) =>
+  getBtwAangifte: (kwartaal: number, jaar: number): Promise<BtwAangifte> =>
     invoke(IPC_CHANNELS.BTW_AANGIFTE_GENEREER, kwartaal, jaar),
 
   // BTW-tarieven
-  getBtwTarieven: () => invoke(IPC_CHANNELS.BTW_TARIEVEN_GET_ACTIEF),
+  getBtwTarieven: (): Promise<BtwTarief[]> => invoke(IPC_CHANNELS.BTW_TARIEVEN_GET_ACTIEF),
 
   // Instellingen
-  getInstellingen: () => invoke(IPC_CHANNELS.INSTELLINGEN_GET_ALL),
-  saveInstellingen: (data: Record<string, string>) => invoke(IPC_CHANNELS.INSTELLINGEN_SAVE, data)
+  getInstellingen: (): Promise<Record<string, string>> => invoke(IPC_CHANNELS.INSTELLINGEN_GET_ALL),
+  saveInstellingen: (data: Record<string, string>): Promise<boolean> =>
+    invoke(IPC_CHANNELS.INSTELLINGEN_SAVE, data)
 }
 
 contextBridge.exposeInMainWorld('api', api)
+
+export type Api = typeof api
