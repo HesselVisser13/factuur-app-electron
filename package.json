@@ -1,6 +1,6 @@
 {
   "name": "factuur-app-electron",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "An Electron application with React and TypeScript",
   "main": "./out/main/index.js",
   "author": "example.com",
@@ -63,6 +63,7 @@
   "build": {
     "appId": "nl.factuurapp.btw",
     "productName": "BTW App",
+    "artifactName": "BTW-App-Setup-${version}.${ext}",
     "npmRebuild": false,
     "directories": {
       "output": "release"
