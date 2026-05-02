@@ -47,8 +47,18 @@ app.whenReady().then(() => {
   createWindow()
 
   if (!is.dev) {
-    autoUpdater.checkForUpdatesAndNotify()
     autoUpdater.logger = log
+    autoUpdater.autoInstallOnAppQuit = true
+
+    autoUpdater.on('update-downloaded', () => {
+      log.info('[AutoUpdater] Update downloaded, will install on quit')
+    })
+
+    autoUpdater.on('error', (error) => {
+      log.error('[AutoUpdater] Error:', error)
+    })
+
+    autoUpdater.checkForUpdatesAndNotify()
   }
 
   app.on('activate', () => {

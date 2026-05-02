@@ -1,4 +1,4 @@
-// src/preload/index.d.ts
+// src/preload/api.d.ts
 
 import type { Api } from './index'
 
@@ -7,3 +7,5 @@ declare global {
     api: Api
   }
 }
+
+export {}
