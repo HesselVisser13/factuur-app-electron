@@ -1,28 +1,33 @@
 // src/renderer/src/components/TransactieForm.tsx
 
 import { useState } from 'react'
-import type { BtwTarief } from '../../../shared/types'
-import type { TransactieInput } from '../../../shared/schemas'
+import type { BtwTarief, Transactie } from '../../../shared/types'
+import type { TransactieInput, TransactieUpdate } from '../../../shared/schemas'
 import { transactiesApi } from '../api'
 import { TRANSACTIE_TYPES, CATEGORIEEN, INVOERWIJZEN } from '../../../shared/constants'
 
 interface Props {
   tarieven: BtwTarief[]
+  transactie?: Transactie // Optioneel: als gezet → edit modus
   onSuccess: () => void
+  onCancel?: () => void
 }
 
-export function TransactieForm({ tarieven, onSuccess }: Props) {
+export function TransactieForm({ tarieven, transactie, onSuccess, onCancel }: Props) {
+  const isEdit = !!transactie
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const [form, setForm] = useState({
-    type: 'inkomst' as 'inkomst' | 'uitgave',
-    omschrijving: '',
-    bedrag: '',
-    invoerwijze: 'exclusief' as 'exclusief' | 'inclusief',
-    btwTariefId: tarieven[0]?.id ? String(tarieven[0].id) : '',
-    datum: new Date().toISOString().split('T')[0],
-    categorie: ''
+    type: transactie?.type || ('inkomst' as 'inkomst' | 'uitgave'),
+    omschrijving: transactie?.omschrijving || '',
+    bedrag: transactie ? String(transactie.bedrag) : '',
+    invoerwijze: transactie?.invoerwijze || ('exclusief' as 'exclusief' | 'inclusief'),
+    btwTariefId: String(transactie?.btwTariefId || tarieven[0]?.id || ''),
+    datum: transactie
+      ? new Date(transactie.datum).toISOString().split('T')[0]
+      : new Date().toISOString().split('T')[0],
+    categorie: transactie?.categorie || ''
   })
 
   async function handleSubmit(e: React.FormEvent) {
@@ -34,7 +39,7 @@ export function TransactieForm({ tarieven, onSuccess }: Props) {
       const tarief = tarieven.find((t) => t.id === parseInt(form.btwTariefId))
       if (!tarief) throw new Error('Geen BTW-tarief geselecteerd')
 
-      const input: TransactieInput = {
+      const baseInput = {
         type: form.type,
         omschrijving: form.omschrijving,
         bedrag: parseFloat(form.bedrag),
@@ -45,14 +50,20 @@ export function TransactieForm({ tarieven, onSuccess }: Props) {
         categorie: form.categorie || undefined
       }
 
-      await transactiesApi.create(input)
+      if (isEdit && transactie) {
+        const input: TransactieUpdate = { ...baseInput, id: transactie.id }
+        await transactiesApi.update(input)
+      } else {
+        const input: TransactieInput = baseInput
+        await transactiesApi.create(input)
 
-      setForm({
-        ...form,
-        omschrijving: '',
-        bedrag: '',
-        categorie: ''
-      })
+        setForm({
+          ...form,
+          omschrijving: '',
+          bedrag: '',
+          categorie: ''
+        })
+      }
 
       onSuccess()
     } catch (err) {
@@ -64,9 +75,20 @@ export function TransactieForm({ tarieven, onSuccess }: Props) {
 
   return (
     <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-gray-200 p-6">
-      <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wide mb-4">
-        Nieuwe transactie
-      </h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wide">
+          {isEdit ? 'Transactie bewerken' : 'Nieuwe transactie'}
+        </h2>
+        {onCancel && (
+          <button
+            type="button"
+            onClick={onCancel}
+            className="text-sm text-gray-500 hover:text-gray-700"
+          >
+            Annuleren
+          </button>
+        )}
+      </div>
 
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4 text-sm text-red-700">
@@ -192,7 +214,7 @@ export function TransactieForm({ tarieven, onSuccess }: Props) {
           disabled={submitting}
           className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition-colors disabled:opacity-50"
         >
-          {submitting ? 'Bezig...' : '✓ Toevoegen'}
+          {submitting ? 'Bezig...' : isEdit ? '✓ Opslaan' : '✓ Toevoegen'}
         </button>
       </div>
     </form>

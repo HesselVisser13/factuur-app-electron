@@ -13,6 +13,7 @@ export function Transacties() {
   const [van, setVan] = useState(`${currentYear}-01-01`)
   const [tot, setTot] = useState(`${currentYear}-12-31`)
   const [showForm, setShowForm] = useState(false)
+  const [editTransactie, setEditTransactie] = useState<Transactie | null>(null)
 
   const {
     data: transacties,
@@ -37,7 +38,17 @@ export function Transacties() {
 
   function handleCreated() {
     setShowForm(false)
+    setEditTransactie(null)
     refetch()
+  }
+
+  function handleEdit(t: Transactie) {
+    setEditTransactie(t)
+    setShowForm(false)
+  }
+
+  function handleCancelEdit() {
+    setEditTransactie(null)
   }
 
   return (
@@ -45,7 +56,10 @@ export function Transacties() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">💶 Transacties</h1>
         <button
-          onClick={() => setShowForm(!showForm)}
+          onClick={() => {
+            setShowForm(!showForm)
+            setEditTransactie(null)
+          }}
           className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg"
         >
           {showForm ? 'Annuleren' : '+ Nieuwe transactie'}
@@ -54,7 +68,15 @@ export function Transacties() {
 
       {showForm && tarieven && <TransactieForm tarieven={tarieven} onSuccess={handleCreated} />}
 
-      {/* Periode filter */}
+      {editTransactie && tarieven && (
+        <TransactieForm
+          tarieven={tarieven}
+          transactie={editTransactie}
+          onSuccess={handleCreated}
+          onCancel={handleCancelEdit}
+        />
+      )}
+
       <div className="bg-white rounded-xl border border-gray-200 p-4 flex gap-4 items-end">
         <div>
           <label className="block text-sm font-medium text-gray-600 mb-1">Van</label>
@@ -128,10 +150,18 @@ export function Transacties() {
                     <td className="px-4 py-3 text-sm text-right font-medium">
                       {formatCurrency(t.bedragIncl)}
                     </td>
-                    <td className="px-4 py-3 text-right">
+                    <td className="px-4 py-3 text-right whitespace-nowrap">
+                      <button
+                        onClick={() => handleEdit(t)}
+                        className="text-blue-600 hover:text-blue-800 text-sm mr-3"
+                        title="Bewerken"
+                      >
+                        ✎
+                      </button>
                       <button
                         onClick={() => handleDelete(t.id)}
                         className="text-red-600 hover:text-red-800 text-sm"
+                        title="Verwijderen"
                       >
                         ✕
                       </button>

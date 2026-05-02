@@ -5,6 +5,7 @@ export const IPC_CHANNELS = {
   TRANSACTIES_GET_BY_PERIODE: 'transacties:getByPeriode',
   TRANSACTIES_CREATE: 'transacties:create',
   TRANSACTIES_DELETE: 'transacties:delete',
+  TRANSACTIES_UPDATE: 'transacties:update',
 
   // BTW-aangifte
   BTW_AANGIFTE_GENEREER: 'btwAangifte:genereer',
@@ -14,7 +15,9 @@ export const IPC_CHANNELS = {
 
   // Instellingen
   INSTELLINGEN_GET_ALL: 'instellingen:getAll',
-  INSTELLINGEN_SAVE: 'instellingen:save'
+  INSTELLINGEN_SAVE: 'instellingen:save',
+
+  APP_GET_VERSION: 'app:getVersion'
 } as const
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS]

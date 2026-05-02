@@ -2,7 +2,7 @@
 
 import { contextBridge, ipcRenderer } from 'electron'
 import { IPC_CHANNELS } from '../shared/ipc-channels'
-import type { TransactieInput } from '../shared/schemas'
+import type { TransactieInput, TransactieUpdate } from '../shared/schemas'
 import type { BtwAangifte, BtwTarief, Transactie } from '../shared/types'
 
 async function invoke<T>(channel: string, ...args: unknown[]): Promise<T> {
@@ -25,6 +25,8 @@ const api = {
   createTransactie: (input: TransactieInput): Promise<Transactie> =>
     invoke(IPC_CHANNELS.TRANSACTIES_CREATE, input),
   deleteTransactie: (id: number): Promise<void> => invoke(IPC_CHANNELS.TRANSACTIES_DELETE, id),
+  updateTransactie: (input: TransactieUpdate): Promise<Transactie> =>
+    invoke(IPC_CHANNELS.TRANSACTIES_UPDATE, input),
 
   // BTW-aangifte
   getBtwAangifte: (kwartaal: number, jaar: number): Promise<BtwAangifte> =>
@@ -36,7 +38,9 @@ const api = {
   // Instellingen
   getInstellingen: (): Promise<Record<string, string>> => invoke(IPC_CHANNELS.INSTELLINGEN_GET_ALL),
   saveInstellingen: (data: Record<string, string>): Promise<boolean> =>
-    invoke(IPC_CHANNELS.INSTELLINGEN_SAVE, data)
+    invoke(IPC_CHANNELS.INSTELLINGEN_SAVE, data),
+
+  getAppVersion: (): Promise<string> => invoke(IPC_CHANNELS.APP_GET_VERSION)
 }
 
 contextBridge.exposeInMainWorld('api', api)

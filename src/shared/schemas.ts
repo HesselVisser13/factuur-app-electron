@@ -14,6 +14,11 @@ export const TransactieInputSchema = z.object({
   notitie: z.string().optional()
 })
 
+// TransactieUpdate = TransactieInput + id
+export const TransactieUpdateSchema = TransactieInputSchema.extend({
+  id: z.number().int().positive()
+})
+
 export const InstellingenSchema = z.record(z.string(), z.string())
 
 export const PeriodeSchema = z.object({
@@ -27,5 +32,6 @@ export const KwartaalSchema = z.object({
 })
 
 export type TransactieInput = z.infer<typeof TransactieInputSchema>
+export type TransactieUpdate = z.infer<typeof TransactieUpdateSchema>
 export type Periode = z.infer<typeof PeriodeSchema>
 export type Kwartaal = z.infer<typeof KwartaalSchema>

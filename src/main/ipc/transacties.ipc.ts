@@ -3,7 +3,7 @@
 import { ipcMain } from 'electron'
 import { createHandler, validate } from './helpers'
 import { transactieService } from '../services/transactie.service'
-import { TransactieInputSchema, PeriodeSchema } from '../../shared/schemas'
+import { TransactieInputSchema, TransactieUpdateSchema, PeriodeSchema } from '../../shared/schemas'
 import { IPC_CHANNELS } from '../../shared/ipc-channels'
 import { z } from 'zod'
 
@@ -29,6 +29,14 @@ export function registerTransactieHandlers() {
     createHandler(async (_event, id: unknown) => {
       const validId = validate(z.number().int().positive(), id)
       return transactieService.delete(validId)
+    })
+  )
+
+  ipcMain.handle(
+    IPC_CHANNELS.TRANSACTIES_UPDATE,
+    createHandler(async (_event, input: unknown) => {
+      const validated = validate(TransactieUpdateSchema, input)
+      return transactieService.update(validated)
     })
   )
 }

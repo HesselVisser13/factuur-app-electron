@@ -8,6 +8,7 @@ import { registerTransactieHandlers } from './ipc/transacties.ipc'
 import { registerBtwAangifteHandlers } from './ipc/btw-aangifte.ipc'
 import { registerBtwTarievenHandlers } from './ipc/btw-tarieven.ipc'
 import { registerInstellingenHandlers } from './ipc/instellingen.ipc'
+import { registerAppHandlers } from './ipc/app.ipc'
 import { runMigrations } from './db/migrate'
 import { initLogger, log } from './logger'
 
@@ -43,6 +44,7 @@ app.whenReady().then(() => {
   registerBtwAangifteHandlers()
   registerBtwTarievenHandlers()
   registerInstellingenHandlers()
+  registerAppHandlers()
 
   createWindow()
 
