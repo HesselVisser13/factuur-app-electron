@@ -31,7 +31,58 @@ export const KwartaalSchema = z.object({
   jaar: z.number().int().min(2020).max(2100)
 })
 
+const klantBaseSchema = {
+  aanhef: z.string().optional(),
+  voornaam: z.string().optional(),
+  achternaam: z.string().optional(),
+  adres: z.string().optional(),
+  postcode: z.string().optional(),
+  plaats: z.string().optional(),
+  email: z.string().email('Ongeldig e-mailadres').optional().or(z.literal('')),
+  telefoon: z.string().optional()
+}
+
+export const KlantInputSchema = z.discriminatedUnion('type', [
+  z.object({
+    type: z.literal('particulier'),
+    ...klantBaseSchema,
+    achternaam: z.string().min(1, 'Achternaam is verplicht'),
+    bedrijfsnaam: z.string().optional(),
+    kvkNummer: z.string().optional(),
+    btwNummer: z.string().optional()
+  }),
+  z.object({
+    type: z.literal('zakelijk'),
+    ...klantBaseSchema,
+    bedrijfsnaam: z.string().min(1, 'Bedrijfsnaam is verplicht'),
+    kvkNummer: z.string().optional(),
+    btwNummer: z.string().optional()
+  })
+])
+
+export const KlantUpdateSchema = z.discriminatedUnion('type', [
+  z.object({
+    type: z.literal('particulier'),
+    id: z.number().int().positive(),
+    ...klantBaseSchema,
+    achternaam: z.string().min(1, 'Achternaam is verplicht'),
+    bedrijfsnaam: z.string().optional(),
+    kvkNummer: z.string().optional(),
+    btwNummer: z.string().optional()
+  }),
+  z.object({
+    type: z.literal('zakelijk'),
+    id: z.number().int().positive(),
+    ...klantBaseSchema,
+    bedrijfsnaam: z.string().min(1, 'Bedrijfsnaam is verplicht'),
+    kvkNummer: z.string().optional(),
+    btwNummer: z.string().optional()
+  })
+])
+
 export type TransactieInput = z.infer<typeof TransactieInputSchema>
 export type TransactieUpdate = z.infer<typeof TransactieUpdateSchema>
 export type Periode = z.infer<typeof PeriodeSchema>
 export type Kwartaal = z.infer<typeof KwartaalSchema>
+export type KlantInput = z.infer<typeof KlantInputSchema>
+export type KlantUpdate = z.infer<typeof KlantUpdateSchema>

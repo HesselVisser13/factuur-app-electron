@@ -55,15 +55,49 @@ model Transactie {
   updatedAt     DateTime @updatedAt
 }
 
+model Klant {
+  id             Int       @id @default(autoincrement())
+  type           String    @default("particulier")  // "particulier" | "zakelijk"
+
+  // Naam-velden
+  bedrijfsnaam   String?   // alleen bij zakelijk verplicht
+  aanhef         String?   // "Dhr." / "Mevr."
+  voornaam       String?
+  achternaam     String?
+
+  // Contact
+  adres          String?
+  postcode       String?
+  plaats         String?
+  email          String?
+  telefoon       String?
+
+  // Alleen zakelijk
+  kvkNummer      String?
+  btwNummer      String?
+
+  facturen       Factuur[]
+
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
 model Factuur {
   id             Int            @id @default(autoincrement())
   factuurNummer  String         @unique
-  klantNaam      String
-  klantAdres     String?
+
+  klantId        Int
+  klant          Klant          @relation(fields: [klantId], references: [id])
+
   datum          DateTime
   vervalDatum    DateTime
+  referentie     String?
   status         String         @default("concept")
   opmerkingen    String?
+
+  totaalExcl     Float          @default(0)
+  totaalBtw      Float          @default(0)
+  totaalIncl     Float          @default(0)
 
   regels         FactuurRegel[]
 
@@ -76,6 +110,7 @@ model FactuurRegel {
   factuurId     Int
   factuur       Factuur   @relation(fields: [factuurId], references: [id], onDelete: Cascade)
 
+  datum         DateTime
   omschrijving  String
   aantal        Float
   prijsPerStuk  Float

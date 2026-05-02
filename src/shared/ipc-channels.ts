@@ -16,6 +16,13 @@ export const IPC_CHANNELS = {
   // Instellingen
   INSTELLINGEN_GET_ALL: 'instellingen:getAll',
   INSTELLINGEN_SAVE: 'instellingen:save',
+  INSTELLINGEN_SELECT_LOGO: 'instellingen:selectLogo',
+
+  // Klanten
+  KLANTEN_GET_ALL: 'klanten:getAll',
+  KLANTEN_CREATE: 'klanten:create',
+  KLANTEN_UPDATE: 'klanten:update',
+  KLANTEN_DELETE: 'klanten:delete',
 
   APP_GET_VERSION: 'app:getVersion'
 } as const

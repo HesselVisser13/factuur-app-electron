@@ -10,6 +10,8 @@ interface FormData {
   kvk_nummer: string
   btw_nummer: string
   iban: string
+  bic: string
+  banknaam: string
   adres: string
   postcode: string
   plaats: string
@@ -18,6 +20,8 @@ interface FormData {
   website: string
   betaaltermijn_dagen: string
   is_starter: string
+  logo_filename: string
+  factuur_voorwaarden: string
 }
 
 const defaultForm: FormData = {
@@ -26,6 +30,8 @@ const defaultForm: FormData = {
   kvk_nummer: '',
   btw_nummer: '',
   iban: '',
+  bic: '',
+  banknaam: '',
   adres: '',
   postcode: '',
   plaats: '',
@@ -33,7 +39,10 @@ const defaultForm: FormData = {
   email: '',
   website: '',
   betaaltermijn_dagen: '14',
-  is_starter: 'false'
+  is_starter: 'false',
+  logo_filename: '',
+  factuur_voorwaarden:
+    'Wij verzoeken u vriendelijk het verschuldigde bedrag binnen {betaaltermijn} dagen over te maken onder vermelding van het factuurnummer.'
 }
 
 export function Instellingen() {
@@ -49,6 +58,8 @@ export function Instellingen() {
         kvk_nummer: data.kvk_nummer || '',
         btw_nummer: data.btw_nummer || '',
         iban: data.iban || '',
+        bic: data.bic || '',
+        banknaam: data.banknaam || '',
         adres: data.adres || '',
         postcode: data.postcode || '',
         plaats: data.plaats || '',
@@ -56,7 +67,9 @@ export function Instellingen() {
         email: data.email || '',
         website: data.website || '',
         betaaltermijn_dagen: data.betaaltermijn_dagen || '14',
-        is_starter: data.is_starter || 'false'
+        is_starter: data.is_starter || 'false',
+        logo_filename: data.logo_filename || '',
+        factuur_voorwaarden: data.factuur_voorwaarden || defaultForm.factuur_voorwaarden
       })
     })
   }, [])
@@ -66,7 +79,7 @@ export function Instellingen() {
     setSaving(true)
     setSaved(false)
 
-    await window.api.saveInstellingen(form)
+    await instellingenApi.save(form)
 
     setSaving(false)
     setSaved(true)
@@ -77,6 +90,7 @@ export function Instellingen() {
     setForm({ ...form, [key]: value })
   }
 
+  async function handleLogoUpload() {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">⚙️ Instellingen</h1>
@@ -218,12 +232,34 @@ export function Instellingen() {
             </div>
 
             <div>
+              <label className="block text-sm font-medium text-gray-600 mb-1">Banknaam</label>
+              <input
+                type="text"
+                value={form.banknaam}
+                onChange={(e) => updateField('banknaam', e.target.value)}
+                placeholder="Mijn Banknaam"
+                className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm"
+              />
+            </div>
+
+            <div>
               <label className="block text-sm font-medium text-gray-600 mb-1">IBAN</label>
               <input
                 type="text"
                 value={form.iban}
                 onChange={(e) => updateField('iban', e.target.value)}
                 placeholder="NL00 BANK 0000 0000 00"
+                className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-600 mb-1">BIC</label>
+              <input
+                type="text"
+                value={form.bic}
+                onChange={(e) => updateField('bic', e.target.value)}
+                placeholder="Mijn Bank BIC Code"
                 className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm"
               />
             </div>
@@ -242,7 +278,7 @@ export function Instellingen() {
               />
             </div>
 
-            <div>
+            <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-600 mb-1">
                 Starter (kleineondernemersregeling)?
               </label>
@@ -254,6 +290,60 @@ export function Instellingen() {
                 <option value="false">Nee</option>
                 <option value="true">Ja</option>
               </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Factuur */}
+        <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wide mb-4">Factuur</h2>
+
+          <div className="space-y-4">
+            {/* Logo */}
+            <div>
+              <label className="block text-sm font-medium text-gray-600 mb-2">Bedrijfslogo</label>
+              {form.logo_filename ? (
+                <div className="flex items-center gap-4 p-3 border border-gray-200 rounded-lg bg-gray-50">
+                  <img
+                    src={`app-logo://${form.logo_filename}`}
+                    alt="Logo"
+                    className="h-16 w-auto object-contain"
+                  />
+                  <div className="flex-1 text-xs text-gray-500 truncate">{form.logo_filename}</div>
+                  <button
+                    type="button"
+                    onClick={handleLogoRemove}
+                    className="text-red-600 hover:text-red-800 text-sm font-medium"
+                  >
+                    Verwijderen
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleLogoUpload}
+                  className="border-2 border-dashed border-gray-300 hover:border-blue-500 rounded-lg px-6 py-8 w-full text-gray-500 hover:text-blue-600 transition-colors text-sm"
+                >
+                  🖼️ Klik om een logo te uploaden (PNG/JPG)
+                </button>
+              )}
+            </div>
+
+            {/* Voorwaarden */}
+            <div>
+              <label className="block text-sm font-medium text-gray-600 mb-1">
+                Voorwaardentekst onderaan factuur
+              </label>
+              <textarea
+                value={form.factuur_voorwaarden}
+                onChange={(e) => updateField('factuur_voorwaarden', e.target.value)}
+                rows={3}
+                className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Tip: gebruik <code className="bg-gray-100 px-1 rounded">{'{betaaltermijn}'}</code>{' '}
+                om het aantal dagen automatisch in te vullen.
+              </p>
             </div>
           </div>
         </div>

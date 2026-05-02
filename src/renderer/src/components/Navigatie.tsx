@@ -7,6 +7,8 @@ import { appApi } from '../api'
 const links = [
   { href: '/', label: '📊 Dashboard' },
   { href: '/transacties', label: '💶 Transacties' },
+  { href: '/facturen', label: '📄 Facturen' },
+  { href: '/klanten', label: '👥 Klanten' },
   { href: '/btw-aangifte', label: '🏛️ BTW-aangifte' },
   { href: '/instellingen', label: '⚙️ Instellingen' }
 ]

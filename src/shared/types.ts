@@ -43,6 +43,24 @@ export interface BtwAangifte {
   afTeDragen: number
 }
 
+export interface Klant {
+  id: number
+  type: 'particulier' | 'zakelijk'
+  bedrijfsnaam: string | null
+  aanhef: string | null
+  voornaam: string | null
+  achternaam: string | null
+  adres: string | null
+  postcode: string | null
+  plaats: string | null
+  email: string | null
+  telefoon: string | null
+  kvkNummer: string | null
+  btwNummer: string | null
+  createdAt: string
+  updatedAt: string
+}
+
 // IPC response wrapper
 export interface IpcResult<T> {
   success: boolean

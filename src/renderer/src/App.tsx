@@ -6,6 +6,7 @@ import { Dashboard } from './pages/Dashboard'
 import { Transacties } from './pages/Transacties'
 import { BtwAangifte } from './pages/BtwAangifte'
 import { Instellingen } from './pages/Instellingen'
+import { Klanten } from './pages/Klanten'
 
 export default function App() {
   return (
@@ -18,6 +19,7 @@ export default function App() {
             <Route path="/transacties" element={<Transacties />} />
             <Route path="/btw-aangifte" element={<BtwAangifte />} />
             <Route path="/instellingen" element={<Instellingen />} />
+            <Route path="/klanten" element={<Klanten />} />
           </Routes>
         </main>
       </div>

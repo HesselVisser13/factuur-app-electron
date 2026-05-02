@@ -1,7 +1,8 @@
 // src/main/index.ts
 
-import { app, BrowserWindow } from 'electron'
-import { join } from 'path'
+import { app, BrowserWindow, protocol, net } from 'electron'
+import { join, basename } from 'path'
+import { pathToFileURL } from 'url'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import { autoUpdater } from 'electron-updater'
 import { registerTransactieHandlers } from './ipc/transacties.ipc'
@@ -9,8 +10,16 @@ import { registerBtwAangifteHandlers } from './ipc/btw-aangifte.ipc'
 import { registerBtwTarievenHandlers } from './ipc/btw-tarieven.ipc'
 import { registerInstellingenHandlers } from './ipc/instellingen.ipc'
 import { registerAppHandlers } from './ipc/app.ipc'
+import { registerKlantenHandlers } from './ipc/klanten.ipc'
 import { runMigrations } from './db/migrate'
 import { initLogger, log } from './logger'
+
+protocol.registerSchemesAsPrivileged([
+  {
+    scheme: 'app-logo',
+    privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true }
+  }
+])
 
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
@@ -34,6 +43,14 @@ app.whenReady().then(() => {
   initLogger()
   electronApp.setAppUserModelId('nl.factuurapp.btw')
 
+  protocol.handle('app-logo', async (request) => {
+    const url = new URL(request.url)
+    const requested = decodeURIComponent(url.hostname + url.pathname)
+    const safeName = basename(requested)
+    const filePath = join(app.getPath('userData'), 'logos', safeName)
+    return net.fetch(pathToFileURL(filePath).toString())
+  })
+
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window)
   })
@@ -45,6 +62,7 @@ app.whenReady().then(() => {
   registerBtwTarievenHandlers()
   registerInstellingenHandlers()
   registerAppHandlers()
+  registerKlantenHandlers()
 
   createWindow()
 

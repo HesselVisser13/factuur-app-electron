@@ -2,8 +2,8 @@
 
 import { contextBridge, ipcRenderer } from 'electron'
 import { IPC_CHANNELS } from '../shared/ipc-channels'
-import type { TransactieInput, TransactieUpdate } from '../shared/schemas'
-import type { BtwAangifte, BtwTarief, Transactie } from '../shared/types'
+import type { TransactieInput, TransactieUpdate, KlantInput, KlantUpdate } from '../shared/schemas'
+import type { BtwAangifte, BtwTarief, Transactie, Klant } from '../shared/types'
 
 async function invoke<T>(channel: string, ...args: unknown[]): Promise<T> {
   const result = await ipcRenderer.invoke(channel, ...args)
@@ -39,6 +39,14 @@ const api = {
   getInstellingen: (): Promise<Record<string, string>> => invoke(IPC_CHANNELS.INSTELLINGEN_GET_ALL),
   saveInstellingen: (data: Record<string, string>): Promise<boolean> =>
     invoke(IPC_CHANNELS.INSTELLINGEN_SAVE, data),
+  selectLogo: (): Promise<{ fileName: string; originalName: string } | null> =>
+    invoke(IPC_CHANNELS.INSTELLINGEN_SELECT_LOGO),
+
+  // Klanten
+  getKlanten: (): Promise<Klant[]> => invoke(IPC_CHANNELS.KLANTEN_GET_ALL),
+  createKlant: (input: KlantInput): Promise<Klant> => invoke(IPC_CHANNELS.KLANTEN_CREATE, input),
+  updateKlant: (input: KlantUpdate): Promise<Klant> => invoke(IPC_CHANNELS.KLANTEN_UPDATE, input),
+  deleteKlant: (id: number): Promise<boolean> => invoke(IPC_CHANNELS.KLANTEN_DELETE, id),
 
   getAppVersion: (): Promise<string> => invoke(IPC_CHANNELS.APP_GET_VERSION)
 }
