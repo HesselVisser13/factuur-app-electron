@@ -85,7 +85,7 @@ export function PdfPreviewModal({ factuurId, factuurNummer, onClose }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/70 z-[95] flex flex-col p-4">
+    <div className="fixed inset-0 bg-black/70 z-95 flex flex-col p-4">
       <div className="flex items-center justify-between bg-white rounded-t-xl px-4 py-3 border-b border-gray-200">
         <div className="font-bold">📄 Voorbeeld{factuurNummer ? ` – ${factuurNummer}` : ''}</div>
         <div className="flex gap-2">

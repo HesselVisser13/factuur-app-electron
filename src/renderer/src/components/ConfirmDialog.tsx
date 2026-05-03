@@ -41,7 +41,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
     <ConfirmContext.Provider value={confirm}>
       {children}
       {options && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[90] p-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-90 p-4">
           <div className="bg-white rounded-xl max-w-md w-full p-6 space-y-4">
             {options.title && <h2 className="text-lg font-bold">{options.title}</h2>}
             <p className="text-sm text-gray-700 whitespace-pre-line">{options.message}</p>
