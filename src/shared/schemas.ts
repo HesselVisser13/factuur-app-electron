@@ -80,9 +80,47 @@ export const KlantUpdateSchema = z.discriminatedUnion('type', [
   })
 ])
 
+// ============================================================
+// FACTUREN
+// ============================================================
+
+export const FactuurStatusSchema = z.enum(['concept', 'verstuurd', 'betaald', 'geannuleerd'])
+export type FactuurStatus = z.infer<typeof FactuurStatusSchema>
+
+export const FactuurRegelInputSchema = z.object({
+  datum: z.string().min(1, 'Datum is verplicht'),
+  omschrijving: z.string().min(1, 'Omschrijving is verplicht'),
+  aantal: z.number().int().positive('Aantal moet positief zijn'),
+  prijsPerStuk: z.number().nonnegative('Prijs mag niet negatief zijn'),
+  btwTariefId: z.number().int().positive(),
+  btwPercentage: z.number().min(0).max(100)
+})
+
+export const FactuurInputSchema = z.object({
+  klantId: z.number().int().positive('Kies een klant'),
+  datum: z.string().min(1, 'Datum is verplicht'),
+  vervalDatum: z.string().min(1, 'Vervaldatum is verplicht'),
+  referentie: z.string().optional(),
+  opmerkingen: z.string().optional(),
+  regels: z.array(FactuurRegelInputSchema).min(1, 'Voeg minstens één regel toe')
+})
+
+export const FactuurUpdateSchema = FactuurInputSchema.extend({
+  id: z.number().int().positive()
+})
+
+export const FactuurStatusUpdateSchema = z.object({
+  id: z.number().int().positive(),
+  status: FactuurStatusSchema
+})
+
 export type TransactieInput = z.infer<typeof TransactieInputSchema>
 export type TransactieUpdate = z.infer<typeof TransactieUpdateSchema>
 export type Periode = z.infer<typeof PeriodeSchema>
 export type Kwartaal = z.infer<typeof KwartaalSchema>
 export type KlantInput = z.infer<typeof KlantInputSchema>
 export type KlantUpdate = z.infer<typeof KlantUpdateSchema>
+export type FactuurRegelInput = z.infer<typeof FactuurRegelInputSchema>
+export type FactuurInput = z.infer<typeof FactuurInputSchema>
+export type FactuurUpdate = z.infer<typeof FactuurUpdateSchema>
+export type FactuurStatusUpdate = z.infer<typeof FactuurStatusUpdateSchema>

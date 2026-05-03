@@ -7,6 +7,8 @@ import { TransactieForm } from '../components/TransactieForm'
 import { formatCurrency, formatDate } from '../utils/formatters'
 import { transactiesApi, btwTarievenApi } from '../api'
 import type { Transactie, BtwTarief } from '../../../shared/types'
+import { useToast } from '../components/Toast'
+import { useConfirm } from '../components/ConfirmDialog'
 
 export function Transacties() {
   const currentYear = new Date().getFullYear()
@@ -14,6 +16,8 @@ export function Transacties() {
   const [tot, setTot] = useState(`${currentYear}-12-31`)
   const [showForm, setShowForm] = useState(false)
   const [editTransactie, setEditTransactie] = useState<Transactie | null>(null)
+  const toast = useToast()
+  const confirm = useConfirm()
 
   const {
     data: transacties,
@@ -25,14 +29,19 @@ export function Transacties() {
   const { data: tarieven } = useApi<BtwTarief[]>(() => btwTarievenApi.getActief(), [])
 
   async function handleDelete(id: number) {
-    if (!confirm('Weet je zeker dat je deze transactie wilt verwijderen?')) {
-      return
-    }
+    const ok = await confirm({
+      title: 'Transactie verwijderen',
+      message: 'Weet je zeker dat je deze transactie wilt verwijderen?',
+      variant: 'danger',
+      confirmText: 'Verwijderen'
+    })
+    if (!ok) return
     try {
       await transactiesApi.delete(id)
+      toast.success('Transactie verwijderd')
       refetch()
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Verwijderen mislukt')
+      toast.error(err instanceof Error ? err.message : 'Verwijderen mislukt')
     }
   }
 

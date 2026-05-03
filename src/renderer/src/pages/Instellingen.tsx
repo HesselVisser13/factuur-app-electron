@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { instellingenApi } from '../api'
+import { useToast } from '../components/Toast'
 
 interface FormData {
   [key: string]: string
@@ -48,7 +49,7 @@ const defaultForm: FormData = {
 export function Instellingen() {
   const [form, setForm] = useState<FormData>(defaultForm)
   const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(false)
+  const toast = useToast()
 
   useEffect(() => {
     instellingenApi.getAll().then((data) => {
@@ -77,13 +78,14 @@ export function Instellingen() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setSaving(true)
-    setSaved(false)
-
-    await instellingenApi.save(form)
-
-    setSaving(false)
-    setSaved(true)
-    setTimeout(() => setSaved(false), 3000)
+    try {
+      await instellingenApi.save(form)
+      toast.success('Instellingen opgeslagen')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Onbekende fout')
+    } finally {
+      setSaving(false)
+    }
   }
 
   function updateField(key: keyof FormData, value: string) {
@@ -91,6 +93,16 @@ export function Instellingen() {
   }
 
   async function handleLogoUpload() {
+    const result = await instellingenApi.selectLogo()
+    if (result?.fileName) {
+      updateField('logo_filename', result.fileName)
+    }
+  }
+
+  async function handleLogoRemove() {
+    updateField('logo_filename', '')
+  }
+
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">⚙️ Instellingen</h1>
@@ -348,22 +360,13 @@ export function Instellingen() {
           </div>
         </div>
 
-        {/* Opslaan */}
-        <div className="flex items-center gap-4">
-          <button
-            type="submit"
-            disabled={saving}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-8 rounded-lg transition-colors disabled:opacity-50"
-          >
-            {saving ? 'Opslaan...' : '💾 Opslaan'}
-          </button>
-
-          {saved && (
-            <span className="text-green-600 font-medium text-sm animate-pulse">
-              ✓ Instellingen opgeslagen!
-            </span>
-          )}
-        </div>
+        <button
+          type="submit"
+          disabled={saving}
+          className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-8 rounded-lg transition-colors disabled:opacity-50"
+        >
+          {saving ? 'Opslaan...' : '💾 Opslaan'}
+        </button>
       </form>
     </div>
   )

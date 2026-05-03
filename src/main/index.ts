@@ -11,12 +11,19 @@ import { registerBtwTarievenHandlers } from './ipc/btw-tarieven.ipc'
 import { registerInstellingenHandlers } from './ipc/instellingen.ipc'
 import { registerAppHandlers } from './ipc/app.ipc'
 import { registerKlantenHandlers } from './ipc/klanten.ipc'
+import { registerFactuurHandlers } from './ipc/facturen.ipc'
 import { runMigrations } from './db/migrate'
 import { initLogger, log } from './logger'
+import { getLogosDir, getFacturenDir } from './paths'
+import { registerDashboardHandlers } from './ipc/dashboard.ipc'
 
 protocol.registerSchemesAsPrivileged([
   {
     scheme: 'app-logo',
+    privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true }
+  },
+  {
+    scheme: 'app-pdf',
     privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true }
   }
 ])
@@ -47,7 +54,15 @@ app.whenReady().then(() => {
     const url = new URL(request.url)
     const requested = decodeURIComponent(url.hostname + url.pathname)
     const safeName = basename(requested)
-    const filePath = join(app.getPath('userData'), 'logos', safeName)
+    const filePath = join(getLogosDir(), safeName)
+    return net.fetch(pathToFileURL(filePath).toString())
+  })
+
+  protocol.handle('app-pdf', async (request) => {
+    const url = new URL(request.url)
+    const requested = decodeURIComponent(url.hostname + url.pathname)
+    const safeName = basename(requested)
+    const filePath = join(getFacturenDir(), safeName)
     return net.fetch(pathToFileURL(filePath).toString())
   })
 
@@ -63,6 +78,8 @@ app.whenReady().then(() => {
   registerInstellingenHandlers()
   registerAppHandlers()
   registerKlantenHandlers()
+  registerFactuurHandlers()
+  registerDashboardHandlers()
 
   createWindow()
 

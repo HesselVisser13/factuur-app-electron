@@ -2,8 +2,27 @@
 
 import { contextBridge, ipcRenderer } from 'electron'
 import { IPC_CHANNELS } from '../shared/ipc-channels'
-import type { TransactieInput, TransactieUpdate, KlantInput, KlantUpdate } from '../shared/schemas'
-import type { BtwAangifte, BtwTarief, Transactie, Klant } from '../shared/types'
+import type {
+  TransactieInput,
+  TransactieUpdate,
+  KlantInput,
+  KlantUpdate,
+  FactuurInput,
+  FactuurUpdate,
+  FactuurStatus
+} from '../shared/schemas'
+import type {
+  BtwAangifte,
+  BtwTarief,
+  Transactie,
+  Klant,
+  Factuur,
+  PdfResult,
+  PdfSaveAsResult,
+  PdfOpenResult,
+  PdfOpenFolderResult,
+  DashboardStats
+} from '../shared/types'
 
 async function invoke<T>(channel: string, ...args: unknown[]): Promise<T> {
   const result = await ipcRenderer.invoke(channel, ...args)
@@ -47,6 +66,32 @@ const api = {
   createKlant: (input: KlantInput): Promise<Klant> => invoke(IPC_CHANNELS.KLANTEN_CREATE, input),
   updateKlant: (input: KlantUpdate): Promise<Klant> => invoke(IPC_CHANNELS.KLANTEN_UPDATE, input),
   deleteKlant: (id: number): Promise<boolean> => invoke(IPC_CHANNELS.KLANTEN_DELETE, id),
+
+  // Facturen
+  getFacturen: (): Promise<Factuur[]> => invoke(IPC_CHANNELS.FACTUREN_GET_ALL),
+  getFactuur: (id: number): Promise<Factuur> => invoke(IPC_CHANNELS.FACTUREN_GET_BY_ID, id),
+  createFactuur: (input: FactuurInput): Promise<Factuur> =>
+    invoke(IPC_CHANNELS.FACTUREN_CREATE, input),
+  updateFactuur: (input: FactuurUpdate): Promise<Factuur> =>
+    invoke(IPC_CHANNELS.FACTUREN_UPDATE, input),
+  deleteFactuur: (id: number): Promise<boolean> => invoke(IPC_CHANNELS.FACTUREN_DELETE, id),
+  updateFactuurStatus: (id: number, status: FactuurStatus): Promise<Factuur> =>
+    invoke(IPC_CHANNELS.FACTUREN_UPDATE_STATUS, { id, status }),
+  getNextFactuurNummer: (datum?: string): Promise<string> =>
+    invoke(IPC_CHANNELS.FACTUREN_GET_NEXT_NUMMER, datum),
+
+  // PDF
+  genereerFactuurPdf: (id: number): Promise<PdfResult> =>
+    invoke(IPC_CHANNELS.FACTUREN_GENEREER_PDF, id),
+  opslaanFactuurPdfAls: (id: number): Promise<PdfSaveAsResult> =>
+    invoke(IPC_CHANNELS.FACTUREN_OPSLAAN_PDF_ALS, id),
+  openFactuurPdf: (id: number): Promise<PdfOpenResult> =>
+    invoke(IPC_CHANNELS.FACTUREN_OPEN_PDF, id),
+  openFacturenFolder: (): Promise<PdfOpenFolderResult> =>
+    invoke(IPC_CHANNELS.FACTUREN_OPEN_PDF_FOLDER),
+
+  // Dashboard
+  getDashboardStats: (): Promise<DashboardStats> => invoke(IPC_CHANNELS.DASHBOARD_GET_STATS),
 
   getAppVersion: (): Promise<string> => invoke(IPC_CHANNELS.APP_GET_VERSION)
 }

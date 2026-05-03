@@ -20,7 +20,12 @@ export function createHandler<T>(handler: (...args: any[]) => Promise<T>) {
 export function validate<T>(schema: ZodSchema<T>, data: unknown): T {
   const result = schema.safeParse(data)
   if (!result.success) {
-    const errors = result.error.issues.map((e) => e.message).join(', ')
+    const errors = result.error.issues
+      .map((e) => {
+        const path = e.path.length > 0 ? e.path.join('.') : '(root)'
+        return `${path}: ${e.message}`
+      })
+      .join(', ')
     throw new Error(`Validatiefout: ${errors}`)
   }
   return result.data

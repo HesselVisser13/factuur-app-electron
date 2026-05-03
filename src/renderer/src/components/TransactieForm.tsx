@@ -5,6 +5,7 @@ import type { BtwTarief, Transactie } from '../../../shared/types'
 import type { TransactieInput, TransactieUpdate } from '../../../shared/schemas'
 import { transactiesApi } from '../api'
 import { TRANSACTIE_TYPES, CATEGORIEEN, INVOERWIJZEN } from '../../../shared/constants'
+import { useToast } from './Toast'
 
 interface Props {
   tarieven: BtwTarief[]
@@ -16,7 +17,7 @@ interface Props {
 export function TransactieForm({ tarieven, transactie, onSuccess, onCancel }: Props) {
   const isEdit = !!transactie
   const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const toast = useToast()
 
   const [form, setForm] = useState({
     type: transactie?.type || ('inkomst' as 'inkomst' | 'uitgave'),
@@ -33,7 +34,6 @@ export function TransactieForm({ tarieven, transactie, onSuccess, onCancel }: Pr
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setSubmitting(true)
-    setError(null)
 
     try {
       const tarief = tarieven.find((t) => t.id === parseInt(form.btwTariefId))
@@ -53,9 +53,11 @@ export function TransactieForm({ tarieven, transactie, onSuccess, onCancel }: Pr
       if (isEdit && transactie) {
         const input: TransactieUpdate = { ...baseInput, id: transactie.id }
         await transactiesApi.update(input)
+        toast.success('Transactie bijgewerkt')
       } else {
         const input: TransactieInput = baseInput
         await transactiesApi.create(input)
+        toast.success('Transactie toegevoegd')
 
         setForm({
           ...form,
@@ -67,7 +69,7 @@ export function TransactieForm({ tarieven, transactie, onSuccess, onCancel }: Pr
 
       onSuccess()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Onbekende fout')
+      toast.error(err instanceof Error ? err.message : 'Onbekende fout')
     } finally {
       setSubmitting(false)
     }
@@ -89,12 +91,6 @@ export function TransactieForm({ tarieven, transactie, onSuccess, onCancel }: Pr
           </button>
         )}
       </div>
-
-      {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4 text-sm text-red-700">
-          ❌ {error}
-        </div>
-      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>

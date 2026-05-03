@@ -3,6 +3,8 @@ import { klantenApi } from '../api/klanten'
 import type { Klant } from '../../../shared/types'
 import type { KlantInput } from '../../../shared/schemas'
 import { klantDisplayNaam } from '../../../shared/klant-utils'
+import { useToast } from '../components/Toast'
+import { useConfirm } from '../components/ConfirmDialog'
 
 type FormState = {
   type: 'particulier' | 'zakelijk'
@@ -41,6 +43,8 @@ export function Klanten() {
   const [form, setForm] = useState<FormState>(emptyForm)
   const [editId, setEditId] = useState<number | null>(null)
   const [saving, setSaving] = useState(false)
+  const toast = useToast()
+  const confirm = useConfirm()
 
   async function load() {
     const data = await klantenApi.getAll()
@@ -83,25 +87,34 @@ export function Klanten() {
       const input = form as KlantInput
       if (editId) {
         await klantenApi.update({ ...input, id: editId })
+        toast.success('Klant bijgewerkt')
       } else {
         await klantenApi.create(input)
+        toast.success('Klant aangemaakt')
       }
       setModalOpen(false)
       await load()
     } catch (err) {
-      alert('Fout: ' + (err instanceof Error ? err.message : 'onbekend'))
+      toast.error(err instanceof Error ? err.message : 'Onbekende fout')
     } finally {
       setSaving(false)
     }
   }
 
   async function handleDelete(k: Klant) {
-    if (!confirm(`Klant "${klantDisplayNaam(k)}" verwijderen?`)) return
+    const ok = await confirm({
+      title: 'Klant verwijderen',
+      message: `Weet je zeker dat je "${klantDisplayNaam(k)}" wilt verwijderen?`,
+      variant: 'danger',
+      confirmText: 'Verwijderen'
+    })
+    if (!ok) return
     try {
       await klantenApi.delete(k.id)
       await load()
+      toast.success('Klant verwijderd')
     } catch (err) {
-      alert('Verwijderen mislukt: ' + (err instanceof Error ? err.message : 'onbekend'))
+      toast.error(err instanceof Error ? err.message : 'Onbekende fout')
     }
   }
 
