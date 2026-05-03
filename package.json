@@ -1,6 +1,6 @@
 {
   "name": "factuur-app-electron",
-  "version": "1.1.4",
+  "version": "1.1.5",
   "description": "An Electron application with React and TypeScript",
   "main": "./out/main/index.js",
   "author": "example.com",
@@ -64,14 +64,21 @@
     "appId": "nl.factuurapp.btw",
     "productName": "BTW App",
     "artifactName": "BTW-App-Setup-${version}.${ext}",
-    "npmRebuild": false,
     "asar": false,
+    "npmRebuild": false,
     "directories": {
-      "output": "release"
+      "output": "release",
+      "buildResources": "build"
     },
     "files": [
       "out/**/*",
-      "node_modules/**/*"
+      "node_modules/**/*",
+      "!**/.vscode/*",
+      "!src/*",
+      "!electron.vite.config.{js,ts,mjs,cjs}",
+      "!{.eslintcache,eslint.config.mjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}",
+      "!{.env,.env.*,.npmrc,pnpm-lock.yaml}",
+      "!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}"
     ],
     "extraResources": [
       {
@@ -85,12 +92,16 @@
     ],
     "win": {
       "target": "nsis",
-      "signAndEditExecutable": false
+      "signAndEditExecutable": false,
+      "executableName": "factuur-app-electron"
     },
     "nsis": {
       "oneClick": true,
       "allowToChangeInstallationDirectory": false,
-      "deleteAppDataOnUninstall": false
+      "deleteAppDataOnUninstall": false,
+      "shortcutName": "BTW App",
+      "uninstallDisplayName": "BTW App",
+      "createDesktopShortcut": "always"
     },
     "publish": {
       "provider": "github",
