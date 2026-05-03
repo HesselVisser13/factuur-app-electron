@@ -1,6 +1,6 @@
 {
   "name": "factuur-app-electron",
-  "version": "1.1.6",
+  "version": "1.1.7",
   "description": "An Electron application with React and TypeScript",
   "main": "./out/main/index.js",
   "author": "example.com",
@@ -20,14 +20,15 @@
     "build:mac": "electron-vite build && electron-builder --mac",
     "build:linux": "electron-vite build && electron-builder --linux",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "build:seed": "node scripts/create-seed.mjs"
   },
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.2",
     "@electron-toolkit/utils": "^4.0.0",
     "@prisma/adapter-better-sqlite3": "^7.8.0",
     "@prisma/client": "^7.8.0",
-    "better-sqlite3": "^11.10.0",
+    "better-sqlite3": "^12.9.0",
     "date-fns": "^4.1.0",
     "electron-log": "^5.4.3",
     "electron-updater": "^6.3.9",

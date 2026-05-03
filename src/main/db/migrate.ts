@@ -12,9 +12,9 @@ export function runMigrations(): void {
 
   const dbPath = path.join(app.getPath('userData'), 'factuur.db')
 
-  // Copy bundled dev.db if no database exists yet (first install)
+  // Copy bundled seed.db if no database exists yet (first install)
   if (!fs.existsSync(dbPath)) {
-    const sourceDb = path.join(process.resourcesPath, 'dev.db')
+    const sourceDb = path.join(process.resourcesPath, 'seed.db')
     if (fs.existsSync(sourceDb)) {
       fs.copyFileSync(sourceDb, dbPath)
       console.log('[Migration] Initial database copied from bundle')
