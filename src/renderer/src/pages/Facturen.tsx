@@ -79,7 +79,7 @@ export function Facturen() {
         title: 'Factuur annuleren',
         message: `Weet je zeker dat je factuur ${f.factuurNummer} wilt annuleren? Dit haalt ook de gekoppelde transacties weg.`,
         variant: 'danger',
-        confirmText: 'Annuleren'
+        confirmText: 'Ja, factuur annuleren'
       })
       if (!ok) return
     }
