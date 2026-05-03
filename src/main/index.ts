@@ -50,6 +50,21 @@ app.whenReady().then(() => {
   initLogger()
   electronApp.setAppUserModelId('nl.factuurapp.btw')
 
+  if (!is.dev) {
+    autoUpdater.logger = log
+    autoUpdater.autoInstallOnAppQuit = true
+
+    autoUpdater.on('update-downloaded', () => {
+      log.info('[AutoUpdater] Update downloaded, will install on quit')
+    })
+
+    autoUpdater.on('error', (error) => {
+      log.error('[AutoUpdater] Error:', error)
+    })
+
+    autoUpdater.checkForUpdatesAndNotify()
+  }
+
   protocol.handle('app-logo', async (request) => {
     const url = new URL(request.url)
     const requested = decodeURIComponent(url.hostname + url.pathname)
@@ -70,7 +85,11 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window)
   })
 
-  runMigrations()
+  try {
+    runMigrations()
+  } catch (error) {
+    log.error('[Migration] Failed, app will continue:', error)
+  }
 
   registerTransactieHandlers()
   registerBtwAangifteHandlers()
@@ -82,21 +101,6 @@ app.whenReady().then(() => {
   registerDashboardHandlers()
 
   createWindow()
-
-  if (!is.dev) {
-    autoUpdater.logger = log
-    autoUpdater.autoInstallOnAppQuit = true
-
-    autoUpdater.on('update-downloaded', () => {
-      log.info('[AutoUpdater] Update downloaded, will install on quit')
-    })
-
-    autoUpdater.on('error', (error) => {
-      log.error('[AutoUpdater] Error:', error)
-    })
-
-    autoUpdater.checkForUpdatesAndNotify()
-  }
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
