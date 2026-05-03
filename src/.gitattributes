@@ -1,0 +1,16 @@
+# Auto detect text files and normalize line endings to LF in repo
+* text=auto eol=lf
+
+# Explicitly declare binary files (zodat Git ze niet per ongeluk aanraakt)
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.woff binary
+*.woff2 binary
+
+# Shell scripts altijd LF (belangrijk als je ooit iets op Linux draait)
+*.sh text eol=lf
