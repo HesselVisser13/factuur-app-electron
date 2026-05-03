@@ -1,18 +1,8 @@
 // src/main/db/migrate.ts
 
 import path from 'path'
-import { app } from 'electron'
 import fs from 'fs'
-
-interface Migration {
-  version: number
-  name: string
-  sql: string
-}
-
-const migrations: Migration[] = [
-  // Toekomstige schema-wijzigingen komen hier
-]
+import { app } from 'electron'
 
 export function runMigrations(): void {
   // Skip in development - Prisma migrate dev handles it
@@ -20,58 +10,115 @@ export function runMigrations(): void {
     return
   }
 
-  // Geen migraties = niks doen
-  if (migrations.length === 0) {
-    return
-  }
+  const dbPath = path.join(app.getPath('userData'), 'factuur.db')
 
-  const dbPath = getDatabasePath()
-
+  // Copy bundled dev.db if no database exists yet (first install)
   if (!fs.existsSync(dbPath)) {
+    const sourceDb = path.join(process.resourcesPath, 'dev.db')
+    if (fs.existsSync(sourceDb)) {
+      fs.copyFileSync(sourceDb, dbPath)
+      console.log('[Migration] Initial database copied from bundle')
+    } else {
+      console.error('[Migration] No existing database and no bundled template')
+      return
+    }
+  }
+
+  const migrationsDir = path.join(process.resourcesPath, 'migrations')
+  if (!fs.existsSync(migrationsDir)) {
+    console.error('[Migration] Migrations folder missing:', migrationsDir)
     return
   }
+
+  const Database = require('better-sqlite3')
+  const db = new Database(dbPath)
 
   try {
-    // Lazy import zodat dev mode niet faalt
-    const Database = require('better-sqlite3')
-    const db = new Database(dbPath)
-
     db.exec(`
-      CREATE TABLE IF NOT EXISTS _migrations (
-        version INTEGER PRIMARY KEY,
-        name TEXT NOT NULL,
+      CREATE TABLE IF NOT EXISTS _app_migrations (
+        name TEXT PRIMARY KEY,
         applied_at TEXT DEFAULT (datetime('now'))
       );
     `)
 
-    const row = db.prepare('SELECT MAX(version) as version FROM _migrations').get() as {
-      version: number | null
-    }
-    const currentVersion = row?.version || 0
+    const migrationFolders = fs
+      .readdirSync(migrationsDir)
+      .filter((name) => fs.statSync(path.join(migrationsDir, name)).isDirectory())
+      .sort()
 
-    for (const migration of migrations) {
-      if (migration.version > currentVersion) {
-        try {
-          db.exec(migration.sql)
-          db.prepare('INSERT INTO _migrations (version, name) VALUES (?, ?)').run(
-            migration.version,
-            migration.name
-          )
-          console.log(`[Migration] Applied: ${migration.name}`)
-        } catch (error) {
-          console.error(`[Migration] Failed: ${migration.name}`, error)
-          break
-        }
+    const appliedRows = db.prepare('SELECT name FROM _app_migrations').all() as {
+      name: string
+    }[]
+    const applied = new Set(appliedRows.map((r) => r.name))
+
+    // Baseline: bestaande DB zonder tracking table
+    if (applied.size === 0 && hasExistingSchema(db)) {
+      const baselineVersion = detectSchemaVersion(db, migrationFolders)
+      console.log(`[Migration] Existing database detected, baselining at: ${baselineVersion}`)
+
+      for (const folder of migrationFolders) {
+        db.prepare('INSERT INTO _app_migrations (name) VALUES (?)').run(folder)
+        applied.add(folder)
+        if (folder === baselineVersion) break
       }
     }
 
+    // Apply pending migrations
+    for (const folder of migrationFolders) {
+      if (applied.has(folder)) continue
+
+      const sqlPath = path.join(migrationsDir, folder, 'migration.sql')
+      if (!fs.existsSync(sqlPath)) {
+        console.warn(`[Migration] Missing migration.sql in ${folder}`)
+        continue
+      }
+
+      console.log(`[Migration] Applying: ${folder}`)
+      const sql = fs.readFileSync(sqlPath, 'utf-8')
+
+      try {
+        db.exec(sql)
+        db.prepare('INSERT INTO _app_migrations (name) VALUES (?)').run(folder)
+        console.log(`[Migration] Applied: ${folder}`)
+      } catch (error) {
+        console.error(`[Migration] Failed: ${folder}`, error)
+        throw error
+      }
+    }
+  } finally {
     db.close()
-  } catch (error) {
-    console.error('[Migration] Error:', error)
   }
 }
 
-function getDatabasePath(): string {
-  const userDataPath = app.getPath('userData')
-  return path.join(userDataPath, 'factuur.db')
+function hasExistingSchema(db: any): boolean {
+  const row = db
+    .prepare(
+      "SELECT COUNT(*) as count FROM sqlite_master WHERE type='table' AND name IN ('Factuur', 'Transactie', 'BtwTarief')"
+    )
+    .get() as { count: number }
+  return row.count > 0
+}
+
+function detectSchemaVersion(db: any, folders: string[]): string {
+  // Latest migration: Klant has 'type' column (particulier/zakelijk)
+  if (columnExists(db, 'Klant', 'type')) {
+    return folders[2]
+  }
+  // Middle migration: Klant table + Factuur.klantId
+  if (tableExists(db, 'Klant') && columnExists(db, 'Factuur', 'klantId')) {
+    return folders[1]
+  }
+  // Init only
+  return folders[0]
+}
+
+function tableExists(db: any, name: string): boolean {
+  const row = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=?").get(name)
+  return !!row
+}
+
+function columnExists(db: any, table: string, column: string): boolean {
+  if (!tableExists(db, table)) return false
+  const columns = db.prepare(`PRAGMA table_info(${table})`).all() as { name: string }[]
+  return columns.some((c) => c.name === column)
 }
