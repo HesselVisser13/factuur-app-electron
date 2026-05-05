@@ -1,6 +1,6 @@
 {
   "name": "factuur-app-electron",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "An Electron application with React and TypeScript",
   "main": "./out/main/index.js",
   "author": "example.com",
@@ -21,7 +21,7 @@
     "build:linux": "electron-vite build && electron-builder --linux",
     "test": "vitest run",
     "test:watch": "vitest",
-    "build:seed": "npm rebuild better-sqlite3 && node scripts/create-seed.mjs && npx electron-builder install-app-deps"
+    "build:seed": "npm rebuild better-sqlite3 && node scripts/create-seed.mjs && npx @electron/rebuild -f -w better-sqlite3"
   },
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.2",
