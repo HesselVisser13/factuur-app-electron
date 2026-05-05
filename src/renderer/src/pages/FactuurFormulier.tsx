@@ -12,6 +12,7 @@ import { klantDisplayNaam } from '../../../shared/klant-utils'
 import { formatCurrency } from '../utils/formatters'
 import { useToast } from '../components/Toast'
 import { PdfPreviewModal } from '../components/PdfPreviewModal'
+import type { ReistijdInput } from '../../../shared/schemas'
 
 // ============================================================
 // Helpers
@@ -61,6 +62,16 @@ type FormState = {
   referentie: string
   opmerkingen: string
   regels: RegelState[]
+  reistijd: ReistijdState
+}
+
+type ReistijdState = {
+  enabled: boolean
+  uren: string
+  km: string
+  omschrijving: string
+  btwTariefId: number | null
+  btwPercentage: number
 }
 
 function emptyRegel(tarief: BtwTarief): RegelState {
@@ -91,6 +102,10 @@ export function FactuurFormulier() {
   const [saving, setSaving] = useState(false)
   const toast = useToast()
   const [previewOpen, setPreviewOpen] = useState(false)
+  const [reistijdInstellingen, setReistijdInstellingen] = useState({
+    uurtarief: 0,
+    kmtarief: 0
+  })
 
   const [form, setForm] = useState<FormState>({
     klantId: null,
@@ -98,7 +113,15 @@ export function FactuurFormulier() {
     vervalDatum: vandaagIso(),
     referentie: '',
     opmerkingen: '',
-    regels: []
+    regels: [],
+    reistijd: {
+      enabled: false,
+      uren: '1',
+      km: '',
+      omschrijving: 'Reistijd',
+      btwTariefId: null,
+      btwPercentage: 0
+    }
   })
 
   const readOnly = bestaandeFactuur !== null && bestaandeFactuur.status !== 'concept'
@@ -116,6 +139,15 @@ export function FactuurFormulier() {
         ])
         setKlanten(klantenData)
         setTarieven(tarievenData)
+        // Reistijd-instellingen ophalen
+        const uurtarief = parseFloat(instellingen.reiskosten_uurtarief || '0') || 0
+        const kmtarief = parseFloat(instellingen.reiskosten_kmtarief || '0') || 0
+        const standaardOms = instellingen.reiskosten_omschrijving || 'Reistijd'
+        const reisBtwTariefId = parseInt(instellingen.reiskosten_btw_tarief_id || '0', 10) || null
+        const reisBtwTarief =
+          (reisBtwTariefId && tarievenData.find((t) => t.id === reisBtwTariefId)) || null
+
+        setReistijdInstellingen({ uurtarief, kmtarief })
 
         if (editId) {
           const factuur = await facturenApi.getById(editId)
@@ -134,7 +166,18 @@ export function FactuurFormulier() {
               prijsPerStuk: String(r.prijsPerStuk),
               btwTariefId: r.btwTariefId,
               btwPercentage: r.btwPercentage
-            }))
+            })),
+            reistijd: {
+              enabled: factuur.reistijdUren !== null,
+              uren: factuur.reistijdUren !== null ? String(factuur.reistijdUren) : '1',
+              km:
+                factuur.reistijdKm !== null && factuur.reistijdKm !== undefined
+                  ? String(factuur.reistijdKm)
+                  : '',
+              omschrijving: factuur.reistijdOmschrijving || standaardOms,
+              btwTariefId: factuur.reistijdBtwTariefId ?? reisBtwTarief?.id ?? null,
+              btwPercentage: factuur.reistijdBtwPercentage ?? reisBtwTarief?.percentage ?? 0
+            }
           })
         } else {
           const nummer = await facturenApi.getNextNummer()
@@ -146,7 +189,13 @@ export function FactuurFormulier() {
           setForm((prev) => ({
             ...prev,
             vervalDatum: voegDagenToe(prev.datum, termijn),
-            regels: standaardTarief ? [emptyRegel(standaardTarief)] : []
+            regels: standaardTarief ? [emptyRegel(standaardTarief)] : [],
+            reistijd: {
+              ...prev.reistijd,
+              omschrijving: standaardOms,
+              btwTariefId: reisBtwTarief?.id ?? standaardTarief?.id ?? null,
+              btwPercentage: reisBtwTarief?.percentage ?? standaardTarief?.percentage ?? 0
+            }
           }))
         }
       } catch (err) {
@@ -218,14 +267,45 @@ export function FactuurFormulier() {
     updateRegel(index, { btwTariefId: tarief.id, btwPercentage: tarief.percentage })
   }
 
+  function updateReistijd(updates: Partial<ReistijdState>) {
+    setForm((prev) => ({
+      ...prev,
+      reistijd: { ...prev.reistijd, ...updates }
+    }))
+  }
+
+  function updateReistijdTarief(tariefId: number) {
+    const tarief = tarieven.find((t) => t.id === tariefId)
+    if (!tarief) return
+    updateReistijd({ btwTariefId: tarief.id, btwPercentage: tarief.percentage })
+  }
+
+  const reistijdBedrag = useMemo(() => {
+    if (!form.reistijd.enabled) {
+      return { excl: 0, btw: 0, incl: 0 }
+    }
+    const uren = parseFloat(form.reistijd.uren) || 0
+    const km = parseFloat(form.reistijd.km) || 0
+    const excl =
+      Math.round(
+        (uren * reistijdInstellingen.uurtarief + km * reistijdInstellingen.kmtarief) * 100
+      ) / 100
+    const btw = Math.round(((excl * form.reistijd.btwPercentage) / 100) * 100) / 100
+    return {
+      excl,
+      btw,
+      incl: Math.round((excl + btw) * 100) / 100
+    }
+  }, [form.reistijd, reistijdInstellingen])
+
   // ============================================================
   // Totalen (live)
   // ============================================================
   const totalen = useMemo(() => {
     const regelBedragen = form.regels.map(berekenRegel)
-    const totaalExcl = regelBedragen.reduce((s, r) => s + r.bedragExcl, 0)
-    const totaalBtw = regelBedragen.reduce((s, r) => s + r.btwBedrag, 0)
-    const totaalIncl = regelBedragen.reduce((s, r) => s + r.bedragIncl, 0)
+    let totaalExcl = regelBedragen.reduce((s, r) => s + r.bedragExcl, 0)
+    let totaalBtw = regelBedragen.reduce((s, r) => s + r.btwBedrag, 0)
+    let totaalIncl = regelBedragen.reduce((s, r) => s + r.bedragIncl, 0)
 
     // Splitsing per BTW-tarief
     const perTarief = new Map<number, { over: number; btw: number }>()
@@ -237,6 +317,19 @@ export function FactuurFormulier() {
         btw: huidig.btw + bedrag.btwBedrag
       })
     })
+
+    // Reistijd toevoegen
+    if (form.reistijd.enabled && reistijdBedrag.excl > 0) {
+      totaalExcl += reistijdBedrag.excl
+      totaalBtw += reistijdBedrag.btw
+      totaalIncl += reistijdBedrag.incl
+
+      const huidig = perTarief.get(form.reistijd.btwPercentage) || { over: 0, btw: 0 }
+      perTarief.set(form.reistijd.btwPercentage, {
+        over: huidig.over + reistijdBedrag.excl,
+        btw: huidig.btw + reistijdBedrag.btw
+      })
+    }
 
     return {
       totaalExcl: Math.round(totaalExcl * 100) / 100,
@@ -250,7 +343,7 @@ export function FactuurFormulier() {
         }))
         .sort((a, b) => a.percentage - b.percentage)
     }
-  }, [form.regels])
+  }, [form.regels, form.reistijd, reistijdBedrag])
 
   // ============================================================
   // Opslaan
@@ -268,6 +361,17 @@ export function FactuurFormulier() {
 
     setSaving(true)
     try {
+      const reistijdInput: ReistijdInput | null =
+        form.reistijd.enabled && form.reistijd.btwTariefId
+          ? {
+              uren: parseFloat(form.reistijd.uren) || 0,
+              km: form.reistijd.km ? parseFloat(form.reistijd.km) : null,
+              btwTariefId: form.reistijd.btwTariefId,
+              btwPercentage: form.reistijd.btwPercentage,
+              omschrijving: form.reistijd.omschrijving || 'Reistijd'
+            }
+          : null
+
       const input: FactuurInput = {
         klantId: form.klantId,
         datum: form.datum,
@@ -281,7 +385,8 @@ export function FactuurFormulier() {
           prijsPerStuk: parseFloat(r.prijsPerStuk) || 0,
           btwTariefId: r.btwTariefId,
           btwPercentage: r.btwPercentage
-        }))
+        })),
+        reistijd: reistijdInput
       }
 
       if (editId) {
@@ -623,6 +728,144 @@ export function FactuurFormulier() {
                 )
               })}
             </div>
+          )}
+        </div>
+
+        {/* Reistijd */}
+        <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wide">🚗 Reistijd</h2>
+            {!readOnly && (
+              <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.reistijd.enabled}
+                  onChange={(e) => updateReistijd({ enabled: e.target.checked })}
+                  className="rounded"
+                />
+                Reistijd toepassen
+              </label>
+            )}
+          </div>
+
+          {form.reistijd.enabled ? (
+            <>
+              {reistijdInstellingen.uurtarief === 0 ? (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-amber-800 text-sm mb-4">
+                  ⚠️ Er is nog geen uurtarief voor reistijd ingesteld. Ga naar{' '}
+                  <button
+                    type="button"
+                    onClick={() => navigate('/instellingen')}
+                    className="underline font-medium"
+                  >
+                    Instellingen → Reiskosten
+                  </button>{' '}
+                  om dit in te stellen.
+                </div>
+              ) : null}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">
+                    Reistijd (uur)
+                  </label>
+                  <input
+                    type="number"
+                    min="0.5"
+                    max="24"
+                    step="0.5"
+                    disabled={readOnly}
+                    value={form.reistijd.uren}
+                    onChange={(e) => updateReistijd({ uren: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm disabled:bg-gray-50"
+                  />
+                  {reistijdInstellingen.uurtarief > 0 && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      {form.reistijd.uren || '0'} × {formatCurrency(reistijdInstellingen.uurtarief)}{' '}
+                      ={' '}
+                      {formatCurrency(
+                        (parseFloat(form.reistijd.uren) || 0) * reistijdInstellingen.uurtarief
+                      )}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">
+                    Kilometers <span className="text-gray-400 font-normal">— optioneel</span>
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    disabled={readOnly || reistijdInstellingen.kmtarief === 0}
+                    value={form.reistijd.km}
+                    onChange={(e) => updateReistijd({ km: e.target.value })}
+                    placeholder={
+                      reistijdInstellingen.kmtarief > 0 ? '0' : 'Geen km-tarief ingesteld'
+                    }
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm disabled:bg-gray-50 disabled:text-gray-400"
+                  />
+                  {reistijdInstellingen.kmtarief > 0 && form.reistijd.km && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      {form.reistijd.km} × {formatCurrency(reistijdInstellingen.kmtarief)} ={' '}
+                      {formatCurrency(
+                        (parseFloat(form.reistijd.km) || 0) * reistijdInstellingen.kmtarief
+                      )}
+                    </p>
+                  )}
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-600 mb-1">
+                    Omschrijving
+                  </label>
+                  <input
+                    type="text"
+                    disabled={readOnly}
+                    value={form.reistijd.omschrijving}
+                    onChange={(e) => updateReistijd({ omschrijving: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm disabled:bg-gray-50"
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-600 mb-1">BTW-tarief</label>
+                  <select
+                    disabled={readOnly}
+                    value={form.reistijd.btwTariefId ?? ''}
+                    onChange={(e) => updateReistijdTarief(parseInt(e.target.value, 10))}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm disabled:bg-gray-50"
+                  >
+                    <option value="">-- Kies tarief --</option>
+                    {tarieven.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.naam} ({t.percentage}%)
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="md:col-span-2 bg-blue-50 border border-blue-200 rounded-lg p-3 space-y-1 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Subtotaal excl. BTW</span>
+                    <span className="font-medium">{formatCurrency(reistijdBedrag.excl)}</span>
+                  </div>
+                  <div className="flex justify-between text-xs text-gray-500">
+                    <span>BTW {form.reistijd.btwPercentage}%</span>
+                    <span>{formatCurrency(reistijdBedrag.btw)}</span>
+                  </div>
+                  <div className="flex justify-between font-bold pt-1 border-t border-blue-200">
+                    <span>Totaal incl. BTW</span>
+                    <span>{formatCurrency(reistijdBedrag.incl)}</span>
+                  </div>
+                </div>
+              </div>
+            </>
+          ) : (
+            <p className="text-sm text-gray-500">
+              Vink &quot;Reistijd toepassen&quot; aan om reistijd toe te voegen aan deze factuur.
+            </p>
           )}
         </div>
 

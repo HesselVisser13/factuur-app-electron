@@ -27,6 +27,15 @@ function formatDatum(iso: string): string {
   })
 }
 
+function formatReistijdDetails(factuur: Factuur): string {
+  if (!factuur.reistijdUren) return ''
+  const parts: string[] = [`${factuur.reistijdUren} uur`]
+  if (factuur.reistijdKm && factuur.reistijdKm > 0) {
+    parts.push(`${factuur.reistijdKm} km`)
+  }
+  return parts.join(' · ')
+}
+
 function escape(s: string | null | undefined): string {
   if (!s) return ''
   return s
@@ -108,6 +117,8 @@ function berekenBtwSplitsing(f: Factuur): Array<{
   btw: number
 }> {
   const map = new Map<number, { over: number; btw: number }>()
+
+  // Regels
   for (const regel of f.regels) {
     const huidig = map.get(regel.btwPercentage) || { over: 0, btw: 0 }
     map.set(regel.btwPercentage, {
@@ -115,6 +126,20 @@ function berekenBtwSplitsing(f: Factuur): Array<{
       btw: huidig.btw + regel.btwBedrag
     })
   }
+
+  // Reistijd toevoegen aan splitsing
+  if (
+    f.reistijdBedragExcl &&
+    f.reistijdBtwPercentage !== null &&
+    f.reistijdBtwPercentage !== undefined
+  ) {
+    const huidig = map.get(f.reistijdBtwPercentage) || { over: 0, btw: 0 }
+    map.set(f.reistijdBtwPercentage, {
+      over: huidig.over + f.reistijdBedragExcl,
+      btw: huidig.btw + (f.reistijdBtwBedrag || 0)
+    })
+  }
+
   return Array.from(map.entries())
     .map(([pct, b]) => ({
       percentage: pct,
@@ -341,6 +366,36 @@ export function renderFactuurHtml(factuur: Factuur, instellingen: Instellingen):
     pointer-events: none;
     letter-spacing: 10px;
   }
+
+  /* Reistijd blok */
+.reistijd-block {
+  margin: 0 0 20px 0;
+  padding: 10px 12px;
+  background: #f8f9fa;
+  border-left: 3px solid #111;
+  border-radius: 0 4px 4px 0;
+  page-break-inside: avoid;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.reistijd-block .label {
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.reistijd-block .details {
+  color: #666;
+  font-size: 9pt;
+}
+
+.reistijd-block .bedrag {
+  text-align: right;
+  font-weight: 500;
+  white-space: nowrap;
+}
 </style>
 </head>
 <body>
@@ -418,6 +473,18 @@ ${
       .join('')}
   </tbody>
 </table>
+
+${
+  factuur.reistijdBedragExcl
+    ? `<div class="reistijd-block">
+        <div>
+          <div class="label">${escape(factuur.reistijdOmschrijving || 'Reistijd')}</div>
+          <div class="details">${formatReistijdDetails(factuur)}</div>
+        </div>
+        <div class="bedrag">${formatBedrag(factuur.reistijdBedragExcl)}</div>
+      </div>`
+    : ''
+}
 
 <div class="totalen-wrap">
   <div class="totalen">

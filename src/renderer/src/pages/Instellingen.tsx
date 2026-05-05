@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react'
 import { instellingenApi } from '../api'
 import { useToast } from '../components/Toast'
+import { btwTarievenApi } from '../api/btw-tarieven'
+import type { BtwTarief } from '../../../shared/types'
 
 interface FormData {
   [key: string]: string
@@ -23,6 +25,10 @@ interface FormData {
   is_starter: string
   logo_filename: string
   factuur_voorwaarden: string
+  reiskosten_uurtarief: string
+  reiskosten_kmtarief: string
+  reiskosten_btw_tarief_id: string
+  reiskosten_omschrijving: string
 }
 
 const defaultForm: FormData = {
@@ -43,36 +49,48 @@ const defaultForm: FormData = {
   is_starter: 'false',
   logo_filename: '',
   factuur_voorwaarden:
-    'Wij verzoeken u vriendelijk het verschuldigde bedrag binnen {betaaltermijn} dagen over te maken onder vermelding van het factuurnummer.'
+    'Wij verzoeken u vriendelijk het verschuldigde bedrag binnen {betaaltermijn} dagen over te maken onder vermelding van het factuurnummer.',
+  reiskosten_uurtarief: '55',
+  reiskosten_kmtarief: '',
+  reiskosten_btw_tarief_id: '',
+  reiskosten_omschrijving: 'Reistijd'
 }
 
 export function Instellingen() {
   const [form, setForm] = useState<FormData>(defaultForm)
   const [saving, setSaving] = useState(false)
   const toast = useToast()
+  const [tarieven, setTarieven] = useState<BtwTarief[]>([])
 
   useEffect(() => {
-    instellingenApi.getAll().then((data) => {
-      setForm({
-        bedrijfsnaam: data.bedrijfsnaam || '',
-        eigenaar_naam: data.eigenaar_naam || '',
-        kvk_nummer: data.kvk_nummer || '',
-        btw_nummer: data.btw_nummer || '',
-        iban: data.iban || '',
-        bic: data.bic || '',
-        banknaam: data.banknaam || '',
-        adres: data.adres || '',
-        postcode: data.postcode || '',
-        plaats: data.plaats || '',
-        telefoon: data.telefoon || '',
-        email: data.email || '',
-        website: data.website || '',
-        betaaltermijn_dagen: data.betaaltermijn_dagen || '14',
-        is_starter: data.is_starter || 'false',
-        logo_filename: data.logo_filename || '',
-        factuur_voorwaarden: data.factuur_voorwaarden || defaultForm.factuur_voorwaarden
-      })
-    })
+    Promise.all([instellingenApi.getAll(), btwTarievenApi.getActief()]).then(
+      ([data, tarievenData]) => {
+        setForm({
+          bedrijfsnaam: data.bedrijfsnaam || '',
+          eigenaar_naam: data.eigenaar_naam || '',
+          kvk_nummer: data.kvk_nummer || '',
+          btw_nummer: data.btw_nummer || '',
+          iban: data.iban || '',
+          bic: data.bic || '',
+          banknaam: data.banknaam || '',
+          adres: data.adres || '',
+          postcode: data.postcode || '',
+          plaats: data.plaats || '',
+          telefoon: data.telefoon || '',
+          email: data.email || '',
+          website: data.website || '',
+          betaaltermijn_dagen: data.betaaltermijn_dagen || '14',
+          is_starter: data.is_starter || 'false',
+          logo_filename: data.logo_filename || '',
+          factuur_voorwaarden: data.factuur_voorwaarden || defaultForm.factuur_voorwaarden,
+          reiskosten_uurtarief: data.reiskosten_uurtarief || '55',
+          reiskosten_kmtarief: data.reiskosten_kmtarief || '',
+          reiskosten_btw_tarief_id: data.reiskosten_btw_tarief_id || '',
+          reiskosten_omschrijving: data.reiskosten_omschrijving || 'Reistijd'
+        })
+        setTarieven(tarievenData)
+      }
+    )
   }, [])
 
   async function handleSubmit(e: React.FormEvent) {
@@ -302,6 +320,85 @@ export function Instellingen() {
                 <option value="false">Nee</option>
                 <option value="true">Ja</option>
               </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Reiskosten */}
+        <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wide mb-4">
+            🚗 Reiskosten
+          </h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-600 mb-1">
+                Uurtarief reistijd (€)
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={form.reiskosten_uurtarief}
+                onChange={(e) => updateField('reiskosten_uurtarief', e.target.value)}
+                placeholder="55,00"
+                className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Wordt vermenigvuldigd met aantal halve uren reistijd.
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-600 mb-1">
+                Km-tarief (€) <span className="text-gray-400 font-normal">— optioneel</span>
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={form.reiskosten_kmtarief}
+                onChange={(e) => updateField('reiskosten_kmtarief', e.target.value)}
+                placeholder="0,21"
+                className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Vul in als je ook kilometers wilt doorberekenen.
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-600 mb-1">
+                Standaard BTW-tarief
+              </label>
+              <select
+                value={form.reiskosten_btw_tarief_id}
+                onChange={(e) => updateField('reiskosten_btw_tarief_id', e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm"
+              >
+                <option value="">-- Kies tarief --</option>
+                {tarieven.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.naam} ({t.percentage}%)
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-600 mb-1">
+                Standaard omschrijving
+              </label>
+              <input
+                type="text"
+                value={form.reiskosten_omschrijving}
+                onChange={(e) => updateField('reiskosten_omschrijving', e.target.value)}
+                placeholder="Reistijd"
+                className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Verschijnt op de factuur als omschrijving van de reisregel.
+              </p>
             </div>
           </div>
         </div>

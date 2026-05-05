@@ -5,7 +5,8 @@ import type {
   FactuurInput,
   FactuurUpdate,
   FactuurRegelInput,
-  FactuurStatus
+  FactuurStatus,
+  ReistijdInput
 } from '../../shared/schemas'
 import type { Factuur, FactuurRegel, Klant } from '../../shared/types'
 
@@ -24,6 +25,19 @@ function berekenRegelBedragen(regel: FactuurRegelInput) {
   }
 }
 
+function berekenReistijdBedragen(reistijd: ReistijdInput, uurtarief: number, kmtarief: number) {
+  const reistijdBedrag = reistijd.uren * uurtarief
+  const km = reistijd.km || 0
+  const kmBedrag = km * kmtarief
+  const bedragExcl = Math.round((reistijdBedrag + kmBedrag) * 100) / 100
+  const btwBedrag = Math.round(((bedragExcl * reistijd.btwPercentage) / 100) * 100) / 100
+  return {
+    bedragExcl,
+    btwBedrag,
+    bedragIncl: Math.round((bedragExcl + btwBedrag) * 100) / 100
+  }
+}
+
 function berekenTotalen(
   regels: Array<{ bedragExcl: number; btwBedrag: number; bedragIncl: number }>
 ) {
@@ -34,6 +48,18 @@ function berekenTotalen(
     totaalExcl: Math.round(totaalExcl * 100) / 100,
     totaalBtw: Math.round(totaalBtw * 100) / 100,
     totaalIncl: Math.round(totaalIncl * 100) / 100
+  }
+}
+
+async function getReistijdTarieven(): Promise<{ uurtarief: number; kmtarief: number }> {
+  const prisma = getDatabase()
+  const instellingen = await prisma.instelling.findMany({
+    where: { key: { in: ['reiskosten_uurtarief', 'reiskosten_kmtarief'] } }
+  })
+  const map = new Map(instellingen.map((i) => [i.key, i.value]))
+  return {
+    uurtarief: parseFloat(map.get('reiskosten_uurtarief') || '0') || 0,
+    kmtarief: parseFloat(map.get('reiskosten_kmtarief') || '0') || 0
   }
 }
 
@@ -113,6 +139,13 @@ type DbFactuur = {
   totaalExcl: number
   totaalBtw: number
   totaalIncl: number
+  reistijdUren: number | null
+  reistijdKm: number | null
+  reistijdBedragExcl: number | null
+  reistijdBtwBedrag: number | null
+  reistijdBtwPercentage: number | null
+  reistijdBtwTariefId: number | null
+  reistijdOmschrijving: string | null
   createdAt: Date
   updatedAt: Date
   klant: DbKlant
@@ -196,7 +229,54 @@ export class FacturenService {
       }
     })
 
-    const totalen = berekenTotalen(regelsMetBedragen)
+    // Reistijd berekenen (indien aanwezig)
+    let reistijdData: {
+      reistijdUren: number | null
+      reistijdKm: number | null
+      reistijdBedragExcl: number | null
+      reistijdBtwBedrag: number | null
+      reistijdBtwPercentage: number | null
+      reistijdBtwTariefId: number | null
+      reistijdOmschrijving: string | null
+    } = {
+      reistijdUren: null,
+      reistijdKm: null,
+      reistijdBedragExcl: null,
+      reistijdBtwBedrag: null,
+      reistijdBtwPercentage: null,
+      reistijdBtwTariefId: null,
+      reistijdOmschrijving: null
+    }
+
+    if (input.reistijd) {
+      const { uurtarief, kmtarief } = await getReistijdTarieven()
+      const reisBedragen = berekenReistijdBedragen(input.reistijd, uurtarief, kmtarief)
+      reistijdData = {
+        reistijdUren: input.reistijd.uren,
+        reistijdKm: input.reistijd.km ?? null,
+        reistijdBedragExcl: reisBedragen.bedragExcl,
+        reistijdBtwBedrag: reisBedragen.btwBedrag,
+        reistijdBtwPercentage: input.reistijd.btwPercentage,
+        reistijdBtwTariefId: input.reistijd.btwTariefId,
+        reistijdOmschrijving: input.reistijd.omschrijving
+      }
+    }
+
+    // Totalen = regels + reistijd
+    const totalenRegels = berekenTotalen(regelsMetBedragen)
+    const totalen = {
+      totaalExcl:
+        Math.round((totalenRegels.totaalExcl + (reistijdData.reistijdBedragExcl || 0)) * 100) / 100,
+      totaalBtw:
+        Math.round((totalenRegels.totaalBtw + (reistijdData.reistijdBtwBedrag || 0)) * 100) / 100,
+      totaalIncl:
+        Math.round(
+          (totalenRegels.totaalIncl +
+            (reistijdData.reistijdBedragExcl || 0) +
+            (reistijdData.reistijdBtwBedrag || 0)) *
+            100
+        ) / 100
+    }
 
     const factuur = await prisma.factuur.create({
       data: {
@@ -208,6 +288,7 @@ export class FacturenService {
         opmerkingen: input.opmerkingen || null,
         status: 'concept',
         ...totalen,
+        ...reistijdData,
         regels: { create: regelsMetBedragen }
       },
       include: { klant: true, regels: true }
@@ -219,7 +300,6 @@ export class FacturenService {
   async update(input: FactuurUpdate): Promise<Factuur> {
     const prisma = getDatabase()
 
-    // Alleen concepten mogen bewerkt worden (verstuurde facturen zijn "vastgezet")
     const bestaand = await prisma.factuur.findUniqueOrThrow({ where: { id: input.id } })
     if (bestaand.status !== 'concept') {
       throw new Error(
@@ -241,9 +321,54 @@ export class FacturenService {
       }
     })
 
-    const totalen = berekenTotalen(regelsMetBedragen)
+    // Reistijd
+    let reistijdData: {
+      reistijdUren: number | null
+      reistijdKm: number | null
+      reistijdBedragExcl: number | null
+      reistijdBtwBedrag: number | null
+      reistijdBtwPercentage: number | null
+      reistijdBtwTariefId: number | null
+      reistijdOmschrijving: string | null
+    } = {
+      reistijdUren: null,
+      reistijdKm: null,
+      reistijdBedragExcl: null,
+      reistijdBtwBedrag: null,
+      reistijdBtwPercentage: null,
+      reistijdBtwTariefId: null,
+      reistijdOmschrijving: null
+    }
 
-    // Regels in één transactie vervangen (simpeler dan diffen)
+    if (input.reistijd) {
+      const { uurtarief, kmtarief } = await getReistijdTarieven()
+      const reisBedragen = berekenReistijdBedragen(input.reistijd, uurtarief, kmtarief)
+      reistijdData = {
+        reistijdUren: input.reistijd.uren,
+        reistijdKm: input.reistijd.km ?? null,
+        reistijdBedragExcl: reisBedragen.bedragExcl,
+        reistijdBtwBedrag: reisBedragen.btwBedrag,
+        reistijdBtwPercentage: input.reistijd.btwPercentage,
+        reistijdBtwTariefId: input.reistijd.btwTariefId,
+        reistijdOmschrijving: input.reistijd.omschrijving
+      }
+    }
+
+    const totalenRegels = berekenTotalen(regelsMetBedragen)
+    const totalen = {
+      totaalExcl:
+        Math.round((totalenRegels.totaalExcl + (reistijdData.reistijdBedragExcl || 0)) * 100) / 100,
+      totaalBtw:
+        Math.round((totalenRegels.totaalBtw + (reistijdData.reistijdBtwBedrag || 0)) * 100) / 100,
+      totaalIncl:
+        Math.round(
+          (totalenRegels.totaalIncl +
+            (reistijdData.reistijdBedragExcl || 0) +
+            (reistijdData.reistijdBtwBedrag || 0)) *
+            100
+        ) / 100
+    }
+
     const factuur = await prisma.$transaction(async (tx) => {
       await tx.factuurRegel.deleteMany({ where: { factuurId: input.id } })
 
@@ -256,6 +381,7 @@ export class FacturenService {
           referentie: input.referentie || null,
           opmerkingen: input.opmerkingen || null,
           ...totalen,
+          ...reistijdData,
           regels: { create: regelsMetBedragen }
         },
         include: { klant: true, regels: true }
@@ -332,6 +458,28 @@ export class FacturenService {
           bedragIncl: regel.bedragIncl,
           datum: factuur.datum,
           categorie: 'Factuur',
+          notitie: `Gekoppeld aan factuur ${factuur.factuurNummer}`
+        }
+      })
+    }
+    if (
+      factuur.reistijdBedragExcl &&
+      factuur.reistijdBtwTariefId &&
+      factuur.reistijdBtwPercentage !== null
+    ) {
+      await prisma.transactie.create({
+        data: {
+          type: 'inkomst',
+          omschrijving: `Factuur ${factuur.factuurNummer} - ${klantNaam} - ${factuur.reistijdOmschrijving || 'Reistijd'}`,
+          bedrag: factuur.reistijdBedragExcl,
+          invoerwijze: 'exclusief',
+          btwTariefId: factuur.reistijdBtwTariefId,
+          btwPercentage: factuur.reistijdBtwPercentage,
+          bedragExcl: factuur.reistijdBedragExcl,
+          btwBedrag: factuur.reistijdBtwBedrag || 0,
+          bedragIncl: (factuur.reistijdBedragExcl || 0) + (factuur.reistijdBtwBedrag || 0),
+          datum: factuur.datum,
+          categorie: 'Reistijd',
           notitie: `Gekoppeld aan factuur ${factuur.factuurNummer}`
         }
       })

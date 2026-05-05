@@ -99,6 +99,14 @@ model Factuur {
   totaalBtw      Float          @default(0)
   totaalIncl     Float          @default(0)
 
+  reistijdUren           Float?
+  reistijdKm             Float?
+  reistijdBedragExcl     Float?
+  reistijdBtwBedrag      Float?
+  reistijdBtwPercentage  Float?
+  reistijdBtwTariefId    Int?
+  reistijdOmschrijving   String?
+
   regels         FactuurRegel[]
 
   createdAt      DateTime       @default(now())

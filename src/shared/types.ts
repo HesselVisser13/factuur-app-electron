@@ -96,6 +96,13 @@ export interface Factuur {
   totaalExcl: number
   totaalBtw: number
   totaalIncl: number
+  reistijdUren: number | null
+  reistijdKm: number | null
+  reistijdBedragExcl: number | null
+  reistijdBtwBedrag: number | null
+  reistijdBtwPercentage: number | null
+  reistijdBtwTariefId: number | null
+  reistijdOmschrijving: string | null
   regels: FactuurRegel[]
   createdAt: string
   updatedAt: string
