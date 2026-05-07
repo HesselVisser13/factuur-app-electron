@@ -5,6 +5,13 @@ import { instellingenApi } from '../api'
 import { useToast } from '../components/Toast'
 import { btwTarievenApi } from '../api/btw-tarieven'
 import type { BtwTarief } from '../../../shared/types'
+import {
+  validatePostcode,
+  validateEmail,
+  validateTelefoon,
+  validateKvk,
+  validateBtwNummer
+} from '../utils/validators'
 
 interface FormData {
   [key: string]: string
@@ -31,6 +38,8 @@ interface FormData {
   reiskosten_omschrijving: string
 }
 
+type FormErrors = Partial<Record<keyof FormData, string>>
+
 const defaultForm: FormData = {
   bedrijfsnaam: '',
   eigenaar_naam: '',
@@ -56,8 +65,112 @@ const defaultForm: FormData = {
   reiskosten_omschrijving: 'Reistijd'
 }
 
+// ============================================================
+// Validatie-helpers (specifiek voor instellingen)
+// ============================================================
+
+function validateIban(value: string): string | null {
+  if (!value) return null
+  const stripped = value.replace(/\s/g, '').toUpperCase()
+  if (!/^[A-Z]{2}\d{2}[A-Z0-9]+$/.test(stripped)) {
+    return 'IBAN moet beginnen met landcode + 2 cijfers (bv. NL91...)'
+  }
+  if (stripped.length < 15 || stripped.length > 34) {
+    return 'IBAN te kort of te lang'
+  }
+  if (stripped.startsWith('NL') && stripped.length !== 18) {
+    return 'Nederlands IBAN moet 18 tekens zijn (incl. spaties weggelaten)'
+  }
+  return null
+}
+
+function validateBic(value: string): string | null {
+  if (!value) return null
+  // BIC is 8 of 11 tekens, alleen letters/cijfers
+  if (!/^[A-Z0-9]{8}([A-Z0-9]{3})?$/i.test(value.trim().replace(/\s/g, ''))) {
+    return 'BIC moet 8 of 11 tekens zijn (alleen letters/cijfers)'
+  }
+  return null
+}
+
+function validateWebsite(value: string): string | null {
+  if (!value) return null
+  // Simpele URL-check: moet beginnen met http(s):// of www.
+  if (!/^(https?:\/\/|www\.)/i.test(value.trim())) {
+    return 'Website moet beginnen met http://, https:// of www.'
+  }
+  return null
+}
+
+function validateBetaaltermijn(value: string): string | null {
+  if (!value) return 'Verplicht'
+  const n = parseInt(value, 10)
+  if (isNaN(n)) return 'Geen geldig getal'
+  if (n < 1) return 'Minimaal 1 dag'
+  if (n > 90) return 'Maximaal 90 dagen'
+  return null
+}
+
+function validatePositiefBedrag(value: string, label: string): string | null {
+  if (!value) return null
+  const n = parseFloat(value)
+  if (isNaN(n)) return `${label} moet een getal zijn`
+  if (n < 0) return `${label} kan niet negatief zijn`
+  if (n > 1000) return `${label} te hoog (max €1.000)`
+  return null
+}
+
+function validateForm(form: FormData): FormErrors {
+  const errors: FormErrors = {}
+
+  // Bedrijfsgegevens
+  errors.email = validateEmail(form.email) ?? undefined
+  errors.telefoon = validateTelefoon(form.telefoon) ?? undefined
+  errors.website = validateWebsite(form.website) ?? undefined
+
+  // Adres
+  errors.postcode = validatePostcode(form.postcode) ?? undefined
+
+  // Financieel
+  errors.kvk_nummer = validateKvk(form.kvk_nummer) ?? undefined
+  errors.btw_nummer = validateBtwNummer(form.btw_nummer) ?? undefined
+  errors.iban = validateIban(form.iban) ?? undefined
+  errors.bic = validateBic(form.bic) ?? undefined
+  errors.betaaltermijn_dagen = validateBetaaltermijn(form.betaaltermijn_dagen) ?? undefined
+
+  // Reiskosten
+  errors.reiskosten_uurtarief =
+    validatePositiefBedrag(form.reiskosten_uurtarief, 'Uurtarief') ?? undefined
+  errors.reiskosten_kmtarief =
+    validatePositiefBedrag(form.reiskosten_kmtarief, 'Km-tarief') ?? undefined
+
+  if (form.reiskosten_omschrijving && form.reiskosten_omschrijving.length > 200) {
+    errors.reiskosten_omschrijving = 'Maximaal 200 tekens'
+  }
+
+  // Voorwaarden tekst
+  if (form.factuur_voorwaarden && form.factuur_voorwaarden.length > 1000) {
+    errors.factuur_voorwaarden = 'Maximaal 1000 tekens'
+  }
+
+  // Cleanup undefined
+  Object.keys(errors).forEach((key) => {
+    if (errors[key as keyof FormErrors] === undefined) {
+      delete errors[key as keyof FormErrors]
+    }
+  })
+
+  return errors
+}
+
+// ============================================================
+// Component
+// ============================================================
+
 export function Instellingen() {
   const [form, setForm] = useState<FormData>(defaultForm)
+  const [errors, setErrors] = useState<FormErrors>({})
+  const [touched, setTouched] = useState<Record<string, boolean>>({})
   const [saving, setSaving] = useState(false)
   const toast = useToast()
   const [tarieven, setTarieven] = useState<BtwTarief[]>([])
@@ -93,8 +206,42 @@ export function Instellingen() {
     )
   }, [])
 
+  function updateField(key: keyof FormData, value: string) {
+    const newForm = { ...form, [key]: value }
+    setForm(newForm)
+    setErrors(validateForm(newForm))
+  }
+
+  function handleBlur(key: keyof FormData) {
+    setTouched({ ...touched, [key]: true })
+    setErrors(validateForm(form))
+  }
+
+  function inputClasses(field: keyof FormData): string {
+    const base = 'w-full border rounded-lg px-4 py-2 text-sm'
+    const hasError = touched[field] && errors[field]
+    return `${base} ${hasError ? 'border-red-500 bg-red-50' : 'border-gray-300'}`
+  }
+
+  function errorMessage(field: keyof FormData) {
+    const hasError = touched[field] && errors[field]
+    if (!hasError) return null
+    return <p className="text-xs text-red-600 mt-1">{errors[field]}</p>
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+
+    // Markeer alles als touched
+    const formErrors = validateForm(form)
+    setErrors(formErrors)
+    setTouched(Object.keys(form).reduce((acc, key) => ({ ...acc, [key]: true }), {}))
+
+    if (Object.keys(formErrors).length > 0) {
+      toast.error('Controleer de gemarkeerde velden')
+      return
+    }
+
     setSaving(true)
     try {
       await instellingenApi.save(form)
@@ -104,10 +251,6 @@ export function Instellingen() {
     } finally {
       setSaving(false)
     }
-  }
-
-  function updateField(key: keyof FormData, value: string) {
-    setForm({ ...form, [key]: value })
   }
 
   async function handleLogoUpload() {
@@ -121,11 +264,14 @@ export function Instellingen() {
     updateField('logo_filename', '')
   }
 
+  // Banner alleen bij zichtbare fouten
+  const heeftZichtbareErrors = Object.keys(errors).some((key) => touched[key])
+
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">⚙️ Instellingen</h1>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} noValidate className="space-y-6">
         {/* Bedrijfsgegevens */}
         <div className="bg-white rounded-xl border border-gray-200 p-6">
           <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wide mb-4">
@@ -161,31 +307,37 @@ export function Instellingen() {
                 type="tel"
                 value={form.telefoon}
                 onChange={(e) => updateField('telefoon', e.target.value)}
+                onBlur={() => handleBlur('telefoon')}
                 placeholder="06-12345678"
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm"
+                className={inputClasses('telefoon')}
               />
+              {errorMessage('telefoon')}
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-600 mb-1">E-mail</label>
               <input
-                type="email"
+                type="text"
                 value={form.email}
                 onChange={(e) => updateField('email', e.target.value)}
+                onBlur={() => handleBlur('email')}
                 placeholder="info@voorbeeld.nl"
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm"
+                className={inputClasses('email')}
               />
+              {errorMessage('email')}
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-600 mb-1">Website</label>
               <input
-                type="url"
+                type="text"
                 value={form.website}
                 onChange={(e) => updateField('website', e.target.value)}
+                onBlur={() => handleBlur('website')}
                 placeholder="https://www.voorbeeld.nl"
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm"
+                className={inputClasses('website')}
               />
+              {errorMessage('website')}
             </div>
           </div>
         </div>
@@ -214,9 +366,11 @@ export function Instellingen() {
                 type="text"
                 value={form.postcode}
                 onChange={(e) => updateField('postcode', e.target.value)}
+                onBlur={() => handleBlur('postcode')}
                 placeholder="1234 AB"
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm"
+                className={inputClasses('postcode')}
               />
+              {errorMessage('postcode')}
             </div>
 
             <div>
@@ -245,9 +399,11 @@ export function Instellingen() {
                 type="text"
                 value={form.kvk_nummer}
                 onChange={(e) => updateField('kvk_nummer', e.target.value)}
+                onBlur={() => handleBlur('kvk_nummer')}
                 placeholder="12345678"
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm"
+                className={inputClasses('kvk_nummer')}
               />
+              {errorMessage('kvk_nummer')}
             </div>
 
             <div>
@@ -256,9 +412,11 @@ export function Instellingen() {
                 type="text"
                 value={form.btw_nummer}
                 onChange={(e) => updateField('btw_nummer', e.target.value)}
+                onBlur={() => handleBlur('btw_nummer')}
                 placeholder="NL123456789B01"
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm"
+                className={inputClasses('btw_nummer')}
               />
+              {errorMessage('btw_nummer')}
             </div>
 
             <div>
@@ -278,9 +436,11 @@ export function Instellingen() {
                 type="text"
                 value={form.iban}
                 onChange={(e) => updateField('iban', e.target.value)}
+                onBlur={() => handleBlur('iban')}
                 placeholder="NL00 BANK 0000 0000 00"
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm"
+                className={inputClasses('iban')}
               />
+              {errorMessage('iban')}
             </div>
 
             <div>
@@ -289,9 +449,11 @@ export function Instellingen() {
                 type="text"
                 value={form.bic}
                 onChange={(e) => updateField('bic', e.target.value)}
-                placeholder="Mijn Bank BIC Code"
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm"
+                onBlur={() => handleBlur('bic')}
+                placeholder="BANKNL2A"
+                className={inputClasses('bic')}
               />
+              {errorMessage('bic')}
             </div>
 
             <div>
@@ -304,8 +466,10 @@ export function Instellingen() {
                 max="90"
                 value={form.betaaltermijn_dagen}
                 onChange={(e) => updateField('betaaltermijn_dagen', e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm"
+                onBlur={() => handleBlur('betaaltermijn_dagen')}
+                className={inputClasses('betaaltermijn_dagen')}
               />
+              {errorMessage('betaaltermijn_dagen')}
             </div>
 
             <div className="md:col-span-2">
@@ -341,12 +505,16 @@ export function Instellingen() {
                 min="0"
                 value={form.reiskosten_uurtarief}
                 onChange={(e) => updateField('reiskosten_uurtarief', e.target.value)}
+                onBlur={() => handleBlur('reiskosten_uurtarief')}
                 placeholder="55,00"
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm"
+                className={inputClasses('reiskosten_uurtarief')}
               />
-              <p className="text-xs text-gray-500 mt-1">
-                Wordt vermenigvuldigd met aantal halve uren reistijd.
-              </p>
+              {errorMessage('reiskosten_uurtarief')}
+              {!errors.reiskosten_uurtarief && (
+                <p className="text-xs text-gray-500 mt-1">
+                  Wordt vermenigvuldigd met aantal halve uren reistijd.
+                </p>
+              )}
             </div>
 
             <div>
@@ -359,12 +527,16 @@ export function Instellingen() {
                 min="0"
                 value={form.reiskosten_kmtarief}
                 onChange={(e) => updateField('reiskosten_kmtarief', e.target.value)}
+                onBlur={() => handleBlur('reiskosten_kmtarief')}
                 placeholder="0,21"
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm"
+                className={inputClasses('reiskosten_kmtarief')}
               />
-              <p className="text-xs text-gray-500 mt-1">
-                Vul in als je ook kilometers wilt doorberekenen.
-              </p>
+              {errorMessage('reiskosten_kmtarief')}
+              {!errors.reiskosten_kmtarief && (
+                <p className="text-xs text-gray-500 mt-1">
+                  Vul in als je ook kilometers wilt doorberekenen.
+                </p>
+              )}
             </div>
 
             <div>
@@ -393,12 +565,16 @@ export function Instellingen() {
                 type="text"
                 value={form.reiskosten_omschrijving}
                 onChange={(e) => updateField('reiskosten_omschrijving', e.target.value)}
+                onBlur={() => handleBlur('reiskosten_omschrijving')}
                 placeholder="Reistijd"
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm"
+                className={inputClasses('reiskosten_omschrijving')}
               />
-              <p className="text-xs text-gray-500 mt-1">
-                Verschijnt op de factuur als omschrijving van de reisregel.
-              </p>
+              {errorMessage('reiskosten_omschrijving')}
+              {!errors.reiskosten_omschrijving && (
+                <p className="text-xs text-gray-500 mt-1">
+                  Verschijnt op de factuur als omschrijving van de reisregel.
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -446,16 +622,27 @@ export function Instellingen() {
               <textarea
                 value={form.factuur_voorwaarden}
                 onChange={(e) => updateField('factuur_voorwaarden', e.target.value)}
+                onBlur={() => handleBlur('factuur_voorwaarden')}
                 rows={3}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm"
+                className={inputClasses('factuur_voorwaarden')}
               />
-              <p className="text-xs text-gray-500 mt-1">
-                Tip: gebruik <code className="bg-gray-100 px-1 rounded">{'{betaaltermijn}'}</code>{' '}
-                om het aantal dagen automatisch in te vullen.
-              </p>
+              {errorMessage('factuur_voorwaarden')}
+              {!errors.factuur_voorwaarden && (
+                <p className="text-xs text-gray-500 mt-1">
+                  Tip: gebruik <code className="bg-gray-100 px-1 rounded">{'{betaaltermijn}'}</code>{' '}
+                  om het aantal dagen automatisch in te vullen.
+                </p>
+              )}
             </div>
           </div>
         </div>
+
+        {/* Banner */}
+        {heeftZichtbareErrors && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">
+            ⚠️ Er zijn nog fouten in het formulier. Controleer de gemarkeerde velden.
+          </div>
+        )}
 
         <button
           type="submit"

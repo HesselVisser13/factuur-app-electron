@@ -2,61 +2,154 @@
 
 import { z } from 'zod'
 
+// ============================================================
+// Helpers — herbruikbare validators
+// ============================================================
+
+const datumSchema = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, 'Datum moet in formaat YYYY-MM-DD zijn')
+  .refine((v) => !isNaN(new Date(v).getTime()), 'Ongeldige datum')
+
+const optionalString = (max: number = 200) =>
+  z.string().trim().max(max, `Maximaal ${max} tekens`).optional().or(z.literal(''))
+
+const postcodeSchema = z
+  .string()
+  .trim()
+  .regex(/^\d{4}\s?[A-Za-z]{2}$/, 'Postcode moet zijn als 1234 AB')
+  .optional()
+  .or(z.literal(''))
+
+const telefoonSchema = z
+  .string()
+  .trim()
+  .regex(/^[\d\s+\-()]+$/, 'Telefoonnummer mag alleen cijfers en + - ( ) bevatten')
+  .min(8, 'Telefoonnummer te kort')
+  .max(20, 'Telefoonnummer te lang')
+  .optional()
+  .or(z.literal(''))
+
+const emailSchema = z
+  .string()
+  .trim()
+  .email('Ongeldig e-mailadres')
+  .max(200, 'E-mail te lang')
+  .optional()
+  .or(z.literal(''))
+
+const kvkSchema = z
+  .string()
+  .trim()
+  .regex(/^\d{8}$/, 'KvK-nummer moet exact 8 cijfers zijn')
+  .optional()
+  .or(z.literal(''))
+
+const btwNummerSchema = z
+  .string()
+  .trim()
+  .regex(/^NL\d{9}B\d{2}$/i, 'BTW-nummer moet zijn als NL123456789B01')
+  .optional()
+  .or(z.literal(''))
+
+// Bedragen: max €1 miljoen per regel, redelijke ondergrens
+const bedragSchema = z
+  .number()
+  .nonnegative('Bedrag mag niet negatief zijn')
+  .max(1_000_000, 'Bedrag te hoog (max €1.000.000)')
+
+const positiefBedragSchema = z
+  .number()
+  .positive('Bedrag moet groter zijn dan 0')
+  .max(1_000_000, 'Bedrag te hoog (max €1.000.000)')
+
+// ============================================================
+// TRANSACTIES
+// ============================================================
+
 export const TransactieInputSchema = z.object({
   type: z.enum(['inkomst', 'uitgave']),
-  omschrijving: z.string().min(1, 'Omschrijving is verplicht'),
-  bedrag: z.number().positive('Bedrag moet positief zijn'),
+  omschrijving: z
+    .string()
+    .trim()
+    .min(1, 'Omschrijving is verplicht')
+    .max(500, 'Omschrijving te lang (max 500 tekens)'),
+  bedrag: positiefBedragSchema,
   invoerwijze: z.enum(['exclusief', 'inclusief']),
   btwTariefId: z.number().int().positive(),
-  btwPercentage: z.number().min(0).max(100),
-  datum: z.string().min(1, 'Datum is verplicht'),
-  categorie: z.string().optional(),
-  notitie: z.string().optional()
+  btwPercentage: z.number().min(0, 'BTW kan niet negatief zijn').max(100, 'BTW max 100%'),
+  datum: datumSchema,
+  categorie: optionalString(100),
+  notitie: optionalString(1000)
 })
 
-// TransactieUpdate = TransactieInput + id
 export const TransactieUpdateSchema = TransactieInputSchema.extend({
   id: z.number().int().positive()
 })
 
+// ============================================================
+// INSTELLINGEN
+// ============================================================
+
 export const InstellingenSchema = z.record(z.string(), z.string())
 
-export const PeriodeSchema = z.object({
-  van: z.string().datetime({ offset: true }).or(z.string().min(10)),
-  tot: z.string().datetime({ offset: true }).or(z.string().min(10))
-})
+// ============================================================
+// PERIODE / KWARTAAL
+// ============================================================
+
+export const PeriodeSchema = z
+  .object({
+    van: datumSchema,
+    tot: datumSchema
+  })
+  .refine((data) => new Date(data.tot) >= new Date(data.van), {
+    message: 'Eind-datum moet op of na start-datum zijn',
+    path: ['tot']
+  })
 
 export const KwartaalSchema = z.object({
-  kwartaal: z.number().int().min(1).max(4),
-  jaar: z.number().int().min(2020).max(2100)
+  kwartaal: z.number().int().min(1, 'Kwartaal 1-4').max(4, 'Kwartaal 1-4'),
+  jaar: z
+    .number()
+    .int()
+    .min(2020, 'Jaar moet 2020 of later zijn')
+    .max(2100, 'Jaar te ver in toekomst')
 })
 
+// ============================================================
+// KLANTEN
+// ============================================================
+
 const klantBaseSchema = {
-  aanhef: z.string().optional(),
-  voornaam: z.string().optional(),
-  achternaam: z.string().optional(),
-  adres: z.string().optional(),
-  postcode: z.string().optional(),
-  plaats: z.string().optional(),
-  email: z.string().email('Ongeldig e-mailadres').optional().or(z.literal('')),
-  telefoon: z.string().optional()
+  aanhef: optionalString(20),
+  voornaam: optionalString(100),
+  achternaam: optionalString(100),
+  adres: optionalString(200),
+  postcode: postcodeSchema,
+  plaats: optionalString(100),
+  email: emailSchema,
+  telefoon: telefoonSchema
 }
 
 export const KlantInputSchema = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('particulier'),
     ...klantBaseSchema,
-    achternaam: z.string().min(1, 'Achternaam is verplicht'),
-    bedrijfsnaam: z.string().optional(),
-    kvkNummer: z.string().optional(),
-    btwNummer: z.string().optional()
+    achternaam: z.string().trim().min(1, 'Achternaam is verplicht').max(100, 'Achternaam te lang'),
+    bedrijfsnaam: optionalString(200),
+    kvkNummer: kvkSchema,
+    btwNummer: btwNummerSchema
   }),
   z.object({
     type: z.literal('zakelijk'),
     ...klantBaseSchema,
-    bedrijfsnaam: z.string().min(1, 'Bedrijfsnaam is verplicht'),
-    kvkNummer: z.string().optional(),
-    btwNummer: z.string().optional()
+    bedrijfsnaam: z
+      .string()
+      .trim()
+      .min(1, 'Bedrijfsnaam is verplicht')
+      .max(200, 'Bedrijfsnaam te lang'),
+    kvkNummer: kvkSchema,
+    btwNummer: btwNummerSchema
   })
 ])
 
@@ -65,18 +158,22 @@ export const KlantUpdateSchema = z.discriminatedUnion('type', [
     type: z.literal('particulier'),
     id: z.number().int().positive(),
     ...klantBaseSchema,
-    achternaam: z.string().min(1, 'Achternaam is verplicht'),
-    bedrijfsnaam: z.string().optional(),
-    kvkNummer: z.string().optional(),
-    btwNummer: z.string().optional()
+    achternaam: z.string().trim().min(1, 'Achternaam is verplicht').max(100, 'Achternaam te lang'),
+    bedrijfsnaam: optionalString(200),
+    kvkNummer: kvkSchema,
+    btwNummer: btwNummerSchema
   }),
   z.object({
     type: z.literal('zakelijk'),
     id: z.number().int().positive(),
     ...klantBaseSchema,
-    bedrijfsnaam: z.string().min(1, 'Bedrijfsnaam is verplicht'),
-    kvkNummer: z.string().optional(),
-    btwNummer: z.string().optional()
+    bedrijfsnaam: z
+      .string()
+      .trim()
+      .min(1, 'Bedrijfsnaam is verplicht')
+      .max(200, 'Bedrijfsnaam te lang'),
+    kvkNummer: kvkSchema,
+    btwNummer: btwNummerSchema
   })
 ])
 
@@ -88,40 +185,89 @@ export const FactuurStatusSchema = z.enum(['concept', 'verstuurd', 'betaald', 'g
 export type FactuurStatus = z.infer<typeof FactuurStatusSchema>
 
 export const FactuurRegelInputSchema = z.object({
-  datum: z.string().min(1, 'Datum is verplicht'),
-  omschrijving: z.string().min(1, 'Omschrijving is verplicht'),
-  aantal: z.number().int().positive('Aantal moet positief zijn'),
-  prijsPerStuk: z.number().nonnegative('Prijs mag niet negatief zijn'),
+  datum: datumSchema,
+  omschrijving: z
+    .string()
+    .trim()
+    .min(1, 'Omschrijving is verplicht')
+    .max(500, 'Omschrijving te lang (max 500 tekens)'),
+  aantal: z
+    .number()
+    .int('Aantal moet een heel getal zijn')
+    .positive('Aantal moet groter zijn dan 0')
+    .max(10_000, 'Aantal te hoog (max 10.000)'),
+  prijsPerStuk: bedragSchema,
   btwTariefId: z.number().int().positive(),
-  btwPercentage: z.number().min(0).max(100)
+  btwPercentage: z.number().min(0, 'BTW kan niet negatief zijn').max(100, 'BTW max 100%')
 })
 
 export const ReistijdInputSchema = z.object({
-  uren: z.number().positive('Reistijd moet positief zijn'),
-  km: z.number().nonnegative().nullable().optional(),
+  uren: z
+    .number()
+    .min(0.5, 'Reistijd moet minstens 0,5 uur zijn')
+    .max(24, 'Reistijd kan maximaal 24 uur zijn'),
+  km: z
+    .number()
+    .nonnegative('Kilometers kunnen niet negatief zijn')
+    .max(10_000, 'Kilometers te hoog (max 10.000)')
+    .nullable()
+    .optional(),
   btwTariefId: z.number().int().positive(),
   btwPercentage: z.number().min(0).max(100),
-  omschrijving: z.string().min(1, 'Omschrijving is verplicht')
+  omschrijving: z
+    .string()
+    .trim()
+    .min(1, 'Omschrijving is verplicht')
+    .max(200, 'Omschrijving te lang (max 200 tekens)')
 })
 
-export const FactuurInputSchema = z.object({
-  klantId: z.number().int().positive('Kies een klant'),
-  datum: z.string().min(1, 'Datum is verplicht'),
-  vervalDatum: z.string().min(1, 'Vervaldatum is verplicht'),
-  referentie: z.string().optional(),
-  opmerkingen: z.string().optional(),
-  regels: z.array(FactuurRegelInputSchema).min(1, 'Voeg minstens één regel toe'),
-  reistijd: ReistijdInputSchema.nullable().optional()
-})
+export const FactuurInputSchema = z
+  .object({
+    klantId: z.number().int().positive('Kies een klant'),
+    datum: datumSchema,
+    vervalDatum: datumSchema,
+    referentie: optionalString(100),
+    opmerkingen: optionalString(1000),
+    regels: z
+      .array(FactuurRegelInputSchema)
+      .min(1, 'Voeg minstens één regel toe')
+      .max(100, 'Maximaal 100 regels per factuur'),
+    reistijd: ReistijdInputSchema.nullable().optional()
+  })
+  .refine((data) => new Date(data.vervalDatum) >= new Date(data.datum), {
+    message: 'Vervaldatum moet op of na de factuurdatum zijn',
+    path: ['vervalDatum']
+  })
 
-export const FactuurUpdateSchema = FactuurInputSchema.extend({
-  id: z.number().int().positive()
-})
+// .extend werkt niet direct op een ZodEffects (die door .refine() ontstaat),
+// dus we definiëren FactuurUpdateSchema apart met dezelfde rules.
+export const FactuurUpdateSchema = z
+  .object({
+    id: z.number().int().positive(),
+    klantId: z.number().int().positive('Kies een klant'),
+    datum: datumSchema,
+    vervalDatum: datumSchema,
+    referentie: optionalString(100),
+    opmerkingen: optionalString(1000),
+    regels: z
+      .array(FactuurRegelInputSchema)
+      .min(1, 'Voeg minstens één regel toe')
+      .max(100, 'Maximaal 100 regels per factuur'),
+    reistijd: ReistijdInputSchema.nullable().optional()
+  })
+  .refine((data) => new Date(data.vervalDatum) >= new Date(data.datum), {
+    message: 'Vervaldatum moet op of na de factuurdatum zijn',
+    path: ['vervalDatum']
+  })
 
 export const FactuurStatusUpdateSchema = z.object({
   id: z.number().int().positive(),
   status: FactuurStatusSchema
 })
+
+// ============================================================
+// TYPE EXPORTS
+// ============================================================
 
 export type TransactieInput = z.infer<typeof TransactieInputSchema>
 export type TransactieUpdate = z.infer<typeof TransactieUpdateSchema>

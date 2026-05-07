@@ -42,6 +42,12 @@ function berekenRegel(regel: RegelState) {
   }
 }
 
+function isGeldigeDatumString(s: string): boolean {
+  if (!s) return false
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return false
+  return !isNaN(new Date(s).getTime())
+}
+
 // ============================================================
 // State types
 // ============================================================
@@ -55,6 +61,15 @@ type RegelState = {
   btwPercentage: number
 }
 
+type ReistijdState = {
+  enabled: boolean
+  uren: string
+  km: string
+  omschrijving: string
+  btwTariefId: number | null
+  btwPercentage: number
+}
+
 type FormState = {
   klantId: number | null
   datum: string
@@ -65,13 +80,30 @@ type FormState = {
   reistijd: ReistijdState
 }
 
-type ReistijdState = {
-  enabled: boolean
-  uren: string
-  km: string
-  omschrijving: string
-  btwTariefId: number | null
-  btwPercentage: number
+type RegelErrors = Partial<Record<keyof RegelState, string>>
+type ReistijdErrors = Partial<Record<keyof ReistijdState, string>>
+
+type FormErrors = {
+  klantId?: string
+  datum?: string
+  vervalDatum?: string
+  referentie?: string
+  opmerkingen?: string
+  regels?: RegelErrors[]
+  reistijd?: ReistijdErrors
+}
+
+type RegelTouched = Partial<Record<keyof RegelState, boolean>>
+type ReistijdTouched = Partial<Record<keyof ReistijdState, boolean>>
+
+type FormTouched = {
+  klantId?: boolean
+  datum?: boolean
+  vervalDatum?: boolean
+  referentie?: boolean
+  opmerkingen?: boolean
+  regels?: RegelTouched[]
+  reistijd?: ReistijdTouched
 }
 
 function emptyRegel(tarief: BtwTarief): RegelState {
@@ -83,6 +115,139 @@ function emptyRegel(tarief: BtwTarief): RegelState {
     btwTariefId: tarief.id,
     btwPercentage: tarief.percentage
   }
+}
+
+// ============================================================
+// Validatie
+// ============================================================
+
+function validateForm(form: FormState): FormErrors {
+  const errors: FormErrors = {}
+
+  // Klant
+  if (!form.klantId) {
+    errors.klantId = 'Kies een klant'
+  }
+
+  // Datum
+  if (!form.datum) {
+    errors.datum = 'Factuurdatum is verplicht'
+  } else if (!isGeldigeDatumString(form.datum)) {
+    errors.datum = 'Ongeldige datum'
+  }
+
+  // Vervaldatum
+  if (!form.vervalDatum) {
+    errors.vervalDatum = 'Vervaldatum is verplicht'
+  } else if (!isGeldigeDatumString(form.vervalDatum)) {
+    errors.vervalDatum = 'Ongeldige datum'
+  } else if (
+    isGeldigeDatumString(form.datum) &&
+    new Date(form.vervalDatum) < new Date(form.datum)
+  ) {
+    errors.vervalDatum = 'Vervaldatum moet op of na de factuurdatum zijn'
+  }
+
+  // Referentie & opmerkingen (alleen max-length)
+  if (form.referentie && form.referentie.length > 100) {
+    errors.referentie = 'Max 100 tekens'
+  }
+  if (form.opmerkingen && form.opmerkingen.length > 1000) {
+    errors.opmerkingen = 'Max 1000 tekens'
+  }
+
+  // Regels
+  if (form.regels.length > 0) {
+    const regelErrors: RegelErrors[] = []
+    let hasError = false
+
+    form.regels.forEach((regel, i) => {
+      const re: RegelErrors = {}
+
+      if (!regel.omschrijving || !regel.omschrijving.trim()) {
+        re.omschrijving = 'Verplicht'
+      } else if (regel.omschrijving.length > 500) {
+        re.omschrijving = 'Max 500 tekens'
+      }
+
+      if (!regel.aantal) {
+        re.aantal = 'Vereist'
+      } else if (!/^\d+$/.test(regel.aantal)) {
+        re.aantal = 'Heel getal'
+      } else {
+        const aantal = parseInt(regel.aantal, 10)
+        if (aantal <= 0) re.aantal = 'Min 1'
+        else if (aantal > 10_000) re.aantal = 'Max 10.000'
+      }
+
+      if (regel.prijsPerStuk === '') {
+        re.prijsPerStuk = 'Vereist'
+      } else {
+        const prijs = parseFloat(regel.prijsPerStuk)
+        if (isNaN(prijs)) re.prijsPerStuk = 'Geen getal'
+        else if (prijs < 0) re.prijsPerStuk = 'Niet negatief'
+        else if (prijs > 1_000_000) re.prijsPerStuk = 'Te hoog'
+      }
+
+      if (!regel.datum) {
+        re.datum = 'Vereist'
+      } else if (!isGeldigeDatumString(regel.datum)) {
+        re.datum = 'Ongeldig'
+      }
+
+      if (!regel.btwTariefId) {
+        re.btwTariefId = 'Kies tarief'
+      }
+
+      regelErrors[i] = re
+      if (Object.keys(re).length > 0) hasError = true
+    })
+
+    if (hasError) errors.regels = regelErrors
+  }
+
+  // Reistijd (alleen als enabled)
+  if (form.reistijd.enabled) {
+    const re: ReistijdErrors = {}
+
+    if (!form.reistijd.uren) {
+      re.uren = 'Reistijd is verplicht'
+    } else {
+      const uren = parseFloat(form.reistijd.uren)
+      if (isNaN(uren)) re.uren = 'Geen geldig getal'
+      else if (uren < 0.5) re.uren = 'Minimaal 0,5 uur'
+      else if (uren > 24) re.uren = 'Maximaal 24 uur'
+    }
+
+    if (form.reistijd.km) {
+      const km = parseFloat(form.reistijd.km)
+      if (isNaN(km)) re.km = 'Geen geldig getal'
+      else if (km < 0) re.km = 'Niet negatief'
+      else if (km > 10_000) re.km = 'Maximaal 10.000 km'
+    }
+
+    if (!form.reistijd.omschrijving || !form.reistijd.omschrijving.trim()) {
+      re.omschrijving = 'Omschrijving is verplicht'
+    } else if (form.reistijd.omschrijving.length > 200) {
+      re.omschrijving = 'Maximaal 200 tekens'
+    }
+
+    if (!form.reistijd.btwTariefId) {
+      re.btwTariefId = 'Kies een BTW-tarief'
+    }
+
+    if (Object.keys(re).length > 0) errors.reistijd = re
+  }
+
+  return errors
+}
+
+function heeftErrors(errors: FormErrors): boolean {
+  if (errors.klantId || errors.datum || errors.vervalDatum) return true
+  if (errors.referentie || errors.opmerkingen) return true
+  if (errors.regels && errors.regels.some((r) => Object.keys(r).length > 0)) return true
+  if (errors.reistijd && Object.keys(errors.reistijd).length > 0) return true
+  return false
 }
 
 // ============================================================
@@ -124,6 +289,9 @@ export function FactuurFormulier() {
     }
   })
 
+  const [errors, setErrors] = useState<FormErrors>({})
+  const [touched, setTouched] = useState<FormTouched>({})
+
   const readOnly = bestaandeFactuur !== null && bestaandeFactuur.status !== 'concept'
 
   // ============================================================
@@ -139,7 +307,6 @@ export function FactuurFormulier() {
         ])
         setKlanten(klantenData)
         setTarieven(tarievenData)
-        // Reistijd-instellingen ophalen
         const uurtarief = parseFloat(instellingen.reiskosten_uurtarief || '0') || 0
         const kmtarief = parseFloat(instellingen.reiskosten_kmtarief || '0') || 0
         const standaardOms = instellingen.reiskosten_omschrijving || 'Reistijd'
@@ -208,57 +375,59 @@ export function FactuurFormulier() {
   }, [editId])
 
   // ============================================================
-  // Datum gewijzigd → vervaldatum herberekenen (alleen bij nieuw)
+  // State updaters met live validatie
   // ============================================================
+
+  function applyForm(newForm: FormState) {
+    setForm(newForm)
+    setErrors(validateForm(newForm))
+  }
+
   async function handleDatumChange(datum: string) {
-    setForm((prev) => ({ ...prev, datum }))
     if (!editId) {
       const inst = await instellingenApi.getAll()
       const termijn = parseInt(inst.betaaltermijn_dagen || '14', 10)
-      setForm((prev) => ({ ...prev, datum, vervalDatum: voegDagenToe(datum, termijn) }))
+      const newForm = { ...form, datum, vervalDatum: voegDagenToe(datum, termijn) }
+      applyForm(newForm)
 
-      // Factuurnummer eventueel updaten als jaar verandert
       const nieuwNummer = await facturenApi.getNextNummer(datum)
       setFactuurNummer(nieuwNummer)
+    } else {
+      applyForm({ ...form, datum })
     }
   }
 
-  // ============================================================
-  // Regels manipulatie
-  // ============================================================
   function addRegel() {
     const standaardTarief = tarieven.find((t) => t.percentage === 21) || tarieven[0]
     if (!standaardTarief) return
-    setForm((prev) => ({
-      ...prev,
-      regels: [...prev.regels, emptyRegel(standaardTarief)]
-    }))
+    applyForm({ ...form, regels: [...form.regels, emptyRegel(standaardTarief)] })
   }
 
   function removeRegel(index: number) {
-    setForm((prev) => ({
-      ...prev,
-      regels: prev.regels.filter((_, i) => i !== index)
-    }))
+    const newRegels = form.regels.filter((_, i) => i !== index)
+    applyForm({ ...form, regels: newRegels })
+    // Touched ook bijwerken
+    if (touched.regels) {
+      setTouched({
+        ...touched,
+        regels: touched.regels.filter((_, i) => i !== index)
+      })
+    }
   }
 
   function moveRegel(index: number, direction: -1 | 1) {
     const newIndex = index + direction
     if (newIndex < 0 || newIndex >= form.regels.length) return
-    setForm((prev) => {
-      const regels = [...prev.regels]
-      const tmp = regels[index]
-      regels[index] = regels[newIndex]
-      regels[newIndex] = tmp
-      return { ...prev, regels }
-    })
+    const regels = [...form.regels]
+    const tmp = regels[index]
+    regels[index] = regels[newIndex]
+    regels[newIndex] = tmp
+    applyForm({ ...form, regels })
   }
 
   function updateRegel(index: number, updates: Partial<RegelState>) {
-    setForm((prev) => ({
-      ...prev,
-      regels: prev.regels.map((r, i) => (i === index ? { ...r, ...updates } : r))
-    }))
+    const regels = form.regels.map((r, i) => (i === index ? { ...r, ...updates } : r))
+    applyForm({ ...form, regels })
   }
 
   function updateRegelTarief(index: number, tariefId: number) {
@@ -268,10 +437,7 @@ export function FactuurFormulier() {
   }
 
   function updateReistijd(updates: Partial<ReistijdState>) {
-    setForm((prev) => ({
-      ...prev,
-      reistijd: { ...prev.reistijd, ...updates }
-    }))
+    applyForm({ ...form, reistijd: { ...form.reistijd, ...updates } })
   }
 
   function updateReistijdTarief(tariefId: number) {
@@ -279,6 +445,75 @@ export function FactuurFormulier() {
     if (!tarief) return
     updateReistijd({ btwTariefId: tarief.id, btwPercentage: tarief.percentage })
   }
+
+  // ============================================================
+  // Touched-handlers
+  // ============================================================
+
+  function touchField(key: 'klantId' | 'datum' | 'vervalDatum' | 'referentie' | 'opmerkingen') {
+    setTouched((prev) => ({ ...prev, [key]: true }))
+  }
+
+  function touchRegelField(index: number, key: keyof RegelState) {
+    setTouched((prev) => {
+      const regels = [...(prev.regels || [])]
+      regels[index] = { ...(regels[index] || {}), [key]: true }
+      return { ...prev, regels }
+    })
+  }
+
+  function touchReistijdField(key: keyof ReistijdState) {
+    setTouched((prev) => ({
+      ...prev,
+      reistijd: { ...(prev.reistijd || {}), [key]: true }
+    }))
+  }
+
+  // ============================================================
+  // Class & message helpers
+  // ============================================================
+
+  function inputClasses(field: 'klantId' | 'datum' | 'vervalDatum' | 'referentie'): string {
+    const base = 'w-full border rounded-lg px-4 py-2 text-sm disabled:bg-gray-50'
+    const showError = touched[field] && errors[field]
+    return `${base} ${showError ? 'border-red-500 bg-red-50' : 'border-gray-300'}`
+  }
+
+  function fieldErrorMessage(
+    field: 'klantId' | 'datum' | 'vervalDatum' | 'referentie' | 'opmerkingen'
+  ) {
+    const showError = touched[field] && errors[field]
+    if (!showError) return null
+    return <p className="text-xs text-red-600 mt-1">{errors[field]}</p>
+  }
+
+  function regelInputClasses(index: number, field: keyof RegelState): string {
+    const base = 'w-full border rounded px-2 py-1 text-sm disabled:bg-gray-100'
+    const showError = touched.regels?.[index]?.[field] && errors.regels?.[index]?.[field]
+    return `${base} ${showError ? 'border-red-500 bg-red-50' : 'border-gray-300'}`
+  }
+
+  function regelErrorMessage(index: number, field: keyof RegelState) {
+    const showError = touched.regels?.[index]?.[field] && errors.regels?.[index]?.[field]
+    if (!showError) return null
+    return <p className="text-xs text-red-600 mt-0.5">{errors.regels![index][field]}</p>
+  }
+
+  function reistijdInputClasses(field: keyof ReistijdState): string {
+    const base = 'w-full border rounded-lg px-4 py-2 text-sm disabled:bg-gray-50'
+    const showError = touched.reistijd?.[field] && errors.reistijd?.[field]
+    return `${base} ${showError ? 'border-red-500 bg-red-50' : 'border-gray-300'}`
+  }
+
+  function reistijdErrorMessage(field: keyof ReistijdState) {
+    const showError = touched.reistijd?.[field] && errors.reistijd?.[field]
+    if (!showError) return null
+    return <p className="text-xs text-red-600 mt-1">{errors.reistijd![field]}</p>
+  }
+
+  // ============================================================
+  // Reistijd & totalen berekening
+  // ============================================================
 
   const reistijdBedrag = useMemo(() => {
     if (!form.reistijd.enabled) {
@@ -298,16 +533,12 @@ export function FactuurFormulier() {
     }
   }, [form.reistijd, reistijdInstellingen])
 
-  // ============================================================
-  // Totalen (live)
-  // ============================================================
   const totalen = useMemo(() => {
     const regelBedragen = form.regels.map(berekenRegel)
     let totaalExcl = regelBedragen.reduce((s, r) => s + r.bedragExcl, 0)
     let totaalBtw = regelBedragen.reduce((s, r) => s + r.btwBedrag, 0)
     let totaalIncl = regelBedragen.reduce((s, r) => s + r.bedragIncl, 0)
 
-    // Splitsing per BTW-tarief
     const perTarief = new Map<number, { over: number; btw: number }>()
     form.regels.forEach((regel, i) => {
       const bedrag = regelBedragen[i]
@@ -318,7 +549,6 @@ export function FactuurFormulier() {
       })
     })
 
-    // Reistijd toevoegen
     if (form.reistijd.enabled && reistijdBedrag.excl > 0) {
       totaalExcl += reistijdBedrag.excl
       totaalBtw += reistijdBedrag.btw
@@ -346,16 +576,44 @@ export function FactuurFormulier() {
   }, [form.regels, form.reistijd, reistijdBedrag])
 
   // ============================================================
-  // Opslaan
+  // Submit
   // ============================================================
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!form.klantId) {
-      toast.error('Kies een klant')
-      return
-    }
+
+    // Markeer alles als touched
+    setTouched({
+      klantId: true,
+      datum: true,
+      vervalDatum: true,
+      referentie: true,
+      opmerkingen: true,
+      regels: form.regels.map(() => ({
+        datum: true,
+        omschrijving: true,
+        aantal: true,
+        prijsPerStuk: true,
+        btwTariefId: true
+      })),
+      reistijd: {
+        uren: true,
+        km: true,
+        omschrijving: true,
+        btwTariefId: true
+      }
+    })
+
+    const formErrors = validateForm(form)
+    setErrors(formErrors)
+
     if (form.regels.length === 0) {
       toast.error('Voeg minstens één factuurregel toe')
+      return
+    }
+
+    if (heeftErrors(formErrors)) {
+      toast.error('Controleer de gemarkeerde velden')
       return
     }
 
@@ -373,7 +631,7 @@ export function FactuurFormulier() {
           : null
 
       const input: FactuurInput = {
-        klantId: form.klantId,
+        klantId: form.klantId!,
         datum: form.datum,
         vervalDatum: form.vervalDatum,
         referentie: form.referentie || undefined,
@@ -427,9 +685,34 @@ export function FactuurFormulier() {
     }
   }
 
+  // Banner: alleen bij touched fouten
+  const heeftZichtbareErrors = (() => {
+    if (touched.klantId && errors.klantId) return true
+    if (touched.datum && errors.datum) return true
+    if (touched.vervalDatum && errors.vervalDatum) return true
+    if (touched.referentie && errors.referentie) return true
+    if (touched.opmerkingen && errors.opmerkingen) return true
+    if (errors.regels && touched.regels) {
+      for (let i = 0; i < errors.regels.length; i++) {
+        const re = errors.regels[i]
+        const tr = touched.regels[i] || {}
+        for (const key of Object.keys(re)) {
+          if (tr[key as keyof RegelState]) return true
+        }
+      }
+    }
+    if (errors.reistijd && touched.reistijd) {
+      for (const key of Object.keys(errors.reistijd)) {
+        if (touched.reistijd[key as keyof ReistijdState]) return true
+      }
+    }
+    return false
+  })()
+
   // ============================================================
   // Render
   // ============================================================
+
   if (loading) {
     return <div className="text-center text-gray-500 py-12">Laden...</div>
   }
@@ -452,7 +735,6 @@ export function FactuurFormulier() {
           </h1>
         </div>
         <div className="flex gap-2">
-          {/* PDF-knoppen alleen bij bestaande factuur */}
           {editId && (
             <>
               <button
@@ -501,7 +783,7 @@ export function FactuurFormulier() {
         </div>
       </div>
 
-      <form id="factuur-form" onSubmit={handleSubmit} className="space-y-6">
+      <form id="factuur-form" onSubmit={handleSubmit} noValidate className="space-y-6">
         {/* Basisgegevens */}
         <div className="bg-white rounded-xl border border-gray-200 p-6">
           <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wide mb-4">
@@ -512,13 +794,13 @@ export function FactuurFormulier() {
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-600 mb-1">Klant *</label>
               <select
-                required
                 disabled={readOnly}
                 value={form.klantId ?? ''}
                 onChange={(e) =>
-                  setForm({ ...form, klantId: parseInt(e.target.value, 10) || null })
+                  applyForm({ ...form, klantId: parseInt(e.target.value, 10) || null })
                 }
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm disabled:bg-gray-50"
+                onBlur={() => touchField('klantId')}
+                className={inputClasses('klantId')}
               >
                 <option value="">-- Kies een klant --</option>
                 {klanten.map((k) => (
@@ -528,6 +810,7 @@ export function FactuurFormulier() {
                   </option>
                 ))}
               </select>
+              {fieldErrorMessage('klantId')}
               {klanten.length === 0 && (
                 <p className="text-xs text-red-600 mt-1">
                   Geen klanten gevonden.{' '}
@@ -554,34 +837,38 @@ export function FactuurFormulier() {
                 type="text"
                 disabled={readOnly}
                 value={form.referentie}
-                onChange={(e) => setForm({ ...form, referentie: e.target.value })}
+                onChange={(e) => applyForm({ ...form, referentie: e.target.value })}
+                onBlur={() => touchField('referentie')}
                 placeholder="bv. inkoopnummer klant"
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm disabled:bg-gray-50"
+                className={inputClasses('referentie')}
               />
+              {fieldErrorMessage('referentie')}
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-600 mb-1">Factuurdatum *</label>
               <input
                 type="date"
-                required
                 disabled={readOnly}
                 value={form.datum}
                 onChange={(e) => handleDatumChange(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm disabled:bg-gray-50"
+                onBlur={() => touchField('datum')}
+                className={inputClasses('datum')}
               />
+              {fieldErrorMessage('datum')}
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-600 mb-1">Vervaldatum *</label>
               <input
                 type="date"
-                required
                 disabled={readOnly}
                 value={form.vervalDatum}
-                onChange={(e) => setForm({ ...form, vervalDatum: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm disabled:bg-gray-50"
+                onChange={(e) => applyForm({ ...form, vervalDatum: e.target.value })}
+                onBlur={() => touchField('vervalDatum')}
+                className={inputClasses('vervalDatum')}
               />
+              {fieldErrorMessage('vervalDatum')}
             </div>
           </div>
         </div>
@@ -604,7 +891,9 @@ export function FactuurFormulier() {
           </div>
 
           {form.regels.length === 0 ? (
-            <div className="text-center text-gray-500 text-sm py-8">Nog geen regels</div>
+            <div className="text-center text-red-600 text-sm py-8 bg-red-50 border border-red-200 rounded-lg">
+              ⚠️ Voeg minstens één factuurregel toe
+            </div>
           ) : (
             <div className="space-y-2">
               {form.regels.map((regel, index) => {
@@ -622,50 +911,55 @@ export function FactuurFormulier() {
                           disabled={readOnly}
                           value={regel.datum}
                           onChange={(e) => updateRegel(index, { datum: e.target.value })}
-                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm disabled:bg-gray-100"
+                          onBlur={() => touchRegelField(index, 'datum')}
+                          className={regelInputClasses(index, 'datum')}
                         />
+                        {regelErrorMessage(index, 'datum')}
                       </div>
 
                       <div className="col-span-12 md:col-span-4">
                         <label className="block text-xs text-gray-500 mb-0.5">Omschrijving</label>
                         <input
                           type="text"
-                          required
                           disabled={readOnly}
                           value={regel.omschrijving}
                           onChange={(e) => updateRegel(index, { omschrijving: e.target.value })}
+                          onBlur={() => touchRegelField(index, 'omschrijving')}
                           placeholder="bv. Installatie warmtepomp"
-                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm disabled:bg-gray-100"
+                          className={regelInputClasses(index, 'omschrijving')}
                         />
+                        {regelErrorMessage(index, 'omschrijving')}
                       </div>
 
                       <div className="col-span-4 md:col-span-1">
                         <label className="block text-xs text-gray-500 mb-0.5">Aantal</label>
                         <input
                           type="number"
-                          required
                           step="1"
                           min="1"
                           disabled={readOnly}
                           value={regel.aantal}
                           onChange={(e) => updateRegel(index, { aantal: e.target.value })}
-                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm disabled:bg-gray-100"
+                          onBlur={() => touchRegelField(index, 'aantal')}
+                          className={regelInputClasses(index, 'aantal')}
                         />
+                        {regelErrorMessage(index, 'aantal')}
                       </div>
 
                       <div className="col-span-4 md:col-span-2">
                         <label className="block text-xs text-gray-500 mb-0.5">Stuksprijs</label>
                         <input
                           type="number"
-                          required
                           step="0.01"
                           min="0"
                           disabled={readOnly}
                           value={regel.prijsPerStuk}
                           onChange={(e) => updateRegel(index, { prijsPerStuk: e.target.value })}
+                          onBlur={() => touchRegelField(index, 'prijsPerStuk')}
                           placeholder="0.00"
-                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm disabled:bg-gray-100"
+                          className={regelInputClasses(index, 'prijsPerStuk')}
                         />
+                        {regelErrorMessage(index, 'prijsPerStuk')}
                       </div>
 
                       <div className="col-span-4 md:col-span-1">
@@ -674,7 +968,8 @@ export function FactuurFormulier() {
                           disabled={readOnly}
                           value={regel.btwTariefId}
                           onChange={(e) => updateRegelTarief(index, parseInt(e.target.value, 10))}
-                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm disabled:bg-gray-100"
+                          onBlur={() => touchRegelField(index, 'btwTariefId')}
+                          className={regelInputClasses(index, 'btwTariefId')}
                         >
                           {tarieven.map((t) => (
                             <option key={t.id} value={t.id}>
@@ -682,6 +977,7 @@ export function FactuurFormulier() {
                             </option>
                           ))}
                         </select>
+                        {regelErrorMessage(index, 'btwTariefId')}
                       </div>
 
                       <div className="col-span-12 md:col-span-2 flex items-end">
@@ -777,9 +1073,11 @@ export function FactuurFormulier() {
                     disabled={readOnly}
                     value={form.reistijd.uren}
                     onChange={(e) => updateReistijd({ uren: e.target.value })}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm disabled:bg-gray-50"
+                    onBlur={() => touchReistijdField('uren')}
+                    className={reistijdInputClasses('uren')}
                   />
-                  {reistijdInstellingen.uurtarief > 0 && (
+                  {reistijdErrorMessage('uren')}
+                  {reistijdInstellingen.uurtarief > 0 && !errors.reistijd?.uren && (
                     <p className="text-xs text-gray-500 mt-1">
                       {form.reistijd.uren || '0'} × {formatCurrency(reistijdInstellingen.uurtarief)}{' '}
                       ={' '}
@@ -801,19 +1099,23 @@ export function FactuurFormulier() {
                     disabled={readOnly || reistijdInstellingen.kmtarief === 0}
                     value={form.reistijd.km}
                     onChange={(e) => updateReistijd({ km: e.target.value })}
+                    onBlur={() => touchReistijdField('km')}
                     placeholder={
                       reistijdInstellingen.kmtarief > 0 ? '0' : 'Geen km-tarief ingesteld'
                     }
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm disabled:bg-gray-50 disabled:text-gray-400"
+                    className={reistijdInputClasses('km')}
                   />
-                  {reistijdInstellingen.kmtarief > 0 && form.reistijd.km && (
-                    <p className="text-xs text-gray-500 mt-1">
-                      {form.reistijd.km} × {formatCurrency(reistijdInstellingen.kmtarief)} ={' '}
-                      {formatCurrency(
-                        (parseFloat(form.reistijd.km) || 0) * reistijdInstellingen.kmtarief
-                      )}
-                    </p>
-                  )}
+                  {reistijdErrorMessage('km')}
+                  {reistijdInstellingen.kmtarief > 0 &&
+                    form.reistijd.km &&
+                    !errors.reistijd?.km && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        {form.reistijd.km} × {formatCurrency(reistijdInstellingen.kmtarief)} ={' '}
+                        {formatCurrency(
+                          (parseFloat(form.reistijd.km) || 0) * reistijdInstellingen.kmtarief
+                        )}
+                      </p>
+                    )}
                 </div>
 
                 <div className="md:col-span-2">
@@ -825,8 +1127,10 @@ export function FactuurFormulier() {
                     disabled={readOnly}
                     value={form.reistijd.omschrijving}
                     onChange={(e) => updateReistijd({ omschrijving: e.target.value })}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm disabled:bg-gray-50"
+                    onBlur={() => touchReistijdField('omschrijving')}
+                    className={reistijdInputClasses('omschrijving')}
                   />
+                  {reistijdErrorMessage('omschrijving')}
                 </div>
 
                 <div className="md:col-span-2">
@@ -835,7 +1139,8 @@ export function FactuurFormulier() {
                     disabled={readOnly}
                     value={form.reistijd.btwTariefId ?? ''}
                     onChange={(e) => updateReistijdTarief(parseInt(e.target.value, 10))}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm disabled:bg-gray-50"
+                    onBlur={() => touchReistijdField('btwTariefId')}
+                    className={reistijdInputClasses('btwTariefId')}
                   >
                     <option value="">-- Kies tarief --</option>
                     {tarieven.map((t) => (
@@ -844,6 +1149,7 @@ export function FactuurFormulier() {
                       </option>
                     ))}
                   </select>
+                  {reistijdErrorMessage('btwTariefId')}
                 </div>
 
                 <div className="md:col-span-2 bg-blue-50 border border-blue-200 rounded-lg p-3 space-y-1 text-sm">
@@ -912,13 +1218,27 @@ export function FactuurFormulier() {
           <textarea
             disabled={readOnly}
             value={form.opmerkingen}
-            onChange={(e) => setForm({ ...form, opmerkingen: e.target.value })}
+            onChange={(e) => applyForm({ ...form, opmerkingen: e.target.value })}
+            onBlur={() => touchField('opmerkingen')}
             rows={3}
             placeholder="Optionele opmerkingen voor op de factuur..."
-            className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm disabled:bg-gray-50"
+            className={
+              touched.opmerkingen && errors.opmerkingen
+                ? 'w-full border border-red-500 bg-red-50 rounded-lg px-4 py-2 text-sm disabled:bg-gray-50'
+                : 'w-full border border-gray-300 rounded-lg px-4 py-2 text-sm disabled:bg-gray-50'
+            }
           />
+          {fieldErrorMessage('opmerkingen')}
         </div>
+
+        {/* Banner met fout-overzicht */}
+        {heeftZichtbareErrors && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">
+            ⚠️ Er zijn nog fouten in het formulier. Controleer de gemarkeerde velden.
+          </div>
+        )}
       </form>
+
       <PdfPreviewModal
         factuurId={previewOpen ? editId : null}
         factuurNummer={factuurNummer}

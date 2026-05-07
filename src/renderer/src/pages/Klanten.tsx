@@ -5,6 +5,14 @@ import type { KlantInput } from '../../../shared/schemas'
 import { klantDisplayNaam } from '../../../shared/klant-utils'
 import { useToast } from '../components/Toast'
 import { useConfirm } from '../components/ConfirmDialog'
+import {
+  validatePostcode,
+  validateEmail,
+  validateTelefoon,
+  validateKvk,
+  validateBtwNummer,
+  validateRequired
+} from '../utils/validators'
 
 type FormState = {
   type: 'particulier' | 'zakelijk'
@@ -21,6 +29,8 @@ type FormState = {
   btwNummer: string
 }
 
+type FormErrors = Partial<Record<keyof FormState, string>>
+
 const emptyForm: FormState = {
   type: 'particulier',
   bedrijfsnaam: '',
@@ -36,11 +46,50 @@ const emptyForm: FormState = {
   btwNummer: ''
 }
 
+// ============================================================
+// Validatie-functie voor het hele formulier
+// ============================================================
+
+function validateForm(form: FormState): FormErrors {
+  const errors: FormErrors = {}
+
+  // Verplichte velden per type
+  if (form.type === 'zakelijk') {
+    const err = validateRequired(form.bedrijfsnaam, 'Bedrijfsnaam')
+    if (err) errors.bedrijfsnaam = err
+  } else {
+    const err = validateRequired(form.achternaam, 'Achternaam')
+    if (err) errors.achternaam = err
+  }
+
+  // Format-checks (alleen als ingevuld)
+  errors.postcode = validatePostcode(form.postcode) ?? undefined
+  errors.email = validateEmail(form.email) ?? undefined
+  errors.telefoon = validateTelefoon(form.telefoon) ?? undefined
+  errors.kvkNummer = validateKvk(form.kvkNummer) ?? undefined
+  errors.btwNummer = validateBtwNummer(form.btwNummer) ?? undefined
+
+  // Verwijder undefined-waardes voor cleanere check
+  Object.keys(errors).forEach((key) => {
+    if (errors[key as keyof FormErrors] === undefined) {
+      delete errors[key as keyof FormErrors]
+    }
+  })
+
+  return errors
+}
+
+// ============================================================
+// Component
+// ============================================================
+
 export function Klanten() {
   const [klanten, setKlanten] = useState<Klant[]>([])
   const [zoek, setZoek] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
   const [form, setForm] = useState<FormState>(emptyForm)
+  const [errors, setErrors] = useState<FormErrors>({})
+  const [touched, setTouched] = useState<Record<string, boolean>>({})
   const [editId, setEditId] = useState<number | null>(null)
   const [saving, setSaving] = useState(false)
   const toast = useToast()
@@ -57,6 +106,8 @@ export function Klanten() {
 
   function openNew() {
     setForm(emptyForm)
+    setErrors({})
+    setTouched({})
     setEditId(null)
     setModalOpen(true)
   }
@@ -76,12 +127,25 @@ export function Klanten() {
       kvkNummer: k.kvkNummer || '',
       btwNummer: k.btwNummer || ''
     })
+    setErrors({})
+    setTouched({})
     setEditId(k.id)
     setModalOpen(true)
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+
+    // Valideer alles bij submit, ook ongeziene velden
+    const formErrors = validateForm(form)
+    setErrors(formErrors)
+    setTouched(Object.keys(form).reduce((acc, key) => ({ ...acc, [key]: true }), {}))
+
+    if (Object.keys(formErrors).length > 0) {
+      toast.error('Controleer de gemarkeerde velden')
+      return
+    }
+
     setSaving(true)
     try {
       const input = form as KlantInput
@@ -119,7 +183,18 @@ export function Klanten() {
   }
 
   function updateField<K extends keyof FormState>(key: K, value: FormState[K]) {
-    setForm({ ...form, [key]: value })
+    const newForm = { ...form, [key]: value }
+    setForm(newForm)
+
+    // Live revalideren als veld al touched is
+    const newErrors = validateForm(newForm)
+    setErrors(newErrors)
+  }
+
+  function handleBlur(key: keyof FormState) {
+    setTouched({ ...touched, [key]: true })
+    const newErrors = validateForm(form)
+    setErrors(newErrors)
   }
 
   const filtered = klanten.filter((k) => {
@@ -132,6 +207,20 @@ export function Klanten() {
   })
 
   const isZakelijk = form.type === 'zakelijk'
+
+  // Helper voor input-classes
+  function inputClasses(field: keyof FormState): string {
+    const base = 'w-full border rounded-lg px-4 py-2 text-sm'
+    const hasError = touched[field] && errors[field]
+    return `${base} ${hasError ? 'border-red-500 bg-red-50' : 'border-gray-300'}`
+  }
+
+  // Helper voor foutmelding eronder
+  function errorMessage(field: keyof FormState) {
+    const hasError = touched[field] && errors[field]
+    if (!hasError) return null
+    return <p className="text-xs text-red-600 mt-1">{errors[field]}</p>
+  }
 
   return (
     <div className="space-y-6">
@@ -213,7 +302,7 @@ export function Klanten() {
       {modalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+            <form onSubmit={handleSubmit} className="p-6 space-y-4" noValidate>
               <h2 className="text-xl font-bold">{editId ? 'Klant bewerken' : 'Nieuwe klant'}</h2>
 
               {/* Type-toggle */}
@@ -251,15 +340,16 @@ export function Klanten() {
                     </label>
                     <input
                       type="text"
-                      required
                       value={form.bedrijfsnaam}
                       onChange={(e) => updateField('bedrijfsnaam', e.target.value)}
-                      className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm"
+                      onBlur={() => handleBlur('bedrijfsnaam')}
+                      className={inputClasses('bedrijfsnaam')}
                     />
+                    {errorMessage('bedrijfsnaam')}
                   </div>
                 )}
 
-                {/* Naam */}
+                {/* Aanhef */}
                 <div>
                   <label className="block text-sm font-medium text-gray-600 mb-1">Aanhef</label>
                   <select
@@ -275,6 +365,7 @@ export function Klanten() {
 
                 <div />
 
+                {/* Voornaam */}
                 <div>
                   <label className="block text-sm font-medium text-gray-600 mb-1">Voornaam</label>
                   <input
@@ -285,17 +376,19 @@ export function Klanten() {
                   />
                 </div>
 
+                {/* Achternaam */}
                 <div>
                   <label className="block text-sm font-medium text-gray-600 mb-1">
                     Achternaam {!isZakelijk && '*'}
                   </label>
                   <input
                     type="text"
-                    required={!isZakelijk}
                     value={form.achternaam}
                     onChange={(e) => updateField('achternaam', e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm"
+                    onBlur={() => handleBlur('achternaam')}
+                    className={inputClasses('achternaam')}
                   />
+                  {errorMessage('achternaam')}
                 </div>
 
                 {/* Adres */}
@@ -310,16 +403,21 @@ export function Klanten() {
                   />
                 </div>
 
+                {/* Postcode */}
                 <div>
                   <label className="block text-sm font-medium text-gray-600 mb-1">Postcode</label>
                   <input
                     type="text"
                     value={form.postcode}
                     onChange={(e) => updateField('postcode', e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm"
+                    onBlur={() => handleBlur('postcode')}
+                    placeholder="1234 AB"
+                    className={inputClasses('postcode')}
                   />
+                  {errorMessage('postcode')}
                 </div>
 
+                {/* Plaats */}
                 <div>
                   <label className="block text-sm font-medium text-gray-600 mb-1">Plaats</label>
                   <input
@@ -330,25 +428,32 @@ export function Klanten() {
                   />
                 </div>
 
-                {/* Contact */}
+                {/* E-mail */}
                 <div>
                   <label className="block text-sm font-medium text-gray-600 mb-1">E-mail</label>
                   <input
-                    type="email"
+                    type="text"
                     value={form.email}
                     onChange={(e) => updateField('email', e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm"
+                    onBlur={() => handleBlur('email')}
+                    placeholder="naam@voorbeeld.nl"
+                    className={inputClasses('email')}
                   />
+                  {errorMessage('email')}
                 </div>
 
+                {/* Telefoon */}
                 <div>
                   <label className="block text-sm font-medium text-gray-600 mb-1">Telefoon</label>
                   <input
                     type="tel"
                     value={form.telefoon}
                     onChange={(e) => updateField('telefoon', e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm"
+                    onBlur={() => handleBlur('telefoon')}
+                    placeholder="06-12345678"
+                    className={inputClasses('telefoon')}
                   />
+                  {errorMessage('telefoon')}
                 </div>
 
                 {/* KvK/BTW (alleen zakelijk) */}
@@ -362,8 +467,11 @@ export function Klanten() {
                         type="text"
                         value={form.kvkNummer}
                         onChange={(e) => updateField('kvkNummer', e.target.value)}
-                        className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm"
+                        onBlur={() => handleBlur('kvkNummer')}
+                        placeholder="12345678"
+                        className={inputClasses('kvkNummer')}
                       />
+                      {errorMessage('kvkNummer')}
                     </div>
 
                     <div>
@@ -374,12 +482,22 @@ export function Klanten() {
                         type="text"
                         value={form.btwNummer}
                         onChange={(e) => updateField('btwNummer', e.target.value)}
-                        className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm"
+                        onBlur={() => handleBlur('btwNummer')}
+                        placeholder="NL123456789B01"
+                        className={inputClasses('btwNummer')}
                       />
+                      {errorMessage('btwNummer')}
                     </div>
                   </>
                 )}
               </div>
+
+              {/* Algemene foutmelding bij submit */}
+              {Object.keys(errors).some((key) => touched[key as keyof FormState]) && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">
+                  ⚠️ Er zijn nog fouten in het formulier. Controleer de gemarkeerde velden.
+                </div>
+              )}
 
               <div className="flex justify-end gap-2 pt-4 border-t border-gray-100">
                 <button
