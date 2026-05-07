@@ -65,15 +65,24 @@ export class DashboardService {
     return {
       openstaand: {
         aantal: openstaandeFacturen.length,
-        bedrag: openstaandeFacturen.reduce((sum, f) => sum + f.totaalIncl, 0)
+        bedrag: {
+          incl: openstaandeFacturen.reduce((sum, f) => sum + f.totaalIncl, 0),
+          excl: openstaandeFacturen.reduce((sum, f) => sum + f.totaalExcl, 0)
+        }
       },
       vervallen: {
         aantal: vervallenFacturen.length,
-        bedrag: vervallenFacturen.reduce((sum, f) => sum + f.totaalIncl, 0)
+        bedrag: {
+          incl: vervallenFacturen.reduce((sum, f) => sum + f.totaalIncl, 0),
+          excl: vervallenFacturen.reduce((sum, f) => sum + f.totaalExcl, 0)
+        }
       },
       ditKwartaal: {
         aantal: ditKwartaalFacturen.length,
-        bedrag: ditKwartaalFacturen.reduce((sum, f) => sum + f.totaalIncl, 0)
+        bedrag: {
+          incl: ditKwartaalFacturen.reduce((sum, f) => sum + f.totaalIncl, 0),
+          excl: ditKwartaalFacturen.reduce((sum, f) => sum + f.totaalExcl, 0)
+        }
       },
       laatsteFacturen: laatsteFacturenRaw.map(serializeFactuur)
     }

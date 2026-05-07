@@ -1,5 +1,5 @@
 // scripts/create-seed.mjs
-import Database from 'better-sqlite3'
+import { DatabaseSync } from 'node:sqlite'
 import fs from 'fs'
 
 const devDb = 'dev.db'
@@ -13,7 +13,7 @@ if (!fs.existsSync(devDb)) {
 fs.copyFileSync(devDb, seedDb)
 console.log('✅ dev.db gekopieerd naar seed.db')
 
-const db = new Database(seedDb)
+const db = new DatabaseSync(seedDb)
 
 try {
   db.exec(`

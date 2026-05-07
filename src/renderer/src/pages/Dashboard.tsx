@@ -1,6 +1,7 @@
 // src/renderer/src/pages/Dashboard.tsx
 
 import { useNavigate } from 'react-router-dom'
+import { useState } from 'react'
 import { useApi } from '../hooks/useApi'
 import { ErrorMessage } from '../components/ErrorMessage'
 import { formatCurrency, formatDate } from '../utils/formatters'
@@ -13,6 +14,15 @@ export function Dashboard() {
   const now = new Date()
   const kwartaal = Math.floor(now.getMonth() / 3) + 1
   const jaar = now.getFullYear()
+
+  const [toonExcl, setToonExcl] = useState<boolean>(() => {
+    return localStorage.getItem('dashboard_toon_excl') === 'true'
+  })
+
+  function setToonExclPersist(value: boolean) {
+    setToonExcl(value)
+    localStorage.setItem('dashboard_toon_excl', String(value))
+  }
 
   const {
     data: btw,
@@ -38,11 +48,31 @@ export function Dashboard() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold">📊 Dashboard</h1>
-        <p className="text-gray-600 text-sm mt-1">
-          Overzicht van Q{kwartaal} {jaar}
-        </p>
+      <div className="flex items-start justify-between flex-wrap gap-3">
+        <div>
+          <h1 className="text-2xl font-bold">📊 Dashboard</h1>
+          <p className="text-gray-600 text-sm mt-1">
+            Overzicht van Q{kwartaal} {jaar}
+          </p>
+        </div>
+        <div className="inline-flex rounded-lg border border-gray-300 bg-white overflow-hidden text-sm">
+          <button
+            onClick={() => setToonExclPersist(false)}
+            className={`px-4 py-2 font-medium transition-colors ${
+              !toonExcl ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            Incl. BTW
+          </button>
+          <button
+            onClick={() => setToonExclPersist(true)}
+            className={`px-4 py-2 font-medium transition-colors ${
+              toonExcl ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            Excl. BTW
+          </button>
+        </div>
       </div>
 
       {loading && <div className="text-center py-12 text-gray-500">Laden...</div>}
@@ -58,14 +88,18 @@ export function Dashboard() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Card
                 label="Openstaand"
-                value={formatCurrency(stats.openstaand.bedrag)}
+                value={formatCurrency(
+                  toonExcl ? stats.openstaand.bedrag.excl : stats.openstaand.bedrag.incl
+                )}
                 sub={`${stats.openstaand.aantal} factu${stats.openstaand.aantal === 1 ? 'ur' : 'ren'}`}
                 color="blue"
                 onClick={() => navigate('/facturen')}
               />
               <Card
                 label="Vervallen"
-                value={formatCurrency(stats.vervallen.bedrag)}
+                value={formatCurrency(
+                  toonExcl ? stats.vervallen.bedrag.excl : stats.vervallen.bedrag.incl
+                )}
                 sub={
                   stats.vervallen.aantal === 0
                     ? 'Alles op tijd ✨'
@@ -76,7 +110,9 @@ export function Dashboard() {
               />
               <Card
                 label={`Dit kwartaal (Q${kwartaal})`}
-                value={formatCurrency(stats.ditKwartaal.bedrag)}
+                value={formatCurrency(
+                  toonExcl ? stats.ditKwartaal.bedrag.excl : stats.ditKwartaal.bedrag.incl
+                )}
                 sub={`${stats.ditKwartaal.aantal} factu${stats.ditKwartaal.aantal === 1 ? 'ur' : 'ren'}`}
                 color="gray"
               />
@@ -150,7 +186,7 @@ export function Dashboard() {
                             <StatusBadge status={f.status} vervallen={vervallen} />
                           </td>
                           <td className="px-4 py-3 text-right font-medium">
-                            {formatCurrency(f.totaalIncl)}
+                            {formatCurrency(toonExcl ? f.totaalExcl : f.totaalIncl)}
                           </td>
                         </tr>
                       )

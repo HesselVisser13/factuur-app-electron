@@ -115,18 +115,23 @@ export interface IpcResult<T> {
   error?: string
 }
 
+export type DashboardBedrag = {
+  incl: number
+  excl: number
+}
+
 export type DashboardStats = {
   openstaand: {
     aantal: number
-    bedrag: number
+    bedrag: DashboardBedrag
   }
   vervallen: {
     aantal: number
-    bedrag: number
+    bedrag: DashboardBedrag
   }
   ditKwartaal: {
     aantal: number
-    bedrag: number
+    bedrag: DashboardBedrag
   }
   laatsteFacturen: Factuur[]
 }
