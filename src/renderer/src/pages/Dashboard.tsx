@@ -1,28 +1,30 @@
 // src/renderer/src/pages/Dashboard.tsx
 
+import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useState } from 'react'
-import { useApi } from '../hooks/useApi'
-import { ErrorMessage } from '../components/ErrorMessage'
-import { formatCurrency, formatDate } from '../utils/formatters'
-import { btwAangifteApi, dashboardApi } from '../api'
-import { klantDisplayNaam } from '../../../shared/klant-utils'
-import type { BtwAangifte, DashboardStats } from '../../../shared/types'
+
+import { btwAangifteApi, dashboardApi } from '@renderer/api'
+import { BtwToggle } from '@renderer/components/BtwToggle'
+import { Card } from '@renderer/components/Card'
+import { DashboardSkeleton } from '@renderer/components/DashboardSkeleton'
+import { ErrorMessage } from '@renderer/components/ErrorMessage'
+import { LaatsteFacturenTable } from '@renderer/components/LaatsteFacturenTable'
+import { SectionHeader } from '@renderer/components/SectionHeader'
+import { useApi } from '@renderer/hooks/useApi'
+import { useLocalStorage } from '@renderer/hooks/useLocalStorage'
+import { formatCurrency } from '@renderer/utils/formatters'
+import { getHuidigKwartaal } from '@renderer/utils/kwartaal'
+import { facturenLabel } from '@renderer/utils/pluralize'
+import type { BtwAangifte, DashboardStats } from '@shared/types'
+
+const STORAGE_KEYS = {
+  toonExcl: 'dashboard_toon_excl'
+} as const
 
 export function Dashboard() {
   const navigate = useNavigate()
-  const now = new Date()
-  const kwartaal = Math.floor(now.getMonth() / 3) + 1
-  const jaar = now.getFullYear()
-
-  const [toonExcl, setToonExcl] = useState<boolean>(() => {
-    return localStorage.getItem('dashboard_toon_excl') === 'true'
-  })
-
-  function setToonExclPersist(value: boolean) {
-    setToonExcl(value)
-    localStorage.setItem('dashboard_toon_excl', String(value))
-  }
+  const { kwartaal, jaar } = useMemo(() => getHuidigKwartaal(), [])
+  const [toonExcl, setToonExcl] = useLocalStorage<boolean>(STORAGE_KEYS.toonExcl, false)
 
   const {
     data: btw,
@@ -39,233 +41,116 @@ export function Dashboard() {
   } = useApi<DashboardStats>(() => dashboardApi.getStats(), [])
 
   const loading = btwLoading || statsLoading
-  const error = btwError || statsError
+  const error = btwError ?? statsError
 
-  function refetch() {
+  const btwTotalen = useMemo(() => {
+    if (!btw) return { omzet: 0, inkoop: 0 }
+    return btw.regels.reduce(
+      (acc, r) => ({
+        omzet: acc.omzet + r.omzet,
+        inkoop: acc.inkoop + r.inkoop
+      }),
+      { omzet: 0, inkoop: 0 }
+    )
+  }, [btw])
+
+  const refetch = (): void => {
     refetchBtw()
     refetchStats()
   }
 
+  const bedrag = (b: { excl: number; incl: number }): number => (toonExcl ? b.excl : b.incl)
+
   return (
     <div className="space-y-8">
-      <div className="flex items-start justify-between flex-wrap gap-3">
+      <header className="flex items-start justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold">📊 Dashboard</h1>
+          <h1 className="text-2xl font-bold">
+            <span aria-hidden="true">📊</span> Dashboard
+          </h1>
           <p className="text-gray-600 text-sm mt-1">
             Overzicht van Q{kwartaal} {jaar}
           </p>
         </div>
-        <div className="inline-flex rounded-lg border border-gray-300 bg-white overflow-hidden text-sm">
-          <button
-            onClick={() => setToonExclPersist(false)}
-            className={`px-4 py-2 font-medium transition-colors ${
-              !toonExcl ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-gray-50'
-            }`}
-          >
-            Incl. BTW
-          </button>
-          <button
-            onClick={() => setToonExclPersist(true)}
-            className={`px-4 py-2 font-medium transition-colors ${
-              toonExcl ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-gray-50'
-            }`}
-          >
-            Excl. BTW
-          </button>
-        </div>
-      </div>
+        <BtwToggle toonExcl={toonExcl} onChange={setToonExcl} />
+      </header>
 
-      {loading && <div className="text-center py-12 text-gray-500">Laden...</div>}
+      {loading && <DashboardSkeleton />}
       {error && <ErrorMessage message={error} onRetry={refetch} />}
 
       {!loading && !error && btw && stats && (
         <>
-          {/* Facturen-sectie */}
-          <section>
-            <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wide mb-3">
-              Facturen
-            </h2>
+          <section aria-label="Facturen overzicht">
+            <SectionHeader title="Facturen" />
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Card
                 label="Openstaand"
-                value={formatCurrency(
-                  toonExcl ? stats.openstaand.bedrag.excl : stats.openstaand.bedrag.incl
-                )}
-                sub={`${stats.openstaand.aantal} factu${stats.openstaand.aantal === 1 ? 'ur' : 'ren'}`}
-                color="blue"
+                value={formatCurrency(bedrag(stats.openstaand.bedrag))}
+                sub={facturenLabel(stats.openstaand.aantal)}
+                tone="info"
                 onClick={() => navigate('/facturen')}
               />
               <Card
                 label="Vervallen"
-                value={formatCurrency(
-                  toonExcl ? stats.vervallen.bedrag.excl : stats.vervallen.bedrag.incl
-                )}
+                value={formatCurrency(bedrag(stats.vervallen.bedrag))}
                 sub={
                   stats.vervallen.aantal === 0
                     ? 'Alles op tijd ✨'
-                    : `${stats.vervallen.aantal} factu${stats.vervallen.aantal === 1 ? 'ur' : 'ren'} te laat`
+                    : `${facturenLabel(stats.vervallen.aantal)} te laat`
                 }
-                color={stats.vervallen.aantal > 0 ? 'red' : 'green'}
+                tone={stats.vervallen.aantal > 0 ? 'danger' : 'success'}
                 onClick={() => navigate('/facturen')}
               />
               <Card
                 label={`Dit kwartaal (Q${kwartaal})`}
-                value={formatCurrency(
-                  toonExcl ? stats.ditKwartaal.bedrag.excl : stats.ditKwartaal.bedrag.incl
-                )}
-                sub={`${stats.ditKwartaal.aantal} factu${stats.ditKwartaal.aantal === 1 ? 'ur' : 'ren'}`}
-                color="gray"
+                value={formatCurrency(bedrag(stats.ditKwartaal.bedrag))}
+                sub={facturenLabel(stats.ditKwartaal.aantal)}
+                tone="neutral"
               />
             </div>
           </section>
 
-          {/* BTW-sectie */}
-          <section>
-            <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wide mb-3">
-              BTW-aangifte Q{kwartaal}
-            </h2>
+          <section aria-label={`BTW-aangifte Q${kwartaal}`}>
+            <SectionHeader title={`BTW-aangifte Q${kwartaal}`} />
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Card
                 label="Omzet (excl. BTW)"
-                value={formatCurrency(btw.regels.reduce((sum, r) => sum + r.omzet, 0))}
-                color="blue"
+                value={formatCurrency(btwTotalen.omzet)}
+                tone="info"
               />
               <Card
                 label="Uitgaven (excl. BTW)"
-                value={formatCurrency(btw.regels.reduce((sum, r) => sum + r.inkoop, 0))}
-                color="gray"
+                value={formatCurrency(btwTotalen.inkoop)}
+                tone="neutral"
               />
               <Card
                 label="BTW af te dragen"
                 value={formatCurrency(btw.afTeDragen)}
-                color={btw.afTeDragen >= 0 ? 'red' : 'green'}
+                tone={btw.afTeDragen >= 0 ? 'danger' : 'success'}
                 onClick={() => navigate('/btw-aangifte')}
               />
             </div>
           </section>
 
-          {/* Laatste facturen */}
           {stats.laatsteFacturen.length > 0 && (
-            <section>
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wide">
-                  Laatste facturen
-                </h2>
-                <button
-                  onClick={() => navigate('/facturen')}
-                  className="text-sm text-blue-600 hover:text-blue-800 font-medium"
-                >
-                  Alle bekijken →
-                </button>
-              </div>
-              <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                <table className="w-full text-sm">
-                  <thead className="bg-gray-50 text-gray-600 uppercase text-xs">
-                    <tr>
-                      <th className="text-left px-4 py-3">Nummer</th>
-                      <th className="text-left px-4 py-3">Datum</th>
-                      <th className="text-left px-4 py-3">Klant</th>
-                      <th className="text-left px-4 py-3">Status</th>
-                      <th className="text-right px-4 py-3">Bedrag</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {stats.laatsteFacturen.map((f) => {
-                      const vervallen =
-                        f.status === 'verstuurd' && new Date(f.vervalDatum) < new Date()
-                      return (
-                        <tr
-                          key={f.id}
-                          onClick={() => navigate(`/facturen/${f.id}`)}
-                          className="border-t border-gray-100 hover:bg-gray-50 cursor-pointer"
-                        >
-                          <td className="px-4 py-3 font-medium font-mono">{f.factuurNummer}</td>
-                          <td className="px-4 py-3 text-gray-600">{formatDate(f.datum)}</td>
-                          <td className="px-4 py-3">{klantDisplayNaam(f.klant)}</td>
-                          <td className="px-4 py-3">
-                            <StatusBadge status={f.status} vervallen={vervallen} />
-                          </td>
-                          <td className="px-4 py-3 text-right font-medium">
-                            {formatCurrency(toonExcl ? f.totaalExcl : f.totaalIncl)}
-                          </td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
-              </div>
+            <section aria-label="Laatste facturen">
+              <SectionHeader
+                title="Laatste facturen"
+                action={
+                  <button
+                    type="button"
+                    onClick={() => navigate('/facturen')}
+                    className="text-sm text-blue-600 hover:text-blue-800 font-medium focus:outline-none focus-visible:underline"
+                  >
+                    Alle bekijken →
+                  </button>
+                }
+              />
+              <LaatsteFacturenTable facturen={stats.laatsteFacturen} toonExcl={toonExcl} />
             </section>
           )}
         </>
       )}
     </div>
-  )
-}
-
-// ============================================================
-// Card component (uitgebreid)
-// ============================================================
-
-type CardColor = 'blue' | 'gray' | 'red' | 'green'
-
-function Card({
-  label,
-  value,
-  sub,
-  color,
-  onClick
-}: {
-  label: string
-  value: string
-  sub?: string
-  color: CardColor
-  onClick?: () => void
-}) {
-  const colorClasses: Record<CardColor, string> = {
-    blue: 'border-blue-200 bg-blue-50',
-    gray: 'border-gray-200 bg-gray-50',
-    red: 'border-red-200 bg-red-50',
-    green: 'border-green-200 bg-green-50'
-  }
-
-  const clickableClasses = onClick ? 'cursor-pointer hover:shadow-md transition-shadow' : ''
-
-  return (
-    <div
-      onClick={onClick}
-      className={`rounded-xl border p-6 ${colorClasses[color]} ${clickableClasses}`}
-    >
-      <div className="text-xs text-gray-600 uppercase tracking-wide mb-2">{label}</div>
-      <div className="text-2xl font-bold">{value}</div>
-      {sub && <div className="text-xs text-gray-600 mt-2">{sub}</div>}
-    </div>
-  )
-}
-
-// ============================================================
-// Status badge
-// ============================================================
-
-function StatusBadge({ status, vervallen }: { status: string; vervallen: boolean }) {
-  const config: Record<string, { label: string; classes: string; icon: string }> = {
-    concept: { label: 'Concept', classes: 'bg-gray-100 text-gray-700', icon: '📝' },
-    verstuurd: { label: 'Verstuurd', classes: 'bg-blue-100 text-blue-700', icon: '📤' },
-    betaald: { label: 'Betaald', classes: 'bg-green-100 text-green-700', icon: '✅' },
-    geannuleerd: { label: 'Geannuleerd', classes: 'bg-red-100 text-red-700', icon: '🚫' }
-  }
-
-  const c = config[status]
-
-  return (
-    <>
-      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${c.classes}`}>
-        {c.icon} {c.label}
-      </span>
-      {vervallen && (
-        <span className="ml-2 text-xs px-2 py-0.5 rounded-full font-medium bg-red-100 text-red-700">
-          ⚠️ Vervallen
-        </span>
-      )}
-    </>
   )
 }
