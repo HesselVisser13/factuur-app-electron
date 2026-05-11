@@ -1,0 +1,101 @@
+//src/renderer/src/pages/Klanten/components/KlantenTabel.tsx
+
+import { klantDisplayNaam } from '@shared/klant-utils'
+import type { Klant } from '@shared/types'
+
+interface Props {
+  klanten: Klant[]
+  totalCount: number
+  deletingId: number | null
+  onEdit: (k: Klant) => void
+  onDelete: (k: Klant) => void
+}
+
+export function KlantenTabel({ klanten, totalCount, deletingId, onEdit, onDelete }: Props) {
+  if (klanten.length === 0) {
+    return (
+      <div className="bg-white rounded-xl border border-gray-200 p-8 text-center text-gray-500 text-sm">
+        {totalCount === 0
+          ? 'Nog geen klanten. Klik op "+ Nieuwe klant" om te beginnen.'
+          : 'Geen klanten gevonden.'}
+      </div>
+    )
+  }
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <table className="w-full text-sm">
+        <thead className="bg-gray-50 text-gray-600 uppercase text-xs">
+          <tr>
+            <th scope="col" className="text-left px-4 py-3">
+              Naam
+            </th>
+            <th scope="col" className="text-left px-4 py-3">
+              Type
+            </th>
+            <th scope="col" className="text-left px-4 py-3">
+              Plaats
+            </th>
+            <th scope="col" className="text-left px-4 py-3">
+              E-mail
+            </th>
+            <th scope="col" className="text-right px-4 py-3">
+              Acties
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {klanten.map((k) => {
+            const isDeleting = deletingId === k.id
+            return (
+              <tr
+                key={k.id}
+                className={`border-t border-gray-100 hover:bg-gray-50 ${
+                  isDeleting ? 'opacity-50' : ''
+                }`}
+              >
+                <td className="px-4 py-3 font-medium">{klantDisplayNaam(k)}</td>
+                <td className="px-4 py-3">
+                  <KlantTypeBadge type={k.type} />
+                </td>
+                <td className="px-4 py-3 text-gray-600">{k.plaats || '-'}</td>
+                <td className="px-4 py-3 text-gray-600">{k.email || '-'}</td>
+                <td className="px-4 py-3 text-right space-x-2">
+                  <button
+                    type="button"
+                    onClick={() => onEdit(k)}
+                    disabled={isDeleting}
+                    className="text-blue-600 hover:text-blue-800 font-medium disabled:opacity-50"
+                  >
+                    Bewerken
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onDelete(k)}
+                    disabled={deletingId !== null}
+                    className="text-red-600 hover:text-red-800 font-medium disabled:opacity-50"
+                  >
+                    {isDeleting ? 'Bezig...' : 'Verwijderen'}
+                  </button>
+                </td>
+              </tr>
+            )
+          })}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+function KlantTypeBadge({ type }: { type: 'particulier' | 'zakelijk' }) {
+  const isZakelijk = type === 'zakelijk'
+  return (
+    <span
+      className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+        isZakelijk ? 'bg-purple-100 text-purple-700' : 'bg-green-100 text-green-700'
+      }`}
+    >
+      {isZakelijk ? 'Zakelijk' : 'Particulier'}
+    </span>
+  )
+}
