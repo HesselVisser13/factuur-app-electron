@@ -1,6 +1,7 @@
 // src/renderer/src/pages/Instellingen/types.ts
 
 import type { InstellingenFormValues } from './instellingenFormSchema'
+import { DEFAULT_MAIL_BODY, DEFAULT_MAIL_ONDERWERP } from '@shared/constants'
 
 export const DEFAULT_VOORWAARDEN =
   'Wij verzoeken u vriendelijk het verschuldigde bedrag binnen {betaaltermijn} dagen over te maken onder vermelding van het factuurnummer.'
@@ -26,7 +27,9 @@ export const defaultInstellingen: InstellingenFormValues = {
   reiskosten_uurtarief: '55',
   reiskosten_kmtarief: '',
   reiskosten_btw_tarief_id: '',
-  reiskosten_omschrijving: 'Reistijd'
+  reiskosten_omschrijving: 'Reistijd',
+  mail_onderwerp_template: DEFAULT_MAIL_ONDERWERP,
+  mail_body_template: DEFAULT_MAIL_BODY
 }
 
 /** Map server-data naar form-values, met fallbacks. */
@@ -52,6 +55,8 @@ export function mapToForm(data: Record<string, string>): InstellingenFormValues 
     reiskosten_uurtarief: data.reiskosten_uurtarief || '55',
     reiskosten_kmtarief: data.reiskosten_kmtarief || '',
     reiskosten_btw_tarief_id: data.reiskosten_btw_tarief_id || '',
-    reiskosten_omschrijving: data.reiskosten_omschrijving || 'Reistijd'
+    reiskosten_omschrijving: data.reiskosten_omschrijving || 'Reistijd',
+    mail_onderwerp_template: data.mail_onderwerp_template || DEFAULT_MAIL_ONDERWERP,
+    mail_body_template: data.mail_body_template || DEFAULT_MAIL_BODY
   }
 }

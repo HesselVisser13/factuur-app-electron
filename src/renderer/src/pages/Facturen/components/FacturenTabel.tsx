@@ -20,6 +20,8 @@ interface Props {
   onPdfOpen: (f: Factuur) => void
   onPdfSaveAs: (f: Factuur) => void
   onPdfPreview: (f: Factuur) => void
+  onMail: (f: Factuur) => void
+  onShowMailHistory: (f: Factuur) => void
 }
 
 function isVervallen(f: Factuur): boolean {
@@ -38,7 +40,9 @@ export function FacturenTabel({
   onDelete,
   onPdfOpen,
   onPdfSaveAs,
-  onPdfPreview
+  onPdfPreview,
+  onMail,
+  onShowMailHistory
 }: Props) {
   if (loading) {
     return (
@@ -120,6 +124,8 @@ export function FacturenTabel({
                     onPdfOpen={() => onPdfOpen(f)}
                     onPdfSaveAs={() => onPdfSaveAs(f)}
                     onPdfPreview={() => onPdfPreview(f)}
+                    onMail={() => onMail(f)}
+                    onShowMailHistory={() => onShowMailHistory(f)}
                   />
                 </td>
               </tr>

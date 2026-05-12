@@ -1,5 +1,4 @@
 // src/main/index.ts
-
 import { app, BrowserWindow, protocol, net } from 'electron'
 import { join, basename } from 'path'
 import { pathToFileURL } from 'url'
@@ -12,6 +11,7 @@ import { registerInstellingenHandlers } from './ipc/instellingen.ipc'
 import { registerAppHandlers } from './ipc/app.ipc'
 import { registerKlantenHandlers } from './ipc/klanten.ipc'
 import { registerFactuurHandlers } from './ipc/facturen.ipc'
+import { registerMailIpc } from './ipc/mail.ipc'
 import { runMigrations } from './db/migrate'
 import { initLogger, log } from './logger'
 import { getLogosDir, getFacturenDir } from './paths'
@@ -99,6 +99,7 @@ app.whenReady().then(() => {
   registerKlantenHandlers()
   registerFactuurHandlers()
   registerDashboardHandlers()
+  registerMailIpc()
 
   createWindow()
 

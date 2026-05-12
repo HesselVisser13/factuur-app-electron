@@ -14,6 +14,7 @@ import { BedrijfsgegevensSectie } from './components/BedrijfsgegevensSectie'
 import { FactuurSectie } from './components/FactuurSectie'
 import { FinancieelSectie } from './components/FinancieelSectie'
 import { ReiskostenSectie } from './components/ReiskostenSectie'
+import { MailSectie } from './components/MailSectie'
 import { InstellingenFormSchema, type InstellingenFormValues } from './instellingenFormSchema'
 import { defaultInstellingen, mapToForm } from './types'
 
@@ -92,6 +93,7 @@ export function Instellingen() {
           <AdresSectie />
           <FinancieelSectie />
           <ReiskostenSectie tarieven={tarieven} />
+          <MailSectie />
           <FactuurSectie />
 
           {isSubmitted && Object.keys(errors).length > 0 && (

@@ -23,6 +23,7 @@ import type {
   PdfOpenFolderResult,
   DashboardStats
 } from '../shared/types'
+import type { MailAuthStatus, MailResult, MailLogEntry } from '../shared/mail-types'
 
 async function invoke<T>(channel: string, ...args: unknown[]): Promise<T> {
   const result = await ipcRenderer.invoke(channel, ...args)
@@ -92,6 +93,19 @@ const api = {
 
   // Dashboard
   getDashboardStats: (): Promise<DashboardStats> => invoke(IPC_CHANNELS.DASHBOARD_GET_STATS),
+
+  // Mail
+  getMailAuthStatus: (): Promise<MailAuthStatus> => invoke(IPC_CHANNELS.MAIL_GET_AUTH_STATUS),
+  authenticateMail: (): Promise<MailAuthStatus> => invoke(IPC_CHANNELS.MAIL_AUTHENTICATE),
+  disconnectMail: (): Promise<void> => invoke(IPC_CHANNELS.MAIL_DISCONNECT),
+  sendMail: (request: {
+    factuurId: number
+    ontvanger: string
+    onderwerp: string
+    body: string
+  }): Promise<MailResult> => invoke(IPC_CHANNELS.MAIL_SEND, request),
+  getMailLog: (factuurId: number): Promise<MailLogEntry[]> =>
+    invoke(IPC_CHANNELS.MAIL_GET_LOG, factuurId),
 
   getAppVersion: (): Promise<string> => invoke(IPC_CHANNELS.APP_GET_VERSION)
 }

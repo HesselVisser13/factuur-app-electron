@@ -95,7 +95,11 @@ export const InstellingenFormSchema = z.object({
   reiskosten_uurtarief: positiefBedragField('Uurtarief'),
   reiskosten_kmtarief: positiefBedragField('Km-tarief'),
   reiskosten_btw_tarief_id: z.string(),
-  reiskosten_omschrijving: z.string().trim().max(200, 'Maximaal 200 tekens')
+  reiskosten_omschrijving: z.string().trim().max(200, 'Maximaal 200 tekens'),
+
+  // Mail templates
+  mail_onderwerp_template: z.string().trim().max(200, 'Maximaal 200 tekens'),
+  mail_body_template: z.string().trim().max(2000, 'Maximaal 2000 tekens')
 })
 
 export type InstellingenFormValues = z.infer<typeof InstellingenFormSchema>

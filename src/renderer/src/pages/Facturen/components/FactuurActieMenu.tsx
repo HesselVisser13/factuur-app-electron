@@ -14,6 +14,8 @@ interface Props {
   onPdfOpen: () => void
   onPdfSaveAs: () => void
   onPdfPreview: () => void
+  onMail: () => void
+  onShowMailHistory: () => void
 }
 
 interface MenuItem {
@@ -32,7 +34,9 @@ export function FactuurActieMenu({
   onDelete,
   onPdfOpen,
   onPdfSaveAs,
-  onPdfPreview
+  onPdfPreview,
+  onMail,
+  onShowMailHistory
 }: Props) {
   const [open, setOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -62,6 +66,8 @@ export function FactuurActieMenu({
   }, [open])
 
   const pdfItems: MenuItem[] = [
+    { label: 'Mailen', icon: '📧', action: onMail, divider: true },
+    { label: 'Mail-geschiedenis', icon: '📬', action: onShowMailHistory },
     { label: 'Voorbeeld', icon: '👁️', action: onPdfPreview, divider: true },
     { label: 'Open PDF', icon: '📄', action: onPdfOpen },
     { label: 'Opslaan als...', icon: '💾', action: onPdfSaveAs }

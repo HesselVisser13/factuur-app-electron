@@ -1,4 +1,4 @@
-// src/renderer/src/pages/FactuurFormulier/components/FactuurFormHeader.ts
+// src/renderer/src/pages/FactuurFormulier/components/FactuurFormHeader.tsx
 
 import { useNavigate } from 'react-router-dom'
 
@@ -10,6 +10,7 @@ interface FactuurFormHeaderProps {
   onPreview: () => void
   onPdfOpen: () => void
   onPdfSaveAs: () => void
+  onMail?: () => void
 }
 
 export function FactuurFormHeader({
@@ -19,7 +20,8 @@ export function FactuurFormHeader({
   saving,
   onPreview,
   onPdfOpen,
-  onPdfSaveAs
+  onPdfSaveAs,
+  onMail
 }: FactuurFormHeaderProps) {
   const navigate = useNavigate()
 
@@ -46,6 +48,7 @@ export function FactuurFormHeader({
             <SecondaryButton onClick={onPreview} icon="👁️" label="Voorbeeld" />
             <SecondaryButton onClick={onPdfOpen} icon="📄" label="PDF" />
             <SecondaryButton onClick={onPdfSaveAs} icon="💾" label="Opslaan als..." />
+            {onMail && <SecondaryButton onClick={onMail} icon="📧" label="Mailen" />}
           </>
         )}
 

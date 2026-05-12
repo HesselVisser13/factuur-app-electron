@@ -19,6 +19,7 @@ import {
 } from '@renderer/utils/datum'
 import type { BtwTarief, Factuur, Klant } from '@shared/types'
 import type { FactuurInput, FactuurRegelInput, ReistijdInput } from '@shared/schemas'
+import { MailVersturenModal } from '@renderer/pages/Facturen/components/MailVersturenModal'
 
 import { BasisgegevensSectie } from './components/BasisgegevensSectie'
 import { FactuurFormHeader } from './components/FactuurFormHeader'
@@ -91,6 +92,7 @@ export function FactuurFormulier() {
   } = methods
 
   const readOnly = bestaandeFactuur !== null && bestaandeFactuur.status !== 'concept'
+  const [mailModalOpen, setMailModalOpen] = useState(false)
 
   // ============================================================
   // Initiële data laden
@@ -296,6 +298,7 @@ export function FactuurFormulier() {
           onPreview={() => setPreviewOpen(true)}
           onPdfOpen={handlePdfOpen}
           onPdfSaveAs={handlePdfSaveAs}
+          onMail={editId ? () => setMailModalOpen(true) : undefined}
         />
 
         <form
@@ -328,6 +331,13 @@ export function FactuurFormulier() {
           factuurNummer={factuurNummer}
           onClose={() => setPreviewOpen(false)}
         />
+        {mailModalOpen && bestaandeFactuur && (
+          <MailVersturenModal
+            factuur={bestaandeFactuur}
+            onClose={() => setMailModalOpen(false)}
+            onSuccess={() => setMailModalOpen(false)}
+          />
+        )}
       </div>
     </FormProvider>
   )

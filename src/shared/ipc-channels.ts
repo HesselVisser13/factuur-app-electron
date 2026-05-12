@@ -41,7 +41,14 @@ export const IPC_CHANNELS = {
 
   DASHBOARD_GET_STATS: 'dashboard:get-stats',
 
-  APP_GET_VERSION: 'app:getVersion'
+  APP_GET_VERSION: 'app:getVersion',
+
+  // Mail
+  MAIL_GET_AUTH_STATUS: 'mail:get-auth-status',
+  MAIL_AUTHENTICATE: 'mail:authenticate',
+  MAIL_DISCONNECT: 'mail:disconnect',
+  MAIL_SEND: 'mail:send',
+  MAIL_GET_LOG: 'mail:get-log'
 } as const
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS]

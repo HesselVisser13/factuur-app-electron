@@ -15,6 +15,8 @@ import { FacturenFilters, type StatusFilter } from './components/FacturenFilters
 import { FacturenHeader } from './components/FacturenHeader'
 import { FacturenStats } from './components/FacturenStats'
 import { FacturenTabel } from './components/FacturenTabel'
+import { MailVersturenModal } from './components/MailVersturenModal'
+import { MailGeschiedenisModal } from './components/MailGeschiedenisModal'
 
 const STORAGE_KEYS = {
   zoek: 'facturen_zoek',
@@ -34,6 +36,9 @@ export function Facturen() {
 
   const [zoek, setZoek] = useLocalStorage<string>(STORAGE_KEYS.zoek, '')
   const [statusFilter, setStatusFilter] = useLocalStorage<StatusFilter>(STORAGE_KEYS.status, 'alle')
+
+  const [mailFactuur, setMailFactuur] = useState<Factuur | null>(null)
+  const [mailHistoryFactuur, setMailHistoryFactuur] = useState<Factuur | null>(null)
 
   /** Sequence ref voor race-safe load() */
   const loadSeqRef = useRef(0)
@@ -200,6 +205,8 @@ export function Facturen() {
         onPdfOpen={handlePdfOpen}
         onPdfSaveAs={handlePdfSaveAs}
         onPdfPreview={setPreviewFactuur}
+        onMail={setMailFactuur}
+        onShowMailHistory={setMailHistoryFactuur}
       />
 
       <PdfPreviewModal
@@ -207,6 +214,24 @@ export function Facturen() {
         factuurNummer={previewFactuur?.factuurNummer}
         onClose={() => setPreviewFactuur(null)}
       />
+
+      {mailFactuur && (
+        <MailVersturenModal
+          factuur={mailFactuur}
+          onClose={() => setMailFactuur(null)}
+          onSuccess={() => {
+            setMailFactuur(null)
+            void load()
+          }}
+        />
+      )}
+
+      {mailHistoryFactuur && (
+        <MailGeschiedenisModal
+          factuur={mailHistoryFactuur}
+          onClose={() => setMailHistoryFactuur(null)}
+        />
+      )}
     </div>
   )
 }

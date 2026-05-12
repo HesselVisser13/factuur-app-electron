@@ -111,6 +111,8 @@ model Factuur {
 
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
+
+  mailLogs     MailLog[]
 }
 
 model FactuurRegel {
@@ -138,4 +140,21 @@ model Instelling {
   id     Int    @id @default(autoincrement())
   key    String @unique
   value  String
+}
+
+model MailLog {
+  id           Int      @id @default(autoincrement())
+  factuurId    Int
+  factuur      Factuur  @relation(fields: [factuurId], references: [id], onDelete: Cascade)
+
+  verzondenOp  DateTime @default(now())
+  ontvanger    String
+  onderwerp    String
+  body         String
+  status       String   // 'sent' | 'failed'
+  errorMsg     String?
+  messageId    String?  // Gmail message ID voor referentie
+
+  @@index([factuurId])
+  @@index([verzondenOp])
 }

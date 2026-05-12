@@ -24,3 +24,32 @@ export const KWARTALEN = [
   { value: 3, label: 'Q3 (jul-sep)' },
   { value: 4, label: 'Q4 (okt-dec)' }
 ] as const
+
+// ============================================================
+// Mail-templates
+// ============================================================
+
+export const DEFAULT_MAIL_ONDERWERP = 'Factuur {factuurNummer} van {bedrijfsnaam}'
+
+export const DEFAULT_MAIL_BODY = `Beste {klantNaam},
+
+Bijgaand de factuur {factuurNummer} voor de geleverde diensten.
+
+Het totaalbedrag van {totaalIncl} kan binnen {betaaltermijn} dagen worden overgemaakt op rekeningnummer {iban} onder vermelding van het factuurnummer.
+
+Met vriendelijke groet,
+{eigenaarNaam}
+{bedrijfsnaam}`
+
+/** Placeholders die in templates ondersteund worden. */
+export const MAIL_TEMPLATE_PLACEHOLDERS = [
+  { key: 'factuurNummer', label: 'Factuurnummer', voorbeeld: '2025-001' },
+  { key: 'klantNaam', label: 'Naam klant', voorbeeld: 'Jan Jansen' },
+  { key: 'totaalIncl', label: 'Totaalbedrag (incl. BTW)', voorbeeld: '€ 1.210,00' },
+  { key: 'totaalExcl', label: 'Totaalbedrag (excl. BTW)', voorbeeld: '€ 1.000,00' },
+  { key: 'vervalDatum', label: 'Vervaldatum', voorbeeld: '15-02-2025' },
+  { key: 'betaaltermijn', label: 'Betaaltermijn (dagen)', voorbeeld: '14' },
+  { key: 'bedrijfsnaam', label: 'Eigen bedrijfsnaam', voorbeeld: 'Mijn Bedrijf' },
+  { key: 'eigenaarNaam', label: 'Eigen naam', voorbeeld: 'Jouw Naam' },
+  { key: 'iban', label: 'IBAN', voorbeeld: 'NL00 BANK 0000 0000 00' }
+] as const
