@@ -1,7 +1,7 @@
 // tests/berekening.test.ts
 
 import { describe, it, expect } from 'vitest'
-import { berekenBedragen, round } from '../src/main/services/berekening.service'
+import { berekenBedragen, round } from './berekening.service'
 
 describe('round', () => {
   it('rondt af op 2 decimalen', () => {
