@@ -1,6 +1,7 @@
 //src/renderer/src/pages/Facturen/components/FactuurActieMenu.tsx
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 
 import type { FactuurStatus } from '@shared/schemas'
 import type { Factuur } from '@shared/types'
@@ -26,6 +27,14 @@ interface MenuItem {
   divider?: boolean
 }
 
+interface Position {
+  top: number
+  left: number
+}
+
+const MENU_WIDTH = 192 // w-48 = 12rem
+const MENU_OFFSET = 4
+
 export function FactuurActieMenu({
   factuur,
   busy,
@@ -39,9 +48,32 @@ export function FactuurActieMenu({
   onShowMailHistory
 }: Props) {
   const [open, setOpen] = useState(false)
-  const containerRef = useRef<HTMLDivElement>(null)
+  const [position, setPosition] = useState<Position | null>(null)
+  const buttonRef = useRef<HTMLButtonElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
 
-  // Sluit bij Escape, scroll en klik buiten
+  // Bereken positie bij openen
+  useLayoutEffect(() => {
+    if (!open || !buttonRef.current) return
+
+    const rect = buttonRef.current.getBoundingClientRect()
+    const estimatedMenuHeight = 280 // ruwe schatting voor flip-detect
+
+    let top = rect.bottom + MENU_OFFSET
+    let left = rect.right - MENU_WIDTH
+
+    // Flip omhoog als niet genoeg ruimte naar beneden
+    if (top + estimatedMenuHeight > window.innerHeight) {
+      top = rect.top - estimatedMenuHeight - MENU_OFFSET
+    }
+
+    // Voorkom dat menu links uit beeld valt
+    if (left < 8) left = 8
+
+    setPosition({ top, left })
+  }, [open])
+
+  // Sluit bij Escape, scroll, klik buiten
   useEffect(() => {
     if (!open) return
 
@@ -49,7 +81,13 @@ export function FactuurActieMenu({
       if (e.key === 'Escape') setOpen(false)
     }
     const handleClick = (e: MouseEvent): void => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      const target = e.target as Node
+      if (
+        buttonRef.current &&
+        !buttonRef.current.contains(target) &&
+        menuRef.current &&
+        !menuRef.current.contains(target)
+      ) {
         setOpen(false)
       }
     }
@@ -57,18 +95,21 @@ export function FactuurActieMenu({
 
     window.addEventListener('keydown', handleKey)
     window.addEventListener('mousedown', handleClick)
-    window.addEventListener('scroll', handleScroll, true) // true = capture (ook in containers)
+    window.addEventListener('scroll', handleScroll, true)
+    window.addEventListener('resize', handleScroll)
+
     return () => {
       window.removeEventListener('keydown', handleKey)
       window.removeEventListener('mousedown', handleClick)
       window.removeEventListener('scroll', handleScroll, true)
+      window.removeEventListener('resize', handleScroll)
     }
   }, [open])
 
   const pdfItems: MenuItem[] = [
     { label: 'Mailen', icon: '📧', action: onMail, divider: true },
     { label: 'Mail-geschiedenis', icon: '📬', action: onShowMailHistory },
-    { label: 'Voorbeeld', icon: '👁️', action: onPdfPreview, divider: true },
+    { label: 'Voorbeeld', icon: '👁️', action: onPdfPreview },
     { label: 'Open PDF', icon: '📄', action: onPdfOpen },
     { label: 'Opslaan als...', icon: '💾', action: onPdfSaveAs }
   ]
@@ -121,8 +162,9 @@ export function FactuurActieMenu({
   }
 
   return (
-    <div className="relative inline-block" ref={containerRef}>
+    <>
       <button
+        ref={buttonRef}
         type="button"
         onClick={() => setOpen((o) => !o)}
         disabled={busy}
@@ -134,28 +176,38 @@ export function FactuurActieMenu({
         <span aria-hidden="true">⋯</span>
       </button>
 
-      {open && (
-        <div
-          role="menu"
-          className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-20 py-1 text-left"
-        >
-          {items.map((item, i) => (
-            <div key={`${item.label}-${i}`}>
-              {item.divider && <div className="border-t border-gray-100 my-1" />}
-              <button
-                type="button"
-                role="menuitem"
-                onClick={() => handleItemClick(item.action)}
-                className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 focus:outline-none focus:bg-gray-50 ${
-                  item.className ?? ''
-                }`}
-              >
-                <span aria-hidden="true">{item.icon}</span> {item.label}
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
+      {open &&
+        position &&
+        createPortal(
+          <div
+            ref={menuRef}
+            role="menu"
+            style={{
+              position: 'fixed',
+              top: position.top,
+              left: position.left,
+              width: MENU_WIDTH
+            }}
+            className="bg-white rounded-lg shadow-lg border border-gray-200 z-50 py-1 text-left"
+          >
+            {items.map((item, i) => (
+              <div key={`${item.label}-${i}`}>
+                {item.divider && <div className="border-t border-gray-100 my-1" />}
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => handleItemClick(item.action)}
+                  className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 focus:outline-none focus:bg-gray-50 ${
+                    item.className ?? ''
+                  }`}
+                >
+                  <span aria-hidden="true">{item.icon}</span> {item.label}
+                </button>
+              </div>
+            ))}
+          </div>,
+          document.body
+        )}
+    </>
   )
 }

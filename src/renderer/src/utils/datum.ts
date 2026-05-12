@@ -20,4 +20,9 @@ export function isGeldigeDatumString(s: string): boolean {
 }
 
 /** Knipt een ISO-datetime ('2024-01-15T...') naar een datum-input string. */
-export const datumInputUit = (iso: string): string => iso.substring(0, 10)
+export function datumInputUit(value: string | Date): string {
+  if (value instanceof Date) {
+    return toDatumInput(value)
+  }
+  return value.substring(0, 10)
+}
