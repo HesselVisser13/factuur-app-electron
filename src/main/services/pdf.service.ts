@@ -111,9 +111,17 @@ export class PdfService {
    * Geeft de PDF terug als Buffer (zonder opslaan).
    * Handig voor preview of 'Save as...'.
    */
-  async genereerFactuurPdfBuffer(factuurId: number): Promise<Buffer> {
+  async genereerFactuurPdfBuffer(
+    factuurId: number,
+    options: { forceFinal?: boolean } = {}
+  ): Promise<Buffer> {
     const [factuur, instellingen] = await Promise.all([loadFactuur(factuurId), loadInstellingen()])
-    const html = renderFactuurHtml(factuur, instellingen)
+
+    const factuurVoorRender = options.forceFinal
+      ? { ...factuur, status: 'verstuurd' as const }
+      : factuur
+
+    const html = renderFactuurHtml(factuurVoorRender, instellingen)
     return htmlToPdfBuffer(html)
   }
 

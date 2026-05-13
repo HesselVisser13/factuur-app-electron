@@ -107,7 +107,9 @@ export function registerMailIpc(): void {
         // 2. PDF genereren (in-memory buffer)
         let pdfBuffer: Buffer
         try {
-          pdfBuffer = await pdfService.genereerFactuurPdfBuffer(request.factuurId)
+          pdfBuffer = await pdfService.genereerFactuurPdfBuffer(request.factuurId, {
+            forceFinal: true
+          })
         } catch (err) {
           const errorMsg = err instanceof Error ? err.message : 'PDF genereren mislukt'
           log.error('[mail-ipc] PDF genereren mislukt', err)

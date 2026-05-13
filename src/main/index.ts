@@ -1,5 +1,5 @@
 // src/main/index.ts
-import { app, BrowserWindow, protocol, net } from 'electron'
+import { app, BrowserWindow, protocol, net, Menu } from 'electron'
 import { join, basename } from 'path'
 import { pathToFileURL } from 'url'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
@@ -113,3 +113,5 @@ app.whenReady().then(() => {
 app.on('window-all-closed', () => {
   app.quit()
 })
+
+Menu.setApplicationMenu(null)
