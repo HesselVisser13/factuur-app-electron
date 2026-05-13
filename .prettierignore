@@ -1,6 +1,12 @@
 out
 dist
+release
+node_modules
+src/generated
+prisma/migrations
+package-lock.json
 pnpm-lock.yaml
 LICENSE.md
 tsconfig.json
 tsconfig.*.json
+.eslintcache
