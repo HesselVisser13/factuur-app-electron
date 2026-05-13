@@ -8,7 +8,7 @@ import { IPC_CHANNELS } from '../../shared/ipc-channels'
 import { join, extname, basename } from 'path'
 import { mkdirSync, copyFileSync, existsSync } from 'fs'
 
-export function registerInstellingenHandlers() {
+export function registerInstellingenHandlers(): void {
   ipcMain.handle(
     IPC_CHANNELS.INSTELLINGEN_GET_ALL,
     createHandler(async () => {

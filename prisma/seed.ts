@@ -6,7 +6,7 @@ import { PrismaClient } from '../src/generated/prisma/client'
 const adapter = new PrismaBetterSqlite3({ url: 'file:./dev.db' })
 const prisma = new PrismaClient({ adapter })
 
-async function seed() {
+async function seed(): Promise<void> {
   console.log('🌱 Seeding database...')
 
   // === BTW Tarieven ===

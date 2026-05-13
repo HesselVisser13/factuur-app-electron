@@ -7,7 +7,7 @@ import { TransactieInputSchema, TransactieUpdateSchema, PeriodeSchema } from '..
 import { IPC_CHANNELS } from '../../shared/ipc-channels'
 import { z } from 'zod'
 
-export function registerTransactieHandlers() {
+export function registerTransactieHandlers(): void {
   ipcMain.handle(
     IPC_CHANNELS.TRANSACTIES_GET_BY_PERIODE,
     createHandler(async (_event, van: string, tot: string) => {

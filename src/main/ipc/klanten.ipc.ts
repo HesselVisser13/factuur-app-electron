@@ -5,7 +5,7 @@ import { KlantInputSchema, KlantUpdateSchema } from '../../shared/schemas'
 import { IPC_CHANNELS } from '../../shared/ipc-channels'
 import { z } from 'zod'
 
-export function registerKlantenHandlers() {
+export function registerKlantenHandlers(): void {
   ipcMain.handle(
     IPC_CHANNELS.KLANTEN_GET_ALL,
     createHandler(async () => {

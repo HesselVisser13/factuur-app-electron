@@ -1,3 +1,5 @@
+![CI](https://github.com/HesselVisser13/factuur-app-electron/actions/workflows/ci.yml/badge.svg)
+
 # factuur-app-electron
 
 An Electron application with React and TypeScript

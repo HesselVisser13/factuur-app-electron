@@ -4,8 +4,10 @@ import type { IpcResult } from '../../shared/types'
 import { ZodSchema } from 'zod'
 import { log } from '../logger'
 
-export function createHandler<T>(handler: (...args: any[]) => Promise<T>) {
-  return async (...args: any[]): Promise<IpcResult<T>> => {
+export function createHandler<TArgs extends unknown[], TReturn>(
+  handler: (...args: TArgs) => Promise<TReturn>
+): (...args: TArgs) => Promise<IpcResult<TReturn>> {
+  return async (...args: TArgs): Promise<IpcResult<TReturn>> => {
     try {
       const data = await handler(...args)
       return { success: true, data }
@@ -22,7 +24,7 @@ export function createHandler<T>(handler: (...args: any[]) => Promise<T>) {
 // ============================================================
 
 const veldLabels: Record<string, string> = {
-  // Algemeen
+  // (alles ongewijzigd)
   klantId: 'Klant',
   datum: 'Datum',
   vervalDatum: 'Vervaldatum',

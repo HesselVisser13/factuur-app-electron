@@ -64,8 +64,9 @@ export function Facturen() {
 
   useEffect(() => {
     void load()
+    const seqRef = loadSeqRef
     return () => {
-      loadSeqRef.current++
+      seqRef.current++
     }
   }, [load])
 

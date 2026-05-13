@@ -2,7 +2,31 @@
 
 import path from 'path'
 import fs from 'fs'
+import Database from 'better-sqlite3'
 import { app } from 'electron'
+
+/** Subset van better-sqlite3's Database API die we gebruiken. */
+type SqliteDb = {
+  exec: (sql: string) => unknown
+  prepare: (sql: string) => {
+    run: (...params: unknown[]) => unknown
+    get: (...params: unknown[]) => unknown
+    all: (...params: unknown[]) => unknown[]
+  }
+  close: () => void
+}
+
+interface MigrationRow {
+  name: string
+}
+
+interface CountRow {
+  count: number
+}
+
+interface ColumnInfoRow {
+  name: string
+}
 
 export function runMigrations(): void {
   // Skip in development - Prisma migrate dev handles it
@@ -30,8 +54,7 @@ export function runMigrations(): void {
     return
   }
 
-  const Database = require('better-sqlite3')
-  const db = new Database(dbPath)
+  const db = new Database(dbPath) as unknown as SqliteDb
 
   try {
     db.exec(`
@@ -46,9 +69,7 @@ export function runMigrations(): void {
       .filter((name) => fs.statSync(path.join(migrationsDir, name)).isDirectory())
       .sort()
 
-    const appliedRows = db.prepare('SELECT name FROM _app_migrations').all() as {
-      name: string
-    }[]
+    const appliedRows = db.prepare('SELECT name FROM _app_migrations').all() as MigrationRow[]
     const applied = new Set(appliedRows.map((r) => r.name))
 
     // Baseline: bestaande DB zonder tracking table
@@ -90,16 +111,16 @@ export function runMigrations(): void {
   }
 }
 
-function hasExistingSchema(db: any): boolean {
+function hasExistingSchema(db: SqliteDb): boolean {
   const row = db
     .prepare(
       "SELECT COUNT(*) as count FROM sqlite_master WHERE type='table' AND name IN ('Factuur', 'Transactie', 'BtwTarief')"
     )
-    .get() as { count: number }
+    .get() as CountRow
   return row.count > 0
 }
 
-function detectSchemaVersion(db: any, folders: string[]): string {
+function detectSchemaVersion(db: SqliteDb, folders: string[]): string {
   // Latest migration: Klant has 'type' column (particulier/zakelijk)
   if (columnExists(db, 'Klant', 'type')) {
     return folders[2]
@@ -112,13 +133,13 @@ function detectSchemaVersion(db: any, folders: string[]): string {
   return folders[0]
 }
 
-function tableExists(db: any, name: string): boolean {
+function tableExists(db: SqliteDb, name: string): boolean {
   const row = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=?").get(name)
   return !!row
 }
 
-function columnExists(db: any, table: string, column: string): boolean {
+function columnExists(db: SqliteDb, table: string, column: string): boolean {
   if (!tableExists(db, table)) return false
-  const columns = db.prepare(`PRAGMA table_info(${table})`).all() as { name: string }[]
+  const columns = db.prepare(`PRAGMA table_info(${table})`).all() as ColumnInfoRow[]
   return columns.some((c) => c.name === column)
 }

@@ -5,7 +5,7 @@ import { createHandler } from './helpers'
 import { btwTariefService } from '../services/btw-tarief.service'
 import { IPC_CHANNELS } from '../../shared/ipc-channels'
 
-export function registerBtwTarievenHandlers() {
+export function registerBtwTarievenHandlers(): void {
   ipcMain.handle(
     IPC_CHANNELS.BTW_TARIEVEN_GET_ACTIEF,
     createHandler(async () => {

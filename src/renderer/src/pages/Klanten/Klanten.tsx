@@ -45,9 +45,10 @@ export function Klanten() {
   // Initiële load + cleanup
   useEffect(() => {
     void load()
+    const seqRef = loadSeqRef
     return () => {
       // Alle in-flight responses ongeldig maken bij unmount
-      loadSeqRef.current++
+      seqRef.current++
     }
   }, [load])
 

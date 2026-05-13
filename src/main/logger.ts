@@ -4,7 +4,7 @@ import log from 'electron-log/main'
 import { app } from 'electron'
 import path from 'path'
 
-export function initLogger() {
+export function initLogger(): void {
   // Logs worden opgeslagen in:
   // Windows: %USERPROFILE%\AppData\Roaming\factuur-app-electron\logs\
   log.transports.file.resolvePathFn = () => path.join(app.getPath('userData'), 'logs', 'main.log')

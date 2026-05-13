@@ -15,7 +15,7 @@ import { pdfService } from '../services/pdf.service'
 import { getFacturenDir } from '../paths'
 import { existsSync, copyFileSync } from 'node:fs'
 
-export function registerFactuurHandlers() {
+export function registerFactuurHandlers(): void {
   ipcMain.handle(
     IPC_CHANNELS.FACTUREN_GET_ALL,
     createHandler(async () => {

@@ -1,26 +1,35 @@
 // src/main/services/dashboard.service.ts
 
+import type { Prisma } from '../../generated/prisma/client'
+
 import { getDatabase } from '../db/client'
 import type { DashboardStats, Factuur } from '../../shared/types'
 
-// Helper: serialize factuur (date → ISO strings)
-function serializeFactuur(factuur: any): Factuur {
+/** Factuur zoals Prisma 'm teruggeeft met klant + regels included. */
+type FactuurWithRelations = Prisma.FactuurGetPayload<{
+  include: { klant: true; regels: true }
+}>
+
+/** Single regel-row uit Prisma. */
+type FactuurRegelRow = FactuurWithRelations['regels'][number]
+
+function serializeFactuur(factuur: FactuurWithRelations): Factuur {
   return {
     ...factuur,
-    status: factuur.status,
+    status: factuur.status as Factuur['status'],
     datum: factuur.datum.toISOString(),
     vervalDatum: factuur.vervalDatum.toISOString(),
     createdAt: factuur.createdAt.toISOString(),
     updatedAt: factuur.updatedAt.toISOString(),
     klant: {
       ...factuur.klant,
-      type: factuur.klant.type,
+      type: factuur.klant.type as 'particulier' | 'zakelijk',
       createdAt: factuur.klant.createdAt.toISOString(),
       updatedAt: factuur.klant.updatedAt.toISOString()
     },
     regels: (factuur.regels || [])
-      .sort((a: any, b: any) => a.volgorde - b.volgorde)
-      .map((r: any) => ({ ...r, datum: r.datum.toISOString() }))
+      .sort((a: FactuurRegelRow, b: FactuurRegelRow) => a.volgorde - b.volgorde)
+      .map((r: FactuurRegelRow) => ({ ...r, datum: r.datum.toISOString() }))
   }
 }
 
@@ -38,15 +47,12 @@ export class DashboardService {
     const nu = new Date()
     const { van, tot } = getKwartaalRange(nu)
 
-    // Alle verstuurde facturen (openstaand)
     const openstaandeFacturen = await prisma.factuur.findMany({
       where: { status: 'verstuurd' }
     })
 
-    // Daarvan: welke zijn vervallen
     const vervallenFacturen = openstaandeFacturen.filter((f) => f.vervalDatum < nu)
 
-    // Dit kwartaal: alle facturen die NIET geannuleerd zijn
     const ditKwartaalFacturen = await prisma.factuur.findMany({
       where: {
         datum: { gte: van, lte: tot },
@@ -54,7 +60,6 @@ export class DashboardService {
       }
     })
 
-    // Laatste 5 facturen (alle statussen behalve concept)
     const laatsteFacturenRaw = await prisma.factuur.findMany({
       where: { status: { not: 'geannuleerd' } },
       orderBy: { datum: 'desc' },

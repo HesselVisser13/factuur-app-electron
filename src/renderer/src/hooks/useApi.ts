@@ -1,6 +1,6 @@
 // src/renderer/src/hooks/useApi.ts
 
-import { useState, useEffect, useCallback } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 interface UseApiResult<T> {
   data: T | null
@@ -9,7 +9,7 @@ interface UseApiResult<T> {
   refetch: () => void
 }
 
-export function useApi<T>(fetcher: () => Promise<T>, deps: any[] = []): UseApiResult<T> {
+export function useApi<T>(fetcher: () => Promise<T>, deps: unknown[] = []): UseApiResult<T> {
   const [data, setData] = useState<T | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -26,6 +26,7 @@ export function useApi<T>(fetcher: () => Promise<T>, deps: any[] = []): UseApiRe
     } finally {
       setLoading(false)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- generic deps via spread niet statisch te valideren
   }, deps)
 
   useEffect(() => {
