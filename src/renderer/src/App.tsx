@@ -17,7 +17,7 @@ export default function App() {
     <ToastProvider>
       <ConfirmProvider>
         <HashRouter>
-          <div className="min-h-screen bg-gray-50">
+          <div className="min-h-screen">
             <Navigatie />
             <main className="max-w-5xl mx-auto px-4 py-8">
               <Routes>
