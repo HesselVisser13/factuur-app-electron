@@ -1,3 +1,5 @@
+// src/main/services/klanten.service.ts
+
 import { getDatabase } from '../db/client'
 import type { KlantInput, KlantUpdate } from '../../shared/schemas'
 import type { Klant } from '../../shared/types'
@@ -81,6 +83,19 @@ export class KlantenService {
 
   async delete(id: number): Promise<void> {
     const prisma = getDatabase()
+
+    const factuurCount = await prisma.factuur.count({
+      where: { klantId: id }
+    })
+
+    if (factuurCount > 0) {
+      throw new Error(
+        `Deze klant heeft nog ${factuurCount} ${
+          factuurCount === 1 ? 'gekoppelde factuur' : 'gekoppelde facturen'
+        }. Verwijder of annuleer eerst de facturen voordat je deze klant verwijdert.`
+      )
+    }
+
     await prisma.klant.delete({ where: { id } })
   }
 }

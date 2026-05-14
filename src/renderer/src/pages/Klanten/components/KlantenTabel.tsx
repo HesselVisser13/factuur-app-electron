@@ -1,9 +1,11 @@
 //src/renderer/src/pages/Klanten/components/KlantenTabel.tsx
 
 import { Pencil, Trash2 } from 'lucide-react'
+import { Plus, Users } from 'lucide-react'
 
 import { klantDisplayNaam } from '@shared/klant-utils'
 import type { Klant } from '@shared/types'
+import { EmptyState } from '@renderer/components/EmptyState'
 
 interface Props {
   klanten: Klant[]
@@ -11,15 +13,37 @@ interface Props {
   deletingId: number | null
   onEdit: (k: Klant) => void
   onDelete: (k: Klant) => void
+  onAddNew?: () => void
 }
 
-export function KlantenTabel({ klanten, totalCount, deletingId, onEdit, onDelete }: Props) {
+export function KlantenTabel({
+  klanten,
+  totalCount,
+  deletingId,
+  onEdit,
+  onDelete,
+  onAddNew
+}: Props) {
   if (klanten.length === 0) {
+    if (totalCount === 0 && onAddNew) {
+      return (
+        <EmptyState
+          icon={Users}
+          title="Nog geen klanten"
+          description="Voeg je eerste klant toe om facturen te kunnen versturen. Je kunt particulieren én bedrijven toevoegen."
+          action={{
+            label: 'Eerste klant toevoegen',
+            onClick: onAddNew,
+            icon: Plus
+          }}
+        />
+      )
+    }
+
+    // Wel klanten in DB, maar filter levert niets op
     return (
       <div className="bg-white rounded-xl border border-gray-200 p-8 text-center text-gray-500 text-sm">
-        {totalCount === 0
-          ? 'Nog geen klanten. Klik op "+ Nieuwe klant" om te beginnen.'
-          : 'Geen klanten gevonden.'}
+        Geen klanten gevonden met deze zoekterm.
       </div>
     )
   }

@@ -145,6 +145,7 @@ export function Transacties() {
           deletingId={deletingId}
           onEdit={handleEdit}
           onDelete={handleDelete}
+          onAddNew={handleToggleNew}
         />
       )}
     </div>

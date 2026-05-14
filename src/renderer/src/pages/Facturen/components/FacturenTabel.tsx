@@ -4,10 +4,11 @@ import { formatCurrency, formatDate } from '@renderer/utils/formatters'
 import { klantDisplayNaam } from '@shared/klant-utils'
 import type { FactuurStatus } from '@shared/schemas'
 import type { Factuur } from '@shared/types'
-import { AlertTriangle } from 'lucide-react'
+import { AlertTriangle, FileText, Plus } from 'lucide-react'
 
 import { STATUS_CONFIG } from '../statusConfig'
 import { FactuurActieMenu } from './FactuurActieMenu'
+import { EmptyState } from '@renderer/components/EmptyState'
 
 interface Props {
   facturen: Factuur[]
@@ -23,6 +24,7 @@ interface Props {
   onPdfPreview: (f: Factuur) => void
   onMail: (f: Factuur) => void
   onShowMailHistory: (f: Factuur) => void
+  onAddNew?: () => void
 }
 
 function isVervallen(f: Factuur): boolean {
@@ -43,7 +45,8 @@ export function FacturenTabel({
   onPdfSaveAs,
   onPdfPreview,
   onMail,
-  onShowMailHistory
+  onShowMailHistory,
+  onAddNew
 }: Props) {
   if (loading) {
     return (
@@ -54,11 +57,24 @@ export function FacturenTabel({
   }
 
   if (facturen.length === 0) {
+    if (totalCount === 0 && onAddNew) {
+      return (
+        <EmptyState
+          icon={FileText}
+          title="Nog geen facturen"
+          description="Maak je eerste factuur aan voor een klant. Vul regels in, voeg eventueel reistijd toe, en verstuur de PDF direct naar je klant."
+          action={{
+            label: 'Eerste factuur maken',
+            onClick: onAddNew,
+            icon: Plus
+          }}
+        />
+      )
+    }
+
     return (
       <div className="bg-white rounded-xl border border-gray-200 p-8 text-center text-gray-500 text-sm">
-        {totalCount === 0
-          ? 'Nog geen facturen. Klik op "+ Nieuwe factuur" om te beginnen.'
-          : 'Geen facturen gevonden met deze filters.'}
+        Geen facturen gevonden met deze filters.
       </div>
     )
   }

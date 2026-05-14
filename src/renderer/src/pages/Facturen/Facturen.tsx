@@ -208,6 +208,7 @@ export function Facturen() {
         onPdfPreview={setPreviewFactuur}
         onMail={setMailFactuur}
         onShowMailHistory={setMailHistoryFactuur}
+        onAddNew={() => navigate('/facturen/nieuw')}
       />
 
       <PdfPreviewModal

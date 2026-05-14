@@ -1,4 +1,4 @@
-//src/renderer/src/pages/Klanten/Klanten.ts
+//src/renderer/src/pages/Klanten/Klanten.tsx
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 
@@ -64,7 +64,7 @@ export function Klanten() {
   }
 
   const handleDelete = async (k: Klant): Promise<void> => {
-    if (deletingId !== null) return // dubbele klik / parallel verzoek blokkeren
+    if (deletingId !== null) return
 
     const ok = await confirm({
       title: 'Klant verwijderen',
@@ -127,6 +127,7 @@ export function Klanten() {
         deletingId={deletingId}
         onEdit={openEdit}
         onDelete={handleDelete}
+        onAddNew={openNew}
       />
 
       {modalOpen && (
