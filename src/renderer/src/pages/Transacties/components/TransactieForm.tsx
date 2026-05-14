@@ -1,7 +1,8 @@
-//src/renderer/src/pages/Transacties/components/TransactieForm.tsx
+// src/renderer/src/pages/Transacties/components/TransactieForm.tsx
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Controller, useForm } from 'react-hook-form'
+import { AlertTriangle, Loader2, Check } from 'lucide-react'
 
 import { transactiesApi } from '@renderer/api'
 import { FormError } from '@renderer/components/FormError'
@@ -230,9 +231,9 @@ export function TransactieForm({ mode, tarieven, onSuccess, onCancel }: Props) {
       </div>
 
       {isSubmitted && Object.keys(errors).length > 0 && (
-        <div className="mt-4 bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">
-          <span aria-hidden="true">⚠️</span> Er zijn nog fouten in het formulier. Controleer de
-          gemarkeerde velden.
+        <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700 flex items-center gap-2">
+          <AlertTriangle className="w-4 h-4 shrink-0" aria-hidden="true" />
+          Er zijn nog fouten in het formulier. Controleer de gemarkeerde velden.
         </div>
       )}
 
@@ -242,7 +243,19 @@ export function TransactieForm({ mode, tarieven, onSuccess, onCancel }: Props) {
           disabled={isSubmitting}
           className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition-colors disabled:opacity-50"
         >
-          {isSubmitting ? 'Bezig...' : isEdit ? '✓ Opslaan' : '✓ Toevoegen'}
+          <>
+            {isSubmitting ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+                Bezig...
+              </>
+            ) : (
+              <>
+                <Check className="w-4 h-4" aria-hidden="true" />
+                {isEdit ? 'Opslaan' : 'Toevoegen'}
+              </>
+            )}
+          </>
         </button>
       </div>
     </form>

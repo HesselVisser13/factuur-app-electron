@@ -1,12 +1,15 @@
-// src/renderer/src/pages/FactuurFormulier/components/ReistijdSectie.ts
+// src/renderer/src/pages/FactuurFormulier/components/ReistijdSectie.tsx
 
+import { AlertTriangle, Car } from 'lucide-react'
 import { useFormContext, useWatch } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
+
 import { FormError } from '@renderer/components/FormError'
 import { formatCurrency } from '@renderer/utils/formatters'
-import { formatCents } from '@renderer/utils/money'
 import { inputClasses } from '@renderer/utils/inputClasses'
+import { formatCents } from '@renderer/utils/money'
 import type { BtwTarief } from '@shared/types'
+
 import { berekenReistijd } from '../berekenen'
 import type { FactuurFormValues } from '../factuurFormSchema'
 import type { ReistijdInstellingen } from '../types'
@@ -33,8 +36,9 @@ export function ReistijdSectie({ tarieven, instellingen, readOnly }: Props) {
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-6">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wide">
-          <span aria-hidden="true">🚗</span> Reistijd
+        <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wide flex items-center gap-2">
+          <Car className="w-4 h-4" aria-hidden="true" />
+          Reistijd
         </h2>
         {!readOnly && (
           <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
@@ -51,17 +55,19 @@ export function ReistijdSectie({ tarieven, instellingen, readOnly }: Props) {
       ) : (
         <>
           {instellingen.uurtarief === 0 && (
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-amber-800 text-sm mb-4">
-              <span aria-hidden="true">⚠️</span> Er is nog geen uurtarief voor reistijd ingesteld.
-              Ga naar{' '}
-              <button
-                type="button"
-                onClick={() => navigate('/instellingen')}
-                className="underline font-medium"
-              >
-                Instellingen → Reiskosten
-              </button>{' '}
-              om dit in te stellen.
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-amber-800 text-sm mb-4 flex items-start gap-2">
+              <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" />
+              <span>
+                Er is nog geen uurtarief voor reistijd ingesteld. Ga naar{' '}
+                <button
+                  type="button"
+                  onClick={() => navigate('/instellingen')}
+                  className="underline font-medium"
+                >
+                  Instellingen → Reiskosten
+                </button>{' '}
+                om dit in te stellen.
+              </span>
             </div>
           )}
 

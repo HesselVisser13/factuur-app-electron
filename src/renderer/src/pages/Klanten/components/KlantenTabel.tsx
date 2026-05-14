@@ -1,5 +1,7 @@
 //src/renderer/src/pages/Klanten/components/KlantenTabel.tsx
 
+import { Pencil, Trash2 } from 'lucide-react'
+
 import { klantDisplayNaam } from '@shared/klant-utils'
 import type { Klant } from '@shared/types'
 
@@ -60,23 +62,29 @@ export function KlantenTabel({ klanten, totalCount, deletingId, onEdit, onDelete
                 </td>
                 <td className="px-4 py-3 text-gray-600">{k.plaats || '-'}</td>
                 <td className="px-4 py-3 text-gray-600">{k.email || '-'}</td>
-                <td className="px-4 py-3 text-right space-x-2">
-                  <button
-                    type="button"
-                    onClick={() => onEdit(k)}
-                    disabled={isDeleting}
-                    className="text-blue-600 hover:text-blue-800 font-medium disabled:opacity-50"
-                  >
-                    Bewerken
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onDelete(k)}
-                    disabled={deletingId !== null}
-                    className="text-red-600 hover:text-red-800 font-medium disabled:opacity-50"
-                  >
-                    {isDeleting ? 'Bezig...' : 'Verwijderen'}
-                  </button>
+                <td className="px-4 py-3 text-right">
+                  <div className="flex items-center justify-end gap-1">
+                    <button
+                      type="button"
+                      onClick={() => onEdit(k)}
+                      disabled={isDeleting}
+                      aria-label={`Bewerk ${klantDisplayNaam(k)}`}
+                      title="Bewerken"
+                      className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 disabled:opacity-50"
+                    >
+                      <Pencil className="w-4 h-4" aria-hidden="true" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onDelete(k)}
+                      disabled={deletingId !== null}
+                      aria-label={`Verwijder ${klantDisplayNaam(k)}`}
+                      title="Verwijderen"
+                      className="p-2 rounded-lg text-red-600 hover:bg-red-50 disabled:opacity-50"
+                    >
+                      <Trash2 className="w-4 h-4" aria-hidden="true" />
+                    </button>
+                  </div>
                 </td>
               </tr>
             )

@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { BarChart3 } from 'lucide-react'
 
 import { btwAangifteApi, dashboardApi } from '@renderer/api'
 import { BtwToggle } from '@renderer/components/BtwToggle'
@@ -65,8 +66,9 @@ export function Dashboard() {
     <div className="space-y-8">
       <header className="flex items-start justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold">
-            <span aria-hidden="true">📊</span> Dashboard
+          <h1 className="text-2xl font-bold flex items-center gap-2">
+            <BarChart3 className="w-7 h-7 text-blue-600" aria-hidden="true" />
+            Dashboard
           </h1>
           <p className="text-gray-600 text-sm mt-1">
             Overzicht van Q{kwartaal} {jaar}
@@ -95,7 +97,7 @@ export function Dashboard() {
                 value={formatCurrency(bedrag(stats.vervallen.bedrag))}
                 sub={
                   stats.vervallen.aantal === 0
-                    ? 'Alles op tijd ✨'
+                    ? 'Alles op tijd'
                     : `${facturenLabel(stats.vervallen.aantal)} te laat`
                 }
                 tone={stats.vervallen.aantal > 0 ? 'danger' : 'success'}

@@ -5,6 +5,20 @@ import { createPortal } from 'react-dom'
 
 import type { FactuurStatus } from '@shared/schemas'
 import type { Factuur } from '@shared/types'
+import {
+  Ban,
+  Check,
+  Eye,
+  FilePenLine,
+  History,
+  Mail,
+  Save,
+  Send,
+  Trash2,
+  ExternalLink,
+  MoreHorizontal,
+  type LucideIcon
+} from 'lucide-react'
 
 interface Props {
   factuur: Factuur
@@ -21,7 +35,7 @@ interface Props {
 
 interface MenuItem {
   label: string
-  icon: string
+  icon: LucideIcon
   action: () => void
   className?: string
   divider?: boolean
@@ -107,27 +121,27 @@ export function FactuurActieMenu({
   }, [open])
 
   const pdfItems: MenuItem[] = [
-    { label: 'Mailen', icon: '📧', action: onMail, divider: true },
-    { label: 'Mail-geschiedenis', icon: '📬', action: onShowMailHistory },
-    { label: 'Voorbeeld', icon: '👁️', action: onPdfPreview },
-    { label: 'Open PDF', icon: '📄', action: onPdfOpen },
-    { label: 'Opslaan als...', icon: '💾', action: onPdfSaveAs }
+    { label: 'Mailen', icon: Mail, action: onMail, divider: true },
+    { label: 'Mail-geschiedenis', icon: History, action: onShowMailHistory },
+    { label: 'Voorbeeld', icon: Eye, action: onPdfPreview },
+    { label: 'Open PDF', icon: ExternalLink, action: onPdfOpen },
+    { label: 'Opslaan als...', icon: Save, action: onPdfSaveAs }
   ]
 
   const items: MenuItem[] = (() => {
     switch (factuur.status) {
       case 'concept':
         return [
-          { label: 'Bewerken', icon: '✏️', action: onEdit },
+          { label: 'Bewerken', icon: FilePenLine, action: onEdit },
           {
             label: 'Markeer als verstuurd',
-            icon: '📤',
+            icon: Send,
             action: () => onStatusChange('verstuurd'),
             className: 'text-blue-600'
           },
           {
             label: 'Verwijderen',
-            icon: '🗑️',
+            icon: Trash2,
             action: onDelete,
             className: 'text-red-600'
           },
@@ -135,16 +149,16 @@ export function FactuurActieMenu({
         ]
       case 'verstuurd':
         return [
-          { label: 'Bekijken', icon: '👁️', action: onEdit },
+          { label: 'Bekijken', icon: Eye, action: onEdit },
           {
             label: 'Markeer als betaald',
-            icon: '✅',
+            icon: Check,
             action: () => onStatusChange('betaald'),
             className: 'text-green-600'
           },
           {
             label: 'Annuleren',
-            icon: '🚫',
+            icon: Ban,
             action: () => onStatusChange('geannuleerd'),
             className: 'text-red-600'
           },
@@ -152,7 +166,7 @@ export function FactuurActieMenu({
         ]
       case 'betaald':
       case 'geannuleerd':
-        return [{ label: 'Bekijken', icon: '👁️', action: onEdit }, ...pdfItems]
+        return [{ label: 'Bekijken', icon: Eye, action: onEdit }, ...pdfItems]
     }
   })()
 
@@ -171,9 +185,9 @@ export function FactuurActieMenu({
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label={`Acties voor factuur ${factuur.factuurNummer}`}
-        className="px-3 py-1 rounded-lg hover:bg-gray-100 text-gray-600 font-medium disabled:opacity-50"
+        className="px-2 py-1.5 rounded-lg hover:bg-gray-100 text-gray-600 disabled:opacity-50"
       >
-        <span aria-hidden="true">⋯</span>
+        <MoreHorizontal className="w-5 h-5" aria-hidden="true" />
       </button>
 
       {open &&
@@ -190,21 +204,25 @@ export function FactuurActieMenu({
             }}
             className="bg-white rounded-lg shadow-lg border border-gray-200 z-50 py-1 text-left"
           >
-            {items.map((item, i) => (
-              <div key={`${item.label}-${i}`}>
-                {item.divider && <div className="border-t border-gray-100 my-1" />}
-                <button
-                  type="button"
-                  role="menuitem"
-                  onClick={() => handleItemClick(item.action)}
-                  className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 focus:outline-none focus:bg-gray-50 ${
-                    item.className ?? ''
-                  }`}
-                >
-                  <span aria-hidden="true">{item.icon}</span> {item.label}
-                </button>
-              </div>
-            ))}
+            {items.map((item, i) => {
+              const Icon = item.icon
+              return (
+                <div key={`${item.label}-${i}`}>
+                  {item.divider && <div className="border-t border-gray-100 my-1" />}
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => handleItemClick(item.action)}
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 focus:outline-none focus:bg-gray-50 flex items-center gap-2 ${
+                      item.className ?? ''
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" aria-hidden="true" />
+                    {item.label}
+                  </button>
+                </div>
+              )
+            })}
           </div>,
           document.body
         )}

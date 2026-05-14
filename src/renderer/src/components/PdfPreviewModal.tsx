@@ -1,6 +1,8 @@
 // src/renderer/src/components/PdfPreviewModal.tsx
 
+import { ExternalLink, FileText, Save, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
+
 import { facturenApi } from '../api/facturen'
 import { useToast } from './Toast'
 
@@ -25,12 +27,10 @@ export function PdfPreviewModal({ factuurId, factuurNummer, onClose }: Props) {
     setLoading(true)
     setPdfUrl(null)
 
-    // Zorg dat PDF wordt (her)gegenereerd en laad via app-pdf:// protocol
     facturenApi
       .genereerPdf(factuurId)
       .then((result) => {
         if (!cancelled) {
-          // Cache-buster zodat na bewerken de nieuwe PDF getoond wordt
           const url = `app-pdf://local/${encodeURIComponent(result.factuurNummer)}.pdf?t=${Date.now()}`
           setPdfUrl(url)
         }
@@ -51,10 +51,9 @@ export function PdfPreviewModal({ factuurId, factuurNummer, onClose }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [factuurId])
 
-  // ESC-toets om te sluiten
   useEffect(() => {
     if (factuurId === null) return
-    function onKey(e: KeyboardEvent) {
+    function onKey(e: KeyboardEvent): void {
       if (e.key === 'Escape') onClose()
     }
     window.addEventListener('keydown', onKey)
@@ -63,7 +62,7 @@ export function PdfPreviewModal({ factuurId, factuurNummer, onClose }: Props) {
 
   if (factuurId === null) return null
 
-  async function handleDownload() {
+  async function handleDownload(): Promise<void> {
     if (factuurId === null) return
     try {
       const result = await facturenApi.opslaanPdfAls(factuurId)
@@ -75,7 +74,7 @@ export function PdfPreviewModal({ factuurId, factuurNummer, onClose }: Props) {
     }
   }
 
-  async function handleOpenExternal() {
+  async function handleOpenExternal(): Promise<void> {
     if (factuurId === null) return
     try {
       await facturenApi.openPdf(factuurId)
@@ -87,26 +86,36 @@ export function PdfPreviewModal({ factuurId, factuurNummer, onClose }: Props) {
   return (
     <div className="fixed inset-0 bg-black/70 z-95 flex flex-col p-4">
       <div className="flex items-center justify-between bg-white rounded-t-xl px-4 py-3 border-b border-gray-200">
-        <div className="font-bold">📄 Voorbeeld{factuurNummer ? ` – ${factuurNummer}` : ''}</div>
+        <div className="font-bold flex items-center gap-2">
+          <FileText className="w-5 h-5 text-blue-600" aria-hidden="true" />
+          Voorbeeld{factuurNummer ? ` – ${factuurNummer}` : ''}
+        </div>
         <div className="flex gap-2">
           <button
+            type="button"
             onClick={handleOpenExternal}
-            className="px-3 py-1.5 text-sm font-medium rounded-lg border border-gray-300 hover:bg-gray-50"
+            className="px-3 py-1.5 text-sm font-medium rounded-lg border border-gray-300 hover:bg-gray-50 flex items-center gap-2"
             title="Open in externe PDF-viewer"
           >
-            🗗 Extern openen
+            <ExternalLink className="w-4 h-4" aria-hidden="true" />
+            Extern openen
           </button>
           <button
+            type="button"
             onClick={handleDownload}
-            className="px-3 py-1.5 text-sm font-medium rounded-lg border border-gray-300 hover:bg-gray-50"
+            className="px-3 py-1.5 text-sm font-medium rounded-lg border border-gray-300 hover:bg-gray-50 flex items-center gap-2"
           >
-            💾 Opslaan als...
+            <Save className="w-4 h-4" aria-hidden="true" />
+            Opslaan als...
           </button>
           <button
+            type="button"
             onClick={onClose}
-            className="px-3 py-1.5 text-sm font-medium rounded-lg bg-gray-900 text-white hover:bg-gray-700"
+            aria-label="Sluiten"
+            className="px-3 py-1.5 text-sm font-medium rounded-lg bg-gray-900 text-white hover:bg-gray-700 flex items-center gap-2"
           >
-            ✕ Sluiten
+            <X className="w-4 h-4" aria-hidden="true" />
+            Sluiten
           </button>
         </div>
       </div>

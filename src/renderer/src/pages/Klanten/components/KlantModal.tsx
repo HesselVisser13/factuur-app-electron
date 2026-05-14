@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useEffect } from 'react'
 import FocusLock from 'react-focus-lock'
 import { Controller, useForm } from 'react-hook-form'
+import { AlertTriangle } from 'lucide-react'
 
 import { klantenApi } from '@renderer/api/klanten'
 import { FormError } from '@renderer/components/FormError'
@@ -230,9 +231,9 @@ export function KlantModal({ klant, onClose, onSaved }: Props) {
 
             {/* Banner alleen na submit-poging */}
             {isSubmitted && Object.keys(errors).length > 0 && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">
-                <span aria-hidden="true">⚠️</span> Er zijn nog fouten in het formulier. Controleer
-                de gemarkeerde velden.
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700 flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 shrink-0" aria-hidden="true" />
+                Er zijn nog fouten in het formulier. Controleer de gemarkeerde velden.
               </div>
             )}
 

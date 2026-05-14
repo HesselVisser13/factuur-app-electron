@@ -1,6 +1,7 @@
 // src/renderer/src/components/Toast.tsx
 
-import { createContext, useContext, useState, useCallback, ReactNode } from 'react'
+import { CheckCircle2, Info, X, XCircle, type LucideIcon } from 'lucide-react'
+import { createContext, useCallback, useContext, useState, type ReactNode } from 'react'
 
 type ToastType = 'success' | 'error' | 'info'
 
@@ -18,7 +19,7 @@ type ToastContextValue = {
 
 const ToastContext = createContext<ToastContextValue | null>(null)
 
-export function useToast() {
+export function useToast(): ToastContextValue {
   const ctx = useContext(ToastContext)
   if (!ctx) throw new Error('useToast must be inside ToastProvider')
   return ctx
@@ -26,21 +27,39 @@ export function useToast() {
 
 let nextId = 1
 
-const styles: Record<ToastType, { box: string; icon: string }> = {
-  success: { box: 'bg-green-50 border-green-200 text-green-800', icon: '✅' },
-  error: { box: 'bg-red-50 border-red-200 text-red-800', icon: '❌' },
-  info: { box: 'bg-blue-50 border-blue-200 text-blue-800', icon: 'ℹ️' }
+interface ToastStyle {
+  box: string
+  iconColor: string
+  Icon: LucideIcon
+}
+
+const styles: Record<ToastType, ToastStyle> = {
+  success: {
+    box: 'bg-green-50 border-green-200 text-green-800',
+    iconColor: 'text-green-600',
+    Icon: CheckCircle2
+  },
+  error: {
+    box: 'bg-red-50 border-red-200 text-red-800',
+    iconColor: 'text-red-600',
+    Icon: XCircle
+  },
+  info: {
+    box: 'bg-blue-50 border-blue-200 text-blue-800',
+    iconColor: 'text-blue-600',
+    Icon: Info
+  }
 }
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([])
 
-  const remove = useCallback((id: number) => {
+  const remove = useCallback((id: number): void => {
     setToasts((prev) => prev.filter((t) => t.id !== id))
   }, [])
 
   const add = useCallback(
-    (type: ToastType, message: string) => {
+    (type: ToastType, message: string): void => {
       const id = nextId++
       setToasts((prev) => [...prev, { id, type, message }])
       const duration = type === 'error' ? 6000 : 3500
@@ -58,22 +77,28 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext.Provider value={value}>
       {children}
-      <div className="fixed bottom-4 right-4 z-100 space-y-2 pointer-events-none">
+      <div
+        className="fixed bottom-4 right-4 z-100 space-y-2 pointer-events-none"
+        role="region"
+        aria-label="Notificaties"
+        aria-live="polite"
+      >
         {toasts.map((t) => {
-          const s = styles[t.type]
+          const { box, iconColor, Icon } = styles[t.type]
           return (
             <div
               key={t.id}
-              className={`pointer-events-auto min-w-70 max-w-md rounded-lg shadow-lg border px-4 py-3 text-sm flex items-start gap-2 ${s.box}`}
+              className={`pointer-events-auto min-w-70 max-w-md rounded-lg shadow-lg border px-4 py-3 text-sm flex items-start gap-2 ${box}`}
             >
-              <span>{s.icon}</span>
+              <Icon className={`w-5 h-5 shrink-0 mt-0.5 ${iconColor}`} aria-hidden="true" />
               <div className="flex-1">{t.message}</div>
               <button
+                type="button"
                 onClick={() => remove(t.id)}
-                className="hover:opacity-70 font-bold"
+                className="hover:opacity-70 p-0.5 rounded"
                 aria-label="Sluiten"
               >
-                ✕
+                <X className="w-4 h-4" aria-hidden="true" />
               </button>
             </div>
           )

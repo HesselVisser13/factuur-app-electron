@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import FocusLock from 'react-focus-lock'
+import { Check, Inbox, Mailbox, X, XCircle, ChevronDown, ChevronUp } from 'lucide-react'
 
 import { mailApi } from '@renderer/api'
 import { useToast } from '@renderer/components/Toast'
@@ -78,8 +79,9 @@ export function MailGeschiedenisModal({ factuur, onClose }: Props) {
           <div className="p-6 space-y-4">
             <div className="flex items-start justify-between">
               <div>
-                <h2 id="mail-history-title" className="text-xl font-bold">
-                  <span aria-hidden="true">📬</span> Mail-geschiedenis
+                <h2 id="mail-history-title" className="text-xl font-bold flex items-center gap-2">
+                  <Mailbox className="w-5 h-5 text-blue-600" aria-hidden="true" />
+                  Mail-geschiedenis
                 </h2>
                 <p className="text-sm text-gray-500 mt-1">
                   Factuur <strong>{factuur.factuurNummer}</strong>
@@ -89,9 +91,9 @@ export function MailGeschiedenisModal({ factuur, onClose }: Props) {
                 type="button"
                 onClick={onClose}
                 aria-label="Sluiten"
-                className="text-gray-400 hover:text-gray-600 text-2xl leading-none"
+                className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100"
               >
-                <span aria-hidden="true">×</span>
+                <X className="w-5 h-5" aria-hidden="true" />
               </button>
             </div>
 
@@ -99,9 +101,7 @@ export function MailGeschiedenisModal({ factuur, onClose }: Props) {
               <div className="py-12 text-center text-gray-500">Laden...</div>
             ) : logs.length === 0 ? (
               <div className="py-12 text-center text-gray-500 text-sm">
-                <div className="text-4xl mb-2" aria-hidden="true">
-                  📭
-                </div>
+                <Inbox className="w-12 h-12 mx-auto mb-2 text-gray-300" aria-hidden="true" />
                 Voor deze factuur zijn nog geen mails verzonden.
               </div>
             ) : (
@@ -163,7 +163,11 @@ function MailLogRow({ log, expanded, onToggle }: RowProps) {
         </div>
         <div className="text-xs text-gray-500 whitespace-nowrap flex items-center gap-2">
           <span>{formatDateTime(log.verzondenOp)}</span>
-          <span aria-hidden="true">{expanded ? '▴' : '▾'}</span>
+          {expanded ? (
+            <ChevronUp className="w-4 h-4" aria-hidden="true" />
+          ) : (
+            <ChevronDown className="w-4 h-4" aria-hidden="true" />
+          )}
         </div>
       </button>
 
@@ -202,14 +206,16 @@ function MailLogRow({ log, expanded, onToggle }: RowProps) {
 function StatusBadge({ status }: { status: 'sent' | 'failed' }) {
   if (status === 'sent') {
     return (
-      <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-green-100 text-green-700 whitespace-nowrap">
-        <span aria-hidden="true">✓</span> Verzonden
+      <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-green-100 text-green-700 whitespace-nowrap inline-flex items-center gap-1">
+        <Check className="w-3 h-3" aria-hidden="true" />
+        Verzonden
       </span>
     )
   }
   return (
-    <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-red-100 text-red-700 whitespace-nowrap">
-      <span aria-hidden="true">✗</span> Mislukt
+    <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-red-100 text-red-700 whitespace-nowrap inline-flex items-center gap-1">
+      <XCircle className="w-3 h-3" aria-hidden="true" />
+      Mislukt
     </span>
   )
 }

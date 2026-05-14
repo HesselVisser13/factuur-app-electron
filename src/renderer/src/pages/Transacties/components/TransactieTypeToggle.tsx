@@ -1,8 +1,15 @@
-//src/renderer/src/pages/Transacties/components/TransactieTypeToggle.tsx
+// src/renderer/src/pages/Transacties/components/TransactieTypeToggle.tsx
+
+import { ArrowDownCircle, ArrowUpCircle, type LucideIcon } from 'lucide-react'
 
 import { TRANSACTIE_TYPES } from '@shared/constants'
 
 type TransactieType = 'inkomst' | 'uitgave'
+
+const ICONS: Record<TransactieType, LucideIcon> = {
+  inkomst: ArrowUpCircle,
+  uitgave: ArrowDownCircle
+}
 
 interface Props {
   value: TransactieType
@@ -20,6 +27,8 @@ export function TransactieTypeToggle({ value, onChange }: Props) {
             : 'bg-red-100 border-red-300 text-red-700'
           : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'
 
+        const Icon = ICONS[t.value]
+
         return (
           <button
             key={t.value}
@@ -27,8 +36,9 @@ export function TransactieTypeToggle({ value, onChange }: Props) {
             role="radio"
             aria-checked={selected}
             onClick={() => onChange(t.value)}
-            className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium border transition-colors ${colorClasses}`}
+            className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium border transition-colors flex items-center justify-center gap-2 ${colorClasses}`}
           >
+            <Icon className="w-4 h-4" aria-hidden="true" />
             {t.label}
           </button>
         )

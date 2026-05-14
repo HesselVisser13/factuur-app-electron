@@ -1,12 +1,15 @@
-// src/renderer/src/pages/FactuurFormulier/components/FactuurRegelRow.ts
+// src/renderer/src/pages/FactuurFormulier/components/FactuurRegelRow.tsx
 
+import { ChevronDown, ChevronUp, Trash2 } from 'lucide-react'
 import { Controller, useFormContext, useWatch } from 'react-hook-form'
+
 import { FormError } from '@renderer/components/FormError'
 import { INPUT_BASE_SMALL, inputClasses } from '@renderer/utils/inputClasses'
+import { formatCents } from '@renderer/utils/money'
 import type { BtwTarief } from '@shared/types'
+
 import { berekenRegel } from '../berekenen'
 import type { FactuurFormValues } from '../factuurFormSchema'
-import { formatCents } from '@renderer/utils/money'
 
 interface Props {
   index: number
@@ -28,7 +31,7 @@ export function FactuurRegelRow({ index, total, tarieven, readOnly, onMove, onRe
   const bedragen = berekenRegel(regel)
 
   const regelErrors = errors.regels?.[index]
-  const cls = (hasErr: boolean) => inputClasses(hasErr, INPUT_BASE_SMALL)
+  const cls = (hasErr: boolean): string => inputClasses(hasErr, INPUT_BASE_SMALL)
 
   return (
     <div className="border border-gray-200 rounded-lg p-3 bg-gray-50 space-y-2">
@@ -101,9 +104,6 @@ export function FactuurRegelRow({ index, total, tarieven, readOnly, onMove, onRe
                   const tarief = tarieven.find((t) => t.id === id)
                   if (!tarief) return
                   field.onChange(tarief.id)
-                  // ook btwPercentage updaten via setValue is niet nodig hier;
-                  // gebeurt via parent's useWatch-rebroadcast.
-                  // Maar we hebben btwPercentage wel nodig voor berekening:
                 }}
                 className={cls(!!regelErrors?.btwTariefId)}
                 aria-invalid={!!regelErrors?.btwTariefId}
@@ -138,25 +138,30 @@ export function FactuurRegelRow({ index, total, tarieven, readOnly, onMove, onRe
               onClick={() => onMove(-1)}
               disabled={index === 0}
               aria-label="Regel omhoog"
-              className="px-2 py-0.5 text-gray-600 hover:bg-gray-200 rounded disabled:opacity-30"
+              title="Naar boven"
+              className="p-1.5 text-gray-600 hover:bg-gray-200 rounded disabled:opacity-30"
             >
-              ↑
+              <ChevronUp className="w-4 h-4" aria-hidden="true" />
             </button>
             <button
               type="button"
               onClick={() => onMove(1)}
               disabled={index === total - 1}
               aria-label="Regel omlaag"
-              className="px-2 py-0.5 text-gray-600 hover:bg-gray-200 rounded disabled:opacity-30"
+              title="Naar beneden"
+              className="p-1.5 text-gray-600 hover:bg-gray-200 rounded disabled:opacity-30"
             >
-              ↓
+              <ChevronDown className="w-4 h-4" aria-hidden="true" />
             </button>
             <button
               type="button"
               onClick={onRemove}
-              className="px-2 py-0.5 text-red-600 hover:bg-red-100 rounded"
+              aria-label="Regel verwijderen"
+              title="Verwijderen"
+              className="p-1.5 text-red-600 hover:bg-red-100 rounded inline-flex items-center gap-1"
             >
-              Verwijder
+              <Trash2 className="w-4 h-4" aria-hidden="true" />
+              <span>Verwijder</span>
             </button>
           </div>
         </div>

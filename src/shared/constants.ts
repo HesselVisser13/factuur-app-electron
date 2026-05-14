@@ -1,16 +1,16 @@
 // src/shared/constants.ts
 
 export const TRANSACTIE_TYPES = [
-  { value: 'inkomst', label: '📥 Inkomst', color: 'green' },
-  { value: 'uitgave', label: '📤 Uitgave', color: 'red' }
+  { value: 'inkomst', label: 'Inkomst', color: 'green' },
+  { value: 'uitgave', label: 'Uitgave', color: 'red' }
 ] as const
 
 export const CATEGORIEEN = [
-  { value: 'arbeid', label: '👷 Arbeid' },
-  { value: 'materiaal', label: '🔩 Materiaal' },
-  { value: 'transport', label: '🚐 Transport' },
-  { value: 'gereedschap', label: '🔧 Gereedschap' },
-  { value: 'overig', label: '📦 Overig' }
+  { value: 'arbeid', label: 'Arbeid' },
+  { value: 'materiaal', label: 'Materiaal' },
+  { value: 'transport', label: 'Transport' },
+  { value: 'gereedschap', label: 'Gereedschap' },
+  { value: 'overig', label: 'Overig' }
 ] as const
 
 export const INVOERWIJZEN = [
@@ -41,7 +41,6 @@ Met vriendelijke groet,
 {eigenaarNaam}
 {bedrijfsnaam}`
 
-/** Placeholders die in templates ondersteund worden. */
 export const MAIL_TEMPLATE_PLACEHOLDERS = [
   { key: 'factuurNummer', label: 'Factuurnummer', voorbeeld: '2025-001' },
   { key: 'klantNaam', label: 'Naam klant', voorbeeld: 'Jan Jansen' },

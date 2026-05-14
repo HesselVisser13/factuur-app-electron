@@ -10,6 +10,7 @@ import type { BtwAangifte as BtwAangifteType } from '@shared/types'
 import { BtwAangifteTabel } from './components/BtwAangifteTabel'
 import { BtwAangifteTotalen } from './components/BtwAangifteTotalen'
 import { BtwAangiftePeriode } from './components/BtwAangiftePeriode'
+import { Calculator } from 'lucide-react'
 
 const STORAGE_KEYS = {
   kwartaal: 'btw_aangifte_kwartaal',
@@ -29,8 +30,9 @@ export function BtwAangifte() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">
-        <span aria-hidden="true">🏛️</span> BTW-aangifte
+      <h1 className="text-2xl font-bold flex items-center gap-2">
+        <Calculator className="w-7 h-7 text-blue-600" aria-hidden="true" />
+        BTW-aangifte
       </h1>
 
       <BtwAangiftePeriode

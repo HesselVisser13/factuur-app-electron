@@ -1,6 +1,8 @@
-// src/renderer/src/pages/FactuurFormulier/components/FactuurRegelsSectie.ts
+// src/renderer/src/pages/FactuurFormulier/components/FactuurRegelsSectie.tsx
 
 import { useFieldArray, useFormContext } from 'react-hook-form'
+import { AlertTriangle } from 'lucide-react'
+
 import type { BtwTarief } from '@shared/types'
 import { FactuurRegelRow } from './FactuurRegelRow'
 import { type FactuurFormValues } from '../factuurFormSchema'
@@ -47,7 +49,10 @@ export function FactuurRegelsSectie({ tarieven, readOnly }: Props) {
 
       {fields.length === 0 ? (
         <div className="text-center text-red-600 text-sm py-8 bg-red-50 border border-red-200 rounded-lg">
-          <span aria-hidden="true">⚠️</span> {rootError ?? 'Voeg minstens één factuurregel toe'}
+          <span className="inline-flex items-center gap-1">
+            <AlertTriangle className="w-4 h-4 shrink-0" aria-hidden="true" />
+            {rootError ?? 'Voeg minstens één factuurregel toe'}
+          </span>
         </div>
       ) : (
         <div className="space-y-2">

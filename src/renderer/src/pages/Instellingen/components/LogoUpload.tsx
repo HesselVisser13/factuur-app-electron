@@ -1,5 +1,6 @@
-// src/renderer/src/pages/Instellingen/components/LogoUpload.ts
+// src/renderer/src/pages/Instellingen/components/LogoUpload.tsx
 
+import { Image as ImageIcon, Trash2 } from 'lucide-react'
 import { useFormContext } from 'react-hook-form'
 
 import { instellingenApi } from '@renderer/api'
@@ -42,8 +43,11 @@ export function LogoUpload() {
           <button
             type="button"
             onClick={handleRemove}
-            className="text-red-600 hover:text-red-800 text-sm font-medium"
+            aria-label="Logo verwijderen"
+            title="Verwijderen"
+            className="p-2 rounded-lg text-red-600 hover:bg-red-50 flex items-center gap-1 text-sm font-medium"
           >
+            <Trash2 className="w-4 h-4" aria-hidden="true" />
             Verwijderen
           </button>
         </div>
@@ -51,9 +55,10 @@ export function LogoUpload() {
         <button
           type="button"
           onClick={handleUpload}
-          className="border-2 border-dashed border-gray-300 hover:border-blue-500 rounded-lg px-6 py-8 w-full text-gray-500 hover:text-blue-600 transition-colors text-sm"
+          className="border-2 border-dashed border-gray-300 hover:border-blue-500 rounded-lg px-6 py-8 w-full text-gray-500 hover:text-blue-600 transition-colors text-sm flex items-center justify-center gap-2"
         >
-          <span aria-hidden="true">🖼️</span> Klik om een logo te uploaden (PNG/JPG)
+          <ImageIcon className="w-5 h-5" aria-hidden="true" />
+          Klik om een logo te uploaden (PNG/JPG)
         </button>
       )}
     </div>

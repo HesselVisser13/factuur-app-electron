@@ -4,6 +4,7 @@ import { formatCurrency, formatDate } from '@renderer/utils/formatters'
 import { klantDisplayNaam } from '@shared/klant-utils'
 import type { FactuurStatus } from '@shared/schemas'
 import type { Factuur } from '@shared/types'
+import { AlertTriangle } from 'lucide-react'
 
 import { STATUS_CONFIG } from '../statusConfig'
 import { FactuurActieMenu } from './FactuurActieMenu'
@@ -103,13 +104,15 @@ export function FacturenTabel({
                 <td className="px-4 py-3">{klantDisplayNaam(f.klant)}</td>
                 <td className="px-4 py-3">
                   <span
-                    className={`text-xs px-2 py-0.5 rounded-full font-medium ${status.classes}`}
+                    className={`text-xs px-2 py-0.5 rounded-full font-medium ${status.classes} inline-flex items-center gap-1`}
                   >
-                    <span aria-hidden="true">{status.icon}</span> {status.label}
+                    <status.icon className="w-3 h-3" aria-hidden="true" />
+                    {status.label}
                   </span>
                   {vervallen && (
-                    <span className="ml-2 text-xs px-2 py-0.5 rounded-full font-medium bg-red-100 text-red-700">
-                      <span aria-hidden="true">⚠️</span> Vervallen
+                    <span className="ml-2 text-xs px-2 py-0.5 rounded-full font-medium bg-red-100 text-red-700 inline-flex items-center gap-1">
+                      <AlertTriangle className="w-3 h-3" aria-hidden="true" />
+                      Vervallen
                     </span>
                   )}
                 </td>

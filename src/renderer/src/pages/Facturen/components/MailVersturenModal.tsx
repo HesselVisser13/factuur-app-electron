@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useEffect, useState } from 'react'
 import FocusLock from 'react-focus-lock'
 import { useForm } from 'react-hook-form'
+import { AlertTriangle, Loader2, Mail, Paperclip, Send } from 'lucide-react'
 
 import { instellingenApi, mailApi } from '@renderer/api'
 import { FormError } from '@renderer/components/FormError'
@@ -135,9 +136,12 @@ export function MailVersturenModal({ factuur, onClose, onSuccess }: Props) {
         <Container>
           <div className="p-6 space-y-4">
             <h2 className="text-xl font-bold">Niet verbonden met Gmail</h2>
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-sm text-amber-800">
-              <span aria-hidden="true">⚠️</span> Je moet eerst een Gmail-account verbinden via{' '}
-              <strong>Instellingen → Mail</strong> voordat je facturen kunt versturen.
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-sm text-amber-800 flex items-start gap-2">
+              <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" aria-hidden="true" />
+              <span>
+                Je moet eerst een Gmail-account verbinden via <strong>Instellingen → Mail</strong>{' '}
+                voordat je facturen kunt versturen.
+              </span>
             </div>
             <div className="flex justify-end pt-4 border-t border-gray-100">
               <button
@@ -159,8 +163,9 @@ export function MailVersturenModal({ factuur, onClose, onSuccess }: Props) {
       <Container>
         <form onSubmit={handleSubmit(onSubmit, onInvalid)} noValidate className="p-6 space-y-4">
           <div>
-            <h2 className="text-xl font-bold">
-              <span aria-hidden="true">📧</span> Factuur {factuur.factuurNummer} versturen
+            <h2 className="text-xl font-bold flex items-center gap-2">
+              <Mail className="w-5 h-5 text-blue-600" aria-hidden="true" />
+              Factuur {factuur.factuurNummer} versturen
             </h2>
             <p className="text-xs text-gray-500 mt-1">
               Verzonden vanaf: <strong>{authStatus.email}</strong>
@@ -183,9 +188,9 @@ export function MailVersturenModal({ factuur, onClose, onSuccess }: Props) {
             />
             <FormError message={errors.ontvanger?.message} />
             {!factuur.klant.email && (
-              <p className="text-xs text-amber-600 mt-1">
-                <span aria-hidden="true">⚠️</span> Geen e-mail bekend bij deze klant — vul handmatig
-                in.
+              <p className="text-xs text-amber-600 mt-1 flex items-center gap-1">
+                <AlertTriangle className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                Geen e-mail bekend bij deze klant — vul handmatig in.
               </p>
             )}
           </div>
@@ -221,16 +226,20 @@ export function MailVersturenModal({ factuur, onClose, onSuccess }: Props) {
             <FormError message={errors.body?.message} />
           </div>
 
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
-            <span aria-hidden="true">📎</span> De factuur wordt als PDF-bijlage meegestuurd:{' '}
-            <code className="bg-blue-100 px-1 rounded font-mono text-xs">
-              {factuur.factuurNummer}.pdf
-            </code>
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800 flex items-center gap-2">
+            <Paperclip className="w-4 h-4 shrink-0" aria-hidden="true" />
+            <span>
+              De factuur wordt als PDF-bijlage meegestuurd:{' '}
+              <code className="bg-blue-100 px-1 rounded font-mono text-xs">
+                {factuur.factuurNummer}.pdf
+              </code>
+            </span>
           </div>
 
           {isSubmitted && Object.keys(errors).length > 0 && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">
-              <span aria-hidden="true">⚠️</span> Controleer de gemarkeerde velden.
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700 flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 shrink-0" aria-hidden="true" />
+              Controleer de gemarkeerde velden.
             </div>
           )}
 
@@ -246,9 +255,19 @@ export function MailVersturenModal({ factuur, onClose, onSuccess }: Props) {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg text-sm disabled:opacity-50"
+              className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg text-sm disabled:opacity-50 flex items-center gap-2"
             >
-              {isSubmitting ? 'Verzenden...' : '📤 Verstuur'}
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+                  Verzenden...
+                </>
+              ) : (
+                <>
+                  <Send className="w-4 h-4" aria-hidden="true" />
+                  Verstuur
+                </>
+              )}
             </button>
           </div>
         </form>

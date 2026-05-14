@@ -1,5 +1,7 @@
 //src/renderer/src/pages/Transacties/components/TransactiesTabel.tsx
 
+import { ArrowDownCircle, ArrowUpCircle, Loader2, Pencil, Trash2 } from 'lucide-react'
+
 import { formatCurrency, formatDate } from '@renderer/utils/formatters'
 import type { Transactie } from '@shared/types'
 
@@ -70,13 +72,20 @@ export function TransactiesTabel({ transacties, deletingId, onEdit, onDelete }: 
                 >
                   <td className="px-4 py-3 text-sm text-gray-600">{formatDate(t.datum)}</td>
                   <td className="px-4 py-3 text-sm">
-                    <span
-                      aria-label={t.type === 'inkomst' ? 'Inkomst' : 'Uitgave'}
-                      className={`inline-block w-2 h-2 rounded-full mr-2 ${
-                        t.type === 'inkomst' ? 'bg-green-500' : 'bg-red-500'
-                      }`}
-                    />
-                    {t.omschrijving}
+                    <span className="inline-flex items-center gap-2">
+                      {t.type === 'inkomst' ? (
+                        <ArrowUpCircle
+                          className="w-4 h-4 text-green-600 shrink-0"
+                          aria-label="Inkomst"
+                        />
+                      ) : (
+                        <ArrowDownCircle
+                          className="w-4 h-4 text-red-600 shrink-0"
+                          aria-label="Uitgave"
+                        />
+                      )}
+                      <span>{t.omschrijving}</span>
+                    </span>
                   </td>
                   <td className="px-4 py-3 text-sm text-right">{formatCurrency(t.bedragExcl)}</td>
                   <td className="px-4 py-3 text-sm text-right">
@@ -86,26 +95,32 @@ export function TransactiesTabel({ transacties, deletingId, onEdit, onDelete }: 
                     {formatCurrency(t.bedragIncl)}
                   </td>
                   <td className="px-4 py-3 text-right whitespace-nowrap">
-                    <button
-                      type="button"
-                      onClick={() => onEdit(t)}
-                      disabled={isDeleting}
-                      aria-label={`Bewerk transactie: ${t.omschrijving}`}
-                      title="Bewerken"
-                      className="text-blue-600 hover:text-blue-800 text-sm mr-3 disabled:opacity-50"
-                    >
-                      <span aria-hidden="true">✎</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onDelete(t.id)}
-                      disabled={deletingId !== null}
-                      aria-label={`Verwijder transactie: ${t.omschrijving}`}
-                      title="Verwijderen"
-                      className="text-red-600 hover:text-red-800 text-sm disabled:opacity-50"
-                    >
-                      <span aria-hidden="true">{isDeleting ? '…' : '✕'}</span>
-                    </button>
+                    <div className="flex items-center justify-end gap-1">
+                      <button
+                        type="button"
+                        onClick={() => onEdit(t)}
+                        disabled={isDeleting}
+                        aria-label={`Bewerk transactie: ${t.omschrijving}`}
+                        title="Bewerken"
+                        className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 disabled:opacity-50"
+                      >
+                        <Pencil className="w-4 h-4" aria-hidden="true" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onDelete(t.id)}
+                        disabled={deletingId !== null}
+                        aria-label={`Verwijder transactie: ${t.omschrijving}`}
+                        title="Verwijderen"
+                        className="p-2 rounded-lg text-red-600 hover:bg-red-50 disabled:opacity-50"
+                      >
+                        {isDeleting ? (
+                          <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+                        ) : (
+                          <Trash2 className="w-4 h-4" aria-hidden="true" />
+                        )}
+                      </button>
+                    </div>
                   </td>
                 </tr>
               )

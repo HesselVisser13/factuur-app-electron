@@ -1,5 +1,6 @@
 // src/renderer/src/pages/Instellingen/components/MailSectie.tsx
 
+import { AlertTriangle, CheckCircle2, Link2, Loader2, Mail } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useFormContext } from 'react-hook-form'
 
@@ -68,8 +69,9 @@ export function MailSectie() {
 
   return (
     <section className="bg-white rounded-xl border border-gray-200 p-6">
-      <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wide mb-4">
-        <span aria-hidden="true">📧</span> Mail
+      <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wide mb-4 flex items-center gap-2">
+        <Mail className="w-4 h-4" aria-hidden="true" />
+        Mail
       </h2>
 
       {/* Verbindingsstatus */}
@@ -79,14 +81,16 @@ export function MailSectie() {
         {loading ? (
           <p className="text-sm text-gray-500">Status laden...</p>
         ) : !status?.configured ? (
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-sm text-amber-800">
-            <span aria-hidden="true">⚠️</span> Mail-functionaliteit is niet geconfigureerd. Neem
-            contact op met de ontwikkelaar.
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-sm text-amber-800 flex items-start gap-2">
+            <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" aria-hidden="true" />
+            <span>
+              Mail-functionaliteit is niet geconfigureerd. Neem contact op met de ontwikkelaar.
+            </span>
           </div>
         ) : status.authenticated ? (
           <div className="flex items-center justify-between gap-4 p-3 border border-green-200 bg-green-50 rounded-lg">
             <div className="flex items-center gap-2">
-              <span aria-hidden="true">✅</span>
+              <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" aria-hidden="true" />
               <span className="text-sm">
                 Verbonden als <strong>{status.email}</strong>
               </span>
@@ -108,9 +112,19 @@ export function MailSectie() {
               type="button"
               onClick={handleConnect}
               disabled={authenticating}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg text-sm disabled:opacity-50"
+              className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg text-sm disabled:opacity-50 flex items-center gap-2"
             >
-              {authenticating ? 'Verbinden...' : '🔗 Verbind met Gmail'}
+              {authenticating ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+                  Verbinden...
+                </>
+              ) : (
+                <>
+                  <Link2 className="w-4 h-4" aria-hidden="true" />
+                  Verbind met Gmail
+                </>
+              )}
             </button>
             {authenticating && (
               <p className="text-xs text-gray-500 mt-2">

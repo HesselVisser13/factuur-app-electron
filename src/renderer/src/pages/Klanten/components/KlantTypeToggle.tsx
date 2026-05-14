@@ -1,4 +1,6 @@
-//src/renderer/src/pages/Klanten/components/KlantTypeToggle.tsx
+// src/renderer/src/pages/Klanten/components/KlantTypeToggle.tsx
+
+import { Building2, User, type LucideIcon } from 'lucide-react'
 
 interface Props {
   value: 'particulier' | 'zakelijk'
@@ -11,13 +13,13 @@ export function KlantTypeToggle({ value, onChange }: Props) {
       <ToggleButton
         selected={value === 'particulier'}
         onClick={() => onChange('particulier')}
-        icon="👤"
+        Icon={User}
         label="Particulier"
       />
       <ToggleButton
         selected={value === 'zakelijk'}
         onClick={() => onChange('zakelijk')}
-        icon="🏢"
+        Icon={Building2}
         label="Zakelijk"
       />
     </div>
@@ -27,22 +29,23 @@ export function KlantTypeToggle({ value, onChange }: Props) {
 interface ToggleButtonProps {
   selected: boolean
   onClick: () => void
-  icon: string
+  Icon: LucideIcon
   label: string
 }
 
-function ToggleButton({ selected, onClick, icon, label }: ToggleButtonProps) {
+function ToggleButton({ selected, onClick, Icon, label }: ToggleButtonProps) {
   return (
     <button
       type="button"
       role="radio"
       aria-checked={selected}
       onClick={onClick}
-      className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+      className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
         selected ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-600 hover:text-gray-900'
       }`}
     >
-      <span aria-hidden="true">{icon}</span> {label}
+      <Icon className="w-4 h-4" aria-hidden="true" />
+      {label}
     </button>
   )
 }

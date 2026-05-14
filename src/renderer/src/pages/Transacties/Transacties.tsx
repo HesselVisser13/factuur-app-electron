@@ -2,6 +2,7 @@
 
 // Externe libs
 import { useState } from 'react'
+import { Plus, Receipt, X } from 'lucide-react'
 
 // Aliased imports
 import { btwTarievenApi, transactiesApi } from '@renderer/api'
@@ -100,15 +101,26 @@ export function Transacties() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">
-          <span aria-hidden="true">💶</span> Transacties
+        <h1 className="text-2xl font-bold flex items-center gap-2">
+          <Receipt className="w-7 h-7 text-blue-600" aria-hidden="true" />
+          Transacties
         </h1>
         <button
           type="button"
           onClick={handleToggleNew}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg"
+          className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg flex items-center gap-2"
         >
-          {formIsOpen ? 'Annuleren' : '+ Nieuwe transactie'}
+          {formIsOpen ? (
+            <>
+              <X className="w-4 h-4" aria-hidden="true" />
+              Annuleren
+            </>
+          ) : (
+            <>
+              <Plus className="w-4 h-4" aria-hidden="true" />
+              Nieuwe transactie
+            </>
+          )}
         </button>
       </div>
 

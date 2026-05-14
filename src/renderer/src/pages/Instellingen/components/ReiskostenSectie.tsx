@@ -1,5 +1,6 @@
-// src/renderer/src/pages/Instellingen/components/ReiskostenSectie.ts
+// src/renderer/src/pages/Instellingen/components/ReiskostenSectie.tsx
 
+import { Car } from 'lucide-react'
 import { useFormContext } from 'react-hook-form'
 
 import { FormError } from '@renderer/components/FormError'
@@ -20,8 +21,9 @@ export function ReiskostenSectie({ tarieven }: Props) {
 
   return (
     <section className="bg-white rounded-xl border border-gray-200 p-6">
-      <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wide mb-4">
-        <span aria-hidden="true">🚗</span> Reiskosten
+      <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wide mb-4 flex items-center gap-2">
+        <Car className="w-4 h-4" aria-hidden="true" />
+        Reiskosten
       </h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

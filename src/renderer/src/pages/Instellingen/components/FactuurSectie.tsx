@@ -1,4 +1,4 @@
-// src/renderer/src/pages/Instellingen/components/FactuurSectie.ts
+// src/renderer/src/pages/Instellingen/components/FactuurSectie.tsx
 
 import { useFormContext } from 'react-hook-form'
 

@@ -1,8 +1,9 @@
-// src/renderer/src/pages/Instellingen/Instellingen.ts
+// src/renderer/src/pages/Instellingen/Instellingen.tsx
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useEffect, useState } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
+import { Settings, AlertTriangle, Loader2, Save } from 'lucide-react'
 
 import { instellingenApi } from '@renderer/api'
 import { btwTarievenApi } from '@renderer/api/btw-tarieven'
@@ -83,8 +84,9 @@ export function Instellingen() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">
-        <span aria-hidden="true">⚙️</span> Instellingen
+      <h1 className="text-2xl font-bold flex items-center gap-2">
+        <Settings className="w-7 h-7 text-blue-600" aria-hidden="true" />
+        Instellingen
       </h1>
 
       <FormProvider {...methods}>
@@ -97,18 +99,30 @@ export function Instellingen() {
           <FactuurSectie />
 
           {isSubmitted && Object.keys(errors).length > 0 && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">
-              <span aria-hidden="true">⚠️</span> Er zijn nog fouten in het formulier. Controleer de
-              gemarkeerde velden.
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700 flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 shrink-0" aria-hidden="true" />
+              Er zijn nog fouten in het formulier. Controleer de gemarkeerde velden.
             </div>
           )}
 
           <button
             type="submit"
             disabled={isSubmitting}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-8 rounded-lg transition-colors disabled:opacity-50"
+            className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-8 rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
           >
-            {isSubmitting ? 'Opslaan...' : '💾 Opslaan'}
+            <>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+                  Opslaan...
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4" aria-hidden="true" />
+                  Opslaan
+                </>
+              )}
+            </>
           </button>
         </form>
       </FormProvider>

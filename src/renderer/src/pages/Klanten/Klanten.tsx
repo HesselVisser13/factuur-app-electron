@@ -10,6 +10,7 @@ import type { Klant } from '@shared/types'
 
 import { KlantenTabel } from './components/KlantenTabel'
 import { KlantModal } from './components/KlantModal'
+import { Users, Plus } from 'lucide-react'
 
 export function Klanten() {
   const [klanten, setKlanten] = useState<Klant[]>([])
@@ -97,15 +98,17 @@ export function Klanten() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">
-          <span aria-hidden="true">👥</span> Klanten
+        <h1 className="text-2xl font-bold flex items-center gap-2">
+          <Users className="w-7 h-7 text-blue-600" aria-hidden="true" />
+          Klanten
         </h1>
         <button
           type="button"
           onClick={openNew}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg text-sm"
+          className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg text-sm flex items-center gap-2"
         >
-          + Nieuwe klant
+          <Plus className="w-4 h-4" aria-hidden="true" />
+          Nieuwe klant
         </button>
       </div>
 
