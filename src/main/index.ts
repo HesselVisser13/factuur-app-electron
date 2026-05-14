@@ -33,6 +33,7 @@ function createWindow(): void {
     width: 1200,
     height: 800,
     title: 'BTW App',
+    icon: join(__dirname, '../../build/icon.png'),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false
