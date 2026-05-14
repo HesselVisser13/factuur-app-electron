@@ -1,12 +1,21 @@
 // src/renderer/src/components/Card.tsx
 
-export type CardTone = 'info' | 'neutral' | 'danger' | 'success'
+export type CardTone = 'info' | 'neutral' | 'danger' | 'success' | 'accent'
 
 const TONE_CLASSES: Record<CardTone, string> = {
   info: 'border-blue-200 bg-blue-50',
-  neutral: 'border-gray-200 bg-gray-50',
+  neutral: 'border-gray-200 bg-white',
   danger: 'border-red-200 bg-red-50',
-  success: 'border-green-200 bg-green-50'
+  success: 'border-green-200 bg-green-50',
+  accent: 'border-gray-200 bg-white'
+}
+
+const VALUE_TONE_CLASSES: Record<CardTone, string> = {
+  info: 'text-blue-900',
+  neutral: 'text-gray-900',
+  danger: 'text-red-700',
+  success: 'text-green-700',
+  accent: 'text-gray-900'
 }
 
 interface CardProps {
@@ -20,11 +29,12 @@ interface CardProps {
 
 export function Card({ label, value, sub, tone = 'neutral', onClick, ariaLabel }: CardProps) {
   const baseClasses = `rounded-xl border p-6 ${TONE_CLASSES[tone]}`
+  const valueClasses = `text-2xl font-bold ${VALUE_TONE_CLASSES[tone]}`
 
   const content = (
     <>
       <div className="text-xs text-gray-600 uppercase tracking-wide mb-2">{label}</div>
-      <div className="text-2xl font-bold">{value}</div>
+      <div className={valueClasses}>{value}</div>
       {sub && <div className="text-xs text-gray-600 mt-2">{sub}</div>}
     </>
   )

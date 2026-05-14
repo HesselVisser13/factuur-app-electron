@@ -89,9 +89,10 @@ export function Dashboard() {
                 label="Openstaand"
                 value={formatCurrency(bedrag(stats.openstaand.bedrag))}
                 sub={facturenLabel(stats.openstaand.aantal)}
-                tone="info"
+                tone="accent" // ← was "info"
                 onClick={() => navigate('/facturen')}
               />
+
               <Card
                 label="Vervallen"
                 value={formatCurrency(bedrag(stats.vervallen.bedrag))}
@@ -100,14 +101,15 @@ export function Dashboard() {
                     ? 'Alles op tijd'
                     : `${facturenLabel(stats.vervallen.aantal)} te laat`
                 }
-                tone={stats.vervallen.aantal > 0 ? 'danger' : 'success'}
+                tone={stats.vervallen.aantal > 0 ? 'danger' : 'success'} // ← terug naar success
                 onClick={() => navigate('/facturen')}
               />
+
               <Card
                 label={`Dit kwartaal (Q${kwartaal})`}
                 value={formatCurrency(bedrag(stats.ditKwartaal.bedrag))}
                 sub={facturenLabel(stats.ditKwartaal.aantal)}
-                tone="neutral"
+                tone="accent" // ← was "neutral", nu consistent met andere
               />
             </div>
           </section>
@@ -118,17 +120,17 @@ export function Dashboard() {
               <Card
                 label="Omzet (excl. BTW)"
                 value={formatCurrency(btwTotalen.omzet)}
-                tone="info"
+                tone="accent"
               />
               <Card
                 label="Uitgaven (excl. BTW)"
                 value={formatCurrency(btwTotalen.inkoop)}
-                tone="neutral"
+                tone="accent"
               />
               <Card
                 label="BTW af te dragen"
                 value={formatCurrency(btw.afTeDragen)}
-                tone={btw.afTeDragen >= 0 ? 'danger' : 'success'}
+                tone={btw.afTeDragen > 0 ? 'danger' : 'success'}
                 onClick={() => navigate('/btw-aangifte')}
               />
             </div>
