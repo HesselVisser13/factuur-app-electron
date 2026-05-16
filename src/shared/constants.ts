@@ -52,3 +52,18 @@ export const MAIL_TEMPLATE_PLACEHOLDERS = [
   { key: 'eigenaarNaam', label: 'Eigen naam', voorbeeld: 'Jouw Naam' },
   { key: 'iban', label: 'IBAN', voorbeeld: 'NL00 BANK 0000 0000 00' }
 ] as const
+
+// ============================================================
+// Foto-limieten
+// ============================================================
+
+export const FOTO_LIMITS = {
+  MAX_FILE_SIZE_MB: 20,
+  MAX_FILE_SIZE_BYTES: 20 * 1024 * 1024,
+  MAX_PHOTOS_PER_KLANT: 100,
+  THUMB_SIZE_PX: 300,
+  JPEG_QUALITY: 92,
+  THUMB_QUALITY: 80
+} as const
+
+export const SUPPORTED_FOTO_EXTS = ['.jpg', '.jpeg', '.png', '.heic', '.heif', '.webp'] as const

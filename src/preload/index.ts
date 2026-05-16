@@ -1,6 +1,6 @@
 // src/preload/index.ts
 
-import { contextBridge, ipcRenderer } from 'electron'
+import { contextBridge, ipcRenderer, webUtils } from 'electron'
 import { IPC_CHANNELS } from '../shared/ipc-channels'
 import type {
   TransactieInput,
@@ -21,7 +21,9 @@ import type {
   PdfSaveAsResult,
   PdfOpenResult,
   PdfOpenFolderResult,
-  DashboardStats
+  DashboardStats,
+  AddFotoInput,
+  FotoRecord
 } from '../shared/types'
 import type { MailAuthStatus, MailResult, MailLogEntry } from '../shared/mail-types'
 
@@ -106,6 +108,17 @@ const api = {
   }): Promise<MailResult> => invoke(IPC_CHANNELS.MAIL_SEND, request),
   getMailLog: (factuurId: number): Promise<MailLogEntry[]> =>
     invoke(IPC_CHANNELS.MAIL_GET_LOG, factuurId),
+
+  // Foto's
+  listFotosByKlant: (klantId: number): Promise<FotoRecord[]> =>
+    invoke(IPC_CHANNELS.FOTOS_LIST_BY_KLANT, klantId),
+  pickFotoFiles: (): Promise<string[]> => invoke(IPC_CHANNELS.FOTOS_PICK_FILES),
+  addFoto: (input: AddFotoInput): Promise<FotoRecord> => invoke(IPC_CHANNELS.FOTOS_ADD, input),
+  updateFotoNotitie: (id: number, notitie: string | null): Promise<FotoRecord> =>
+    invoke(IPC_CHANNELS.FOTOS_UPDATE_NOTITIE, { id, notitie }),
+  deleteFoto: (id: number): Promise<boolean> => invoke(IPC_CHANNELS.FOTOS_DELETE, id),
+  openFotoExternal: (id: number): Promise<boolean> => invoke(IPC_CHANNELS.FOTOS_OPEN_EXTERNAL, id),
+  getPathForFile: (file: File): string => webUtils.getPathForFile(file),
 
   getAppVersion: (): Promise<string> => invoke(IPC_CHANNELS.APP_GET_VERSION)
 }

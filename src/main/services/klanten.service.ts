@@ -3,6 +3,10 @@
 import { getDatabase } from '../db/client'
 import type { KlantInput, KlantUpdate } from '../../shared/schemas'
 import type { Klant } from '../../shared/types'
+import { log } from '../logger'
+import { join } from 'node:path'
+import { app } from 'electron'
+import { existsSync, rmSync } from 'node:fs'
 
 function serialize(k: {
   id: number
@@ -96,7 +100,20 @@ export class KlantenService {
       )
     }
 
+    // Verwijder fysieke foto-folder (DB-records gaan via cascade automatisch mee)
+    const fotoFolder = join(app.getPath('userData'), 'klant-fotos', String(id))
+    if (existsSync(fotoFolder)) {
+      try {
+        rmSync(fotoFolder, { recursive: true, force: true })
+        log.info(`[klanten] Foto-folder verwijderd voor klant ${id}`)
+      } catch (err) {
+        log.warn(`[klanten] Foto-folder cleanup mislukt voor klant ${id}`, err)
+        // Niet throwen — DB-delete moet wel doorgaan
+      }
+    }
+
     await prisma.klant.delete({ where: { id } })
+    log.info(`[klanten] Klant verwijderd: id ${id}`)
   }
 }
 

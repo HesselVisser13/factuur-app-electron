@@ -23,3 +23,27 @@ export function getFactuurPdfPath(factuurNummer: string): string {
 export function getLogoPath(fileName: string): string {
   return join(getLogosDir(), fileName)
 }
+
+export function getKlantFotosDir(klantId: number): string {
+  const dir = join(app.getPath('userData'), 'klant-fotos', String(klantId))
+  if (!existsSync(dir)) {
+    mkdirSync(dir, { recursive: true })
+  }
+  return dir
+}
+
+export function getKlantFotoThumbsDir(klantId: number): string {
+  const dir = join(app.getPath('userData'), 'klant-fotos', String(klantId), '.thumbs')
+  if (!existsSync(dir)) {
+    mkdirSync(dir, { recursive: true })
+  }
+  return dir
+}
+
+export function getKlantFotoPath(klantId: number, filename: string): string {
+  return join(getKlantFotosDir(klantId), filename)
+}
+
+export function getKlantFotoThumbPath(klantId: number, filename: string): string {
+  return join(getKlantFotoThumbsDir(klantId), filename)
+}

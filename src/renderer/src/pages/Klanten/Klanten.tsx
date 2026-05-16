@@ -10,6 +10,7 @@ import type { Klant } from '@shared/types'
 
 import { KlantenTabel } from './components/KlantenTabel'
 import { KlantModal } from './components/KlantModal'
+import { FotoModal } from './components/FotoModal'
 import { Users, Plus } from 'lucide-react'
 
 export function Klanten() {
@@ -18,6 +19,7 @@ export function Klanten() {
   const [modalKlant, setModalKlant] = useState<Klant | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
   const [deletingId, setDeletingId] = useState<number | null>(null)
+  const [fotosKlant, setFotosKlant] = useState<Klant | null>(null)
 
   const toast = useToast()
   const confirm = useConfirm()
@@ -128,6 +130,7 @@ export function Klanten() {
         onEdit={openEdit}
         onDelete={handleDelete}
         onAddNew={openNew}
+        onShowFotos={setFotosKlant}
       />
 
       {modalOpen && (
@@ -140,6 +143,8 @@ export function Klanten() {
           }}
         />
       )}
+
+      {fotosKlant && <FotoModal klant={fotosKlant} onClose={() => setFotosKlant(null)} />}
     </div>
   )
 }

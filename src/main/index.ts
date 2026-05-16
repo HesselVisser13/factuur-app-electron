@@ -12,9 +12,10 @@ import { registerAppHandlers } from './ipc/app.ipc'
 import { registerKlantenHandlers } from './ipc/klanten.ipc'
 import { registerFactuurHandlers } from './ipc/facturen.ipc'
 import { registerMailIpc } from './ipc/mail.ipc'
+import { registerFotosHandlers } from './ipc/fotos.ipc'
 import { runMigrations } from './db/migrate'
 import { initLogger, log } from './logger'
-import { getLogosDir, getFacturenDir } from './paths'
+import { getFacturenDir, getKlantFotosDir, getKlantFotoThumbsDir, getLogosDir } from './paths'
 import { registerDashboardHandlers } from './ipc/dashboard.ipc'
 
 protocol.registerSchemesAsPrivileged([
@@ -24,6 +25,10 @@ protocol.registerSchemesAsPrivileged([
   },
   {
     scheme: 'app-pdf',
+    privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true }
+  },
+  {
+    scheme: 'app-foto',
     privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true }
   }
 ])
@@ -82,6 +87,25 @@ app.whenReady().then(() => {
     return net.fetch(pathToFileURL(filePath).toString())
   })
 
+  protocol.handle('app-foto', async (request) => {
+    const url = new URL(request.url)
+    const hostMatch = url.hostname.match(/^klant-(\d+)$/)
+    if (!hostMatch) {
+      return new Response('Invalid klant', { status: 400 })
+    }
+    const klantId = parseInt(hostMatch[1], 10)
+    const requested = decodeURIComponent(url.pathname).replace(/^\/+/, '')
+
+    const isThumb = requested.startsWith('.thumbs/')
+    const safeName = basename(isThumb ? requested.replace('.thumbs/', '') : requested)
+
+    const filePath = isThumb
+      ? join(getKlantFotoThumbsDir(klantId), safeName)
+      : join(getKlantFotosDir(klantId), safeName)
+
+    return net.fetch(pathToFileURL(filePath).toString())
+  })
+
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window)
   })
@@ -101,6 +125,7 @@ app.whenReady().then(() => {
   registerFactuurHandlers()
   registerDashboardHandlers()
   registerMailIpc()
+  registerFotosHandlers()
 
   createWindow()
 

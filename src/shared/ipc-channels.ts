@@ -48,7 +48,15 @@ export const IPC_CHANNELS = {
   MAIL_AUTHENTICATE: 'mail:authenticate',
   MAIL_DISCONNECT: 'mail:disconnect',
   MAIL_SEND: 'mail:send',
-  MAIL_GET_LOG: 'mail:get-log'
+  MAIL_GET_LOG: 'mail:get-log',
+
+  //fotos
+  FOTOS_LIST_BY_KLANT: 'fotos:listByKlant',
+  FOTOS_ADD: 'fotos:add',
+  FOTOS_UPDATE_NOTITIE: 'fotos:updateNotitie',
+  FOTOS_DELETE: 'fotos:delete',
+  FOTOS_PICK_FILES: 'fotos:pickFiles',
+  FOTOS_OPEN_EXTERNAL: 'fotos:openExternal'
 } as const
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS]

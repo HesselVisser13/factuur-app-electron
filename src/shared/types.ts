@@ -135,3 +135,20 @@ export type DashboardStats = {
   }
   laatsteFacturen: Factuur[]
 }
+
+export interface FotoRecord {
+  id: number
+  klantId: number
+  filename: string
+  originalName: string
+  bytes: number
+  takenAt: string | null
+  notitie: string | null
+  createdAt: string
+}
+
+export interface AddFotoInput {
+  klantId: number
+  sourcePath: string
+  originalName: string
+}

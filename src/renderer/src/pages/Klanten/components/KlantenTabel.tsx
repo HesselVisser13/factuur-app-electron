@@ -1,11 +1,10 @@
 //src/renderer/src/pages/Klanten/components/KlantenTabel.tsx
 
-import { Pencil, Trash2 } from 'lucide-react'
-import { Plus, Users } from 'lucide-react'
+import { Camera, Pencil, Plus, Trash2, Users } from 'lucide-react'
 
+import { EmptyState } from '@renderer/components/EmptyState'
 import { klantDisplayNaam } from '@shared/klant-utils'
 import type { Klant } from '@shared/types'
-import { EmptyState } from '@renderer/components/EmptyState'
 
 interface Props {
   klanten: Klant[]
@@ -14,6 +13,7 @@ interface Props {
   onEdit: (k: Klant) => void
   onDelete: (k: Klant) => void
   onAddNew?: () => void
+  onShowFotos: (k: Klant) => void
 }
 
 export function KlantenTabel({
@@ -22,7 +22,8 @@ export function KlantenTabel({
   deletingId,
   onEdit,
   onDelete,
-  onAddNew
+  onAddNew,
+  onShowFotos
 }: Props) {
   if (klanten.length === 0) {
     if (totalCount === 0 && onAddNew) {
@@ -40,7 +41,6 @@ export function KlantenTabel({
       )
     }
 
-    // Wel klanten in DB, maar filter levert niets op
     return (
       <div className="bg-white rounded-xl border border-gray-200 p-8 text-center text-gray-500 text-sm">
         Geen klanten gevonden met deze zoekterm.
@@ -88,6 +88,15 @@ export function KlantenTabel({
                 <td className="px-4 py-3 text-gray-600">{k.email || '-'}</td>
                 <td className="px-4 py-3 text-right">
                   <div className="flex items-center justify-end gap-1">
+                    <button
+                      type="button"
+                      onClick={() => onShowFotos(k)}
+                      aria-label={`Foto's van ${klantDisplayNaam(k)}`}
+                      title="Foto's"
+                      className="p-2 rounded-lg text-gray-600 hover:bg-gray-100"
+                    >
+                      <Camera className="w-4 h-4" aria-hidden="true" />
+                    </button>
                     <button
                       type="button"
                       onClick={() => onEdit(k)}
