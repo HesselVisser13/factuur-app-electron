@@ -177,3 +177,21 @@ export interface RestoreResult {
   manifest: BackupManifest
   rolledBack: boolean
 }
+
+export interface AutoBackupStatus {
+  enabled: boolean
+  folder: string
+  isCustomFolder: boolean
+  consecutiveFailures: number
+  lastAutoBackupAt: string | null
+  lastBackupAt: string | null
+}
+
+export interface AutoBackupRunResult {
+  ran: boolean
+  success?: boolean
+  filePath?: string
+  bytes?: number
+  reason?: string
+  errorMsg?: string
+}

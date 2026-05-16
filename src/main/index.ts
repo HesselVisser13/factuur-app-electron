@@ -21,6 +21,7 @@ import { registerTransactieHandlers } from './ipc/transacties.ipc'
 import { initLogger, log } from './logger'
 import { getFacturenDir, getKlantFotosDir, getKlantFotoThumbsDir, getLogosDir } from './paths'
 import { applyPendingRestore } from './services/backup/restore.service'
+import { maybeRunAutoBackup } from './services/backup/auto-backup.service'
 
 protocol.registerSchemesAsPrivileged([
   {
@@ -57,6 +58,8 @@ function createWindow(): void {
 }
 
 app.whenReady().then(async () => {
+  const dbPath = join(app.getPath('userData'), 'factuur.db')
+  log.info('[startup] DB path:', dbPath)
   initLogger()
   electronApp.setAppUserModelId('nl.factuurapp.btw')
 
@@ -132,12 +135,19 @@ app.whenReady().then(async () => {
   })
 
   try {
-    log.info('[startup] runMigrations starten...')
     runMigrations()
     log.info('[startup] runMigrations voltooid')
   } catch (error) {
     log.error('[Migration] Failed, app will continue:', error)
   }
+
+  maybeRunAutoBackup().then((result) => {
+    if (result.ran && result.success) {
+      log.info(`[startup] Auto-backup gemaakt: ${result.filePath}`)
+    } else if (result.ran && !result.success) {
+      log.warn(`[startup] Auto-backup mislukt: ${result.errorMsg}`)
+    }
+  })
 
   registerTransactieHandlers()
   registerBtwAangifteHandlers()

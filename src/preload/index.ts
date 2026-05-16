@@ -26,7 +26,9 @@ import type {
   FotoRecord,
   BackupManifest,
   BackupResult,
-  RestoreResult
+  RestoreResult,
+  AutoBackupRunResult,
+  AutoBackupStatus
 } from '../shared/types'
 import type { MailAuthStatus, MailResult, MailLogEntry } from '../shared/mail-types'
 
@@ -135,6 +137,9 @@ const api = {
   restoreBackup: (zipPath: string): Promise<RestoreResult> =>
     invoke(IPC_CHANNELS.BACKUP_RESTORE, zipPath),
   relaunchAfterRestore: (): void => ipcRenderer.send('backup:relaunch'),
+  getAutoBackupStatus: (): Promise<AutoBackupStatus> => invoke(IPC_CHANNELS.BACKUP_GET_AUTO_STATUS),
+  runAutoBackupNow: (): Promise<AutoBackupRunResult> => invoke(IPC_CHANNELS.BACKUP_RUN_AUTO_NOW),
+  pickBackupFolder: (): Promise<string | null> => invoke(IPC_CHANNELS.BACKUP_PICK_FOLDER),
 
   getAppVersion: (): Promise<string> => invoke(IPC_CHANNELS.APP_GET_VERSION)
 }

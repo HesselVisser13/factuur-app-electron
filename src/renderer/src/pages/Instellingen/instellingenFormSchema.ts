@@ -99,7 +99,11 @@ export const InstellingenFormSchema = z.object({
 
   // Mail templates
   mail_onderwerp_template: z.string().trim().max(200, 'Maximaal 200 tekens'),
-  mail_body_template: z.string().trim().max(2000, 'Maximaal 2000 tekens')
+  mail_body_template: z.string().trim().max(2000, 'Maximaal 2000 tekens'),
+
+  // Backup
+  backup_auto_enabled: z.enum(['true', 'false']),
+  backup_auto_folder: z.string().trim().max(500, 'Pad te lang')
 })
 
 export type InstellingenFormValues = z.infer<typeof InstellingenFormSchema>

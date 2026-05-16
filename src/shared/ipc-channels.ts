@@ -63,7 +63,10 @@ export const IPC_CHANNELS = {
   BACKUP_INSPECT: 'backup:inspect',
   BACKUP_RESTORE: 'backup:restore',
   BACKUP_PICK_SAVE_LOCATION: 'backup:pickSaveLocation',
-  BACKUP_PICK_OPEN_LOCATION: 'backup:pickOpenLocation'
+  BACKUP_PICK_OPEN_LOCATION: 'backup:pickOpenLocation',
+  BACKUP_GET_AUTO_STATUS: 'backup:getAutoStatus',
+  BACKUP_RUN_AUTO_NOW: 'backup:runAutoNow',
+  BACKUP_PICK_FOLDER: 'backup:pickFolder'
 } as const
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS]

@@ -176,3 +176,16 @@ model Foto {
   @@index([klantId])
   @@index([createdAt])
 }
+
+model BackupLog {
+  id        Int      @id @default(autoincrement())
+  type      String   // 'manual' | 'auto'
+  status    String   // 'success' | 'failed'
+  filePath  String?  // null als status=failed
+  bytes     Int?     // null als status=failed
+  errorMsg  String?  // null als status=success
+  createdAt DateTime @default(now())
+
+  @@index([type])
+  @@index([createdAt])
+}

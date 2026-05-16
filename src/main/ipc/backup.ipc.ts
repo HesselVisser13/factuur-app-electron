@@ -9,6 +9,17 @@ import { createBackup, suggestBackupFilename } from '../services/backup/backup.s
 import { inspectBackup, prepareRestore } from '../services/backup/restore.service'
 
 import { createHandler, validate } from './helpers'
+import {
+  getEffectiveBackupFolder,
+  getDefaultBackupFolder,
+  readConfig,
+  resetFailureCounter
+} from '../services/backup/auto-backup-config'
+import {
+  getLastAutoBackupTime,
+  getLastBackupTime,
+  runAutoBackupForced
+} from '../services/backup/auto-backup.service'
 
 export function registerBackupHandlers(): void {
   ipcMain.handle(
@@ -64,6 +75,47 @@ export function registerBackupHandlers(): void {
   )
 
   log.info('[backup-ipc] Backup handlers geregistreerd')
+
+  ipcMain.handle(
+    IPC_CHANNELS.BACKUP_GET_AUTO_STATUS,
+    createHandler(async () => {
+      const config = await readConfig()
+      const lastAuto = await getLastAutoBackupTime()
+      const lastAny = await getLastBackupTime()
+
+      return {
+        enabled: config.enabled,
+        folder: config.folder.trim() || getDefaultBackupFolder(),
+        isCustomFolder: config.folder.trim() !== '',
+        consecutiveFailures: config.consecutiveFailures,
+        lastAutoBackupAt: lastAuto?.toISOString() ?? null,
+        lastBackupAt: lastAny?.toISOString() ?? null
+      }
+    })
+  )
+
+  ipcMain.handle(
+    IPC_CHANNELS.BACKUP_RUN_AUTO_NOW,
+    createHandler(async () => {
+      await resetFailureCounter()
+      return runAutoBackupForced()
+    })
+  )
+
+  ipcMain.handle(
+    IPC_CHANNELS.BACKUP_PICK_FOLDER,
+    createHandler(async () => {
+      const result = await dialog.showOpenDialog({
+        title: 'Kies folder voor automatische backups',
+        properties: ['openDirectory', 'createDirectory'],
+        defaultPath: await getEffectiveBackupFolder()
+      })
+      if (result.canceled || result.filePaths.length === 0) return null
+      return result.filePaths[0]
+    })
+  )
+
+  log.info('[backup-ipc] Auto-backup handlers geregistreerd')
 }
 
 // Helper-IPC die de app herstart
