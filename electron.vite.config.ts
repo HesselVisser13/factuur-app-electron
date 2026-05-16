@@ -15,13 +15,18 @@ export default defineConfig(({ mode }) => {
         }
       },
       define: {
-        // Build-time injection van env-vars in main process
         'process.env.GMAIL_CLIENT_ID': JSON.stringify(env.GMAIL_CLIENT_ID ?? ''),
         'process.env.GMAIL_CLIENT_SECRET': JSON.stringify(env.GMAIL_CLIENT_SECRET ?? '')
       },
       build: {
         rollupOptions: {
-          external: ['better-sqlite3', '@prisma/adapter-better-sqlite3']
+          external: [
+            'better-sqlite3',
+            '@prisma/adapter-better-sqlite3',
+            'adm-zip',
+            'sharp',
+            'exifr'
+          ]
         }
       }
     },

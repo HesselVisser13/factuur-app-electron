@@ -23,3 +23,10 @@ function getDatabasePath(): string {
   }
   return path.join(app.getPath('userData'), 'factuur.db')
 }
+
+export async function disconnectDatabase(): Promise<void> {
+  if (prisma) {
+    await prisma.$disconnect()
+    prisma = null
+  }
+}

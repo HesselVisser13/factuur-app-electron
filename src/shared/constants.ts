@@ -67,3 +67,21 @@ export const FOTO_LIMITS = {
 } as const
 
 export const SUPPORTED_FOTO_EXTS = ['.jpg', '.jpeg', '.png', '.heic', '.heif', '.webp'] as const
+
+// ============================================================
+// Backup
+// ============================================================
+
+/**
+ * Backup-format versie. Bij breaking changes in de backup-structuur
+ * (bv. nieuwe folders, andere database-schema) verhogen we dit.
+ *
+ * Restore weigert backups van een hoger format-versie.
+ */
+export const BACKUP_FORMAT_VERSION = 1
+
+/** Bestandsnaam-pattern voor backups. */
+export const BACKUP_FILENAME_PREFIX = 'BTW-App-Backup'
+
+/** Naam van het manifest-bestand binnen elke backup-ZIP. */
+export const BACKUP_MANIFEST_FILENAME = 'backup-manifest.json'

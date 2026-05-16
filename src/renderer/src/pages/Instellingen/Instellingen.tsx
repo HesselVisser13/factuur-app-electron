@@ -16,6 +16,7 @@ import { FactuurSectie } from './components/FactuurSectie'
 import { FinancieelSectie } from './components/FinancieelSectie'
 import { ReiskostenSectie } from './components/ReiskostenSectie'
 import { MailSectie } from './components/MailSectie'
+import { BackupSectie } from './components/BackupSectie'
 import { InstellingenFormSchema, type InstellingenFormValues } from './instellingenFormSchema'
 import { defaultInstellingen, mapToForm } from './types'
 
@@ -97,7 +98,6 @@ export function Instellingen() {
           <ReiskostenSectie tarieven={tarieven} />
           <MailSectie />
           <FactuurSectie />
-
           {isSubmitted && Object.keys(errors).length > 0 && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700 flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 shrink-0" aria-hidden="true" />
@@ -126,6 +126,7 @@ export function Instellingen() {
           </button>
         </form>
       </FormProvider>
+      <BackupSectie />
     </div>
   )
 }

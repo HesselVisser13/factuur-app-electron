@@ -56,7 +56,14 @@ export const IPC_CHANNELS = {
   FOTOS_UPDATE_NOTITIE: 'fotos:updateNotitie',
   FOTOS_DELETE: 'fotos:delete',
   FOTOS_PICK_FILES: 'fotos:pickFiles',
-  FOTOS_OPEN_EXTERNAL: 'fotos:openExternal'
+  FOTOS_OPEN_EXTERNAL: 'fotos:openExternal',
+
+  // Backup
+  BACKUP_CREATE: 'backup:create',
+  BACKUP_INSPECT: 'backup:inspect',
+  BACKUP_RESTORE: 'backup:restore',
+  BACKUP_PICK_SAVE_LOCATION: 'backup:pickSaveLocation',
+  BACKUP_PICK_OPEN_LOCATION: 'backup:pickOpenLocation'
 } as const
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS]

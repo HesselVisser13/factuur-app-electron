@@ -23,7 +23,10 @@ import type {
   PdfOpenFolderResult,
   DashboardStats,
   AddFotoInput,
-  FotoRecord
+  FotoRecord,
+  BackupManifest,
+  BackupResult,
+  RestoreResult
 } from '../shared/types'
 import type { MailAuthStatus, MailResult, MailLogEntry } from '../shared/mail-types'
 
@@ -119,6 +122,19 @@ const api = {
   deleteFoto: (id: number): Promise<boolean> => invoke(IPC_CHANNELS.FOTOS_DELETE, id),
   openFotoExternal: (id: number): Promise<boolean> => invoke(IPC_CHANNELS.FOTOS_OPEN_EXTERNAL, id),
   getPathForFile: (file: File): string => webUtils.getPathForFile(file),
+
+  // Backup
+  pickBackupSaveLocation: (): Promise<string | null> =>
+    invoke(IPC_CHANNELS.BACKUP_PICK_SAVE_LOCATION),
+  pickBackupOpenLocation: (): Promise<string | null> =>
+    invoke(IPC_CHANNELS.BACKUP_PICK_OPEN_LOCATION),
+  createBackup: (targetPath: string): Promise<BackupResult> =>
+    invoke(IPC_CHANNELS.BACKUP_CREATE, targetPath),
+  inspectBackup: (zipPath: string): Promise<BackupManifest> =>
+    invoke(IPC_CHANNELS.BACKUP_INSPECT, zipPath),
+  restoreBackup: (zipPath: string): Promise<RestoreResult> =>
+    invoke(IPC_CHANNELS.BACKUP_RESTORE, zipPath),
+  relaunchAfterRestore: (): void => ipcRenderer.send('backup:relaunch'),
 
   getAppVersion: (): Promise<string> => invoke(IPC_CHANNELS.APP_GET_VERSION)
 }

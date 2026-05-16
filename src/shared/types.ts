@@ -152,3 +152,28 @@ export interface AddFotoInput {
   sourcePath: string
   originalName: string
 }
+
+export interface BackupManifest {
+  formatVersion: number
+  appVersion: string
+  createdAt: string
+  contents: {
+    klanten: number
+    facturen: number
+    transacties: number
+    fotos: number
+    factuurPdfs: number
+    hasLogo: boolean
+  }
+}
+
+export interface BackupResult {
+  filePath: string
+  bytes: number
+  manifest: BackupManifest
+}
+
+export interface RestoreResult {
+  manifest: BackupManifest
+  rolledBack: boolean
+}

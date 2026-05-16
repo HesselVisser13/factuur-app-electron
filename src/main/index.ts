@@ -1,22 +1,26 @@
 // src/main/index.ts
-import { app, BrowserWindow, protocol, net, Menu } from 'electron'
-import { join, basename } from 'path'
+import { app, BrowserWindow, dialog, Menu, net, protocol } from 'electron'
+import { basename, join } from 'path'
 import { pathToFileURL } from 'url'
-import { electronApp, optimizer, is } from '@electron-toolkit/utils'
+
+import { electronApp, is, optimizer } from '@electron-toolkit/utils'
 import { autoUpdater } from 'electron-updater'
-import { registerTransactieHandlers } from './ipc/transacties.ipc'
+
+import { runMigrations } from './db/migrate'
+import { registerAppHandlers } from './ipc/app.ipc'
+import { registerBackupHandlers } from './ipc/backup.ipc'
 import { registerBtwAangifteHandlers } from './ipc/btw-aangifte.ipc'
 import { registerBtwTarievenHandlers } from './ipc/btw-tarieven.ipc'
-import { registerInstellingenHandlers } from './ipc/instellingen.ipc'
-import { registerAppHandlers } from './ipc/app.ipc'
-import { registerKlantenHandlers } from './ipc/klanten.ipc'
+import { registerDashboardHandlers } from './ipc/dashboard.ipc'
 import { registerFactuurHandlers } from './ipc/facturen.ipc'
-import { registerMailIpc } from './ipc/mail.ipc'
 import { registerFotosHandlers } from './ipc/fotos.ipc'
-import { runMigrations } from './db/migrate'
+import { registerInstellingenHandlers } from './ipc/instellingen.ipc'
+import { registerKlantenHandlers } from './ipc/klanten.ipc'
+import { registerMailIpc } from './ipc/mail.ipc'
+import { registerTransactieHandlers } from './ipc/transacties.ipc'
 import { initLogger, log } from './logger'
 import { getFacturenDir, getKlantFotosDir, getKlantFotoThumbsDir, getLogosDir } from './paths'
-import { registerDashboardHandlers } from './ipc/dashboard.ipc'
+import { applyPendingRestore } from './services/backup/restore.service'
 
 protocol.registerSchemesAsPrivileged([
   {
@@ -52,9 +56,26 @@ function createWindow(): void {
   }
 }
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   initLogger()
   electronApp.setAppUserModelId('nl.factuurapp.btw')
+
+  // ============================================================
+  // KRITIEK: pending restore VÓÓR Prisma init en migrations
+  // De database mag nog niet geopend zijn als we files vervangen.
+  // ============================================================
+  try {
+    const restored = await applyPendingRestore()
+    if (restored) {
+      log.info('[startup] Backup hersteld bij start')
+    }
+  } catch (err) {
+    log.error('[startup] Pending restore faalde', err)
+    dialog.showErrorBox(
+      'Backup terugzetten mislukt',
+      err instanceof Error ? err.message : 'Onbekende fout'
+    )
+  }
 
   if (!is.dev) {
     autoUpdater.logger = log
@@ -111,7 +132,9 @@ app.whenReady().then(() => {
   })
 
   try {
+    log.info('[startup] runMigrations starten...')
     runMigrations()
+    log.info('[startup] runMigrations voltooid')
   } catch (error) {
     log.error('[Migration] Failed, app will continue:', error)
   }
@@ -126,6 +149,7 @@ app.whenReady().then(() => {
   registerDashboardHandlers()
   registerMailIpc()
   registerFotosHandlers()
+  registerBackupHandlers()
 
   createWindow()
 
