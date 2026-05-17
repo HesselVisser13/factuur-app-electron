@@ -12,6 +12,9 @@ export const IPC_CHANNELS = {
 
   // BTW-tarieven
   BTW_TARIEVEN_GET_ACTIEF: 'btwTarieven:getActief',
+  BTW_TARIEVEN_CREATE: 'btwTarieven:create',
+  BTW_TARIEVEN_UPDATE: 'btwTarieven:update',
+  BTW_TARIEVEN_DELETE: 'btwTarieven:delete',
 
   // Instellingen
   INSTELLINGEN_GET_ALL: 'instellingen:getAll',

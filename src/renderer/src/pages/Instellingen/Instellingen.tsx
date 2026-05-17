@@ -19,6 +19,7 @@ import { MailSectie } from './components/MailSectie'
 import { BackupSectie } from './components/BackupSectie'
 import { InstellingenFormSchema, type InstellingenFormValues } from './instellingenFormSchema'
 import { defaultInstellingen, mapToForm } from './types'
+import { BtwTarievenSectie } from './components/BtwTarievenSectie'
 
 export function Instellingen() {
   const toast = useToast()
@@ -127,6 +128,7 @@ export function Instellingen() {
           </button>
         </form>
       </FormProvider>
+      <BtwTarievenSectie />
     </div>
   )
 }

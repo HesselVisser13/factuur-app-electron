@@ -34,9 +34,9 @@ import {
   type RegelFormValues
 } from './factuurFormSchema'
 import { emptyRegel, type ReistijdInstellingen } from './types'
+import { vindTariefOpNaam, STANDAARD_TARIEF_NAAM } from '@shared/constants'
 
 const DEFAULT_BETAALTERMIJN_DAGEN = 14
-const STANDAARD_BTW_PERCENTAGE = 21
 
 const initialDefaults: FactuurFormValues = {
   klantId: null,
@@ -160,7 +160,7 @@ export function FactuurFormulier() {
           })
         } else {
           const standaardTarief =
-            tarievenData.find((t) => t.percentage === STANDAARD_BTW_PERCENTAGE) || tarievenData[0]
+            vindTariefOpNaam(tarievenData, STANDAARD_TARIEF_NAAM) ?? tarievenData[0] ?? null
 
           reset({
             ...initialDefaults,

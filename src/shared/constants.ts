@@ -85,3 +85,49 @@ export const BACKUP_FILENAME_PREFIX = 'BTW-App-Backup'
 
 /** Naam van het manifest-bestand binnen elke backup-ZIP. */
 export const BACKUP_MANIFEST_FILENAME = 'backup-manifest.json'
+
+// ============================================================
+// BTW-tarieven (Nederlandse belastingdienst)
+// ============================================================
+
+/**
+ * Standaard NL BTW-tarieven die bij installatie in de database worden gezet.
+ *
+ * SINGLE SOURCE OF TRUTH: alle code in de app refereert naar deze constants.
+ * Bij wetswijziging: pas hier aan, schrijf migratie indien nodig, release.
+ */
+export const BTW_TARIEVEN_DEFAULTS = [
+  {
+    naam: 'Hoog tarief',
+    percentage: 21,
+    geldigVanaf: '2012-10-01'
+  },
+  {
+    naam: 'Laag tarief',
+    percentage: 9,
+    geldigVanaf: '2019-01-01'
+  },
+  {
+    naam: 'Vrijgesteld',
+    percentage: 0,
+    geldigVanaf: '2001-01-01'
+  }
+] as const
+
+export type BtwTariefDefault = (typeof BTW_TARIEVEN_DEFAULTS)[number]
+
+/**
+ * Helper om een specifiek tarief op te halen uit een lijst van DB-tarieven.
+ * Gebruikt de naam (stable) i.p.v. percentage (kan wijzigen).
+ *
+ * Returnt het matched tarief, of `null` als niet gevonden.
+ */
+export function vindTariefOpNaam<T extends { naam: string }>(
+  tarieven: readonly T[],
+  naam: BtwTariefDefault['naam']
+): T | null {
+  return tarieven.find((t) => t.naam === naam) ?? null
+}
+
+/** Het hoofdtarief voor nieuwe regels (default selectie). */
+export const STANDAARD_TARIEF_NAAM: BtwTariefDefault['naam'] = 'Hoog tarief'

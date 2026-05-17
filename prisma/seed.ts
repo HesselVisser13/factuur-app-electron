@@ -1,41 +1,44 @@
 // prisma/seed.ts
 
 import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3'
+
 import { PrismaClient } from '../src/generated/prisma/client'
+import { BTW_TARIEVEN_DEFAULTS } from '../src/shared/constants'
 
 const adapter = new PrismaBetterSqlite3({ url: 'file:./dev.db' })
 const prisma = new PrismaClient({ adapter })
+
+function rekenBtw(bedragExcl: number, percentage: number) {
+  const btwBedrag = Math.round(bedragExcl * (percentage / 100) * 100) / 100
+  return {
+    bedragExcl,
+    btwBedrag,
+    bedragIncl: Math.round((bedragExcl + btwBedrag) * 100) / 100
+  }
+}
 
 async function seed(): Promise<void> {
   console.log('🌱 Seeding database...')
 
   // === BTW Tarieven ===
-  const tarieven = await Promise.all([
-    prisma.btwTarief.create({
-      data: {
-        naam: 'Hoog tarief',
-        percentage: 21,
-        geldigVanaf: new Date('2012-10-01'),
-        bron: 'seed'
-      }
-    }),
-    prisma.btwTarief.create({
-      data: {
-        naam: 'Laag tarief',
-        percentage: 9,
-        geldigVanaf: new Date('2019-01-01'),
-        bron: 'seed'
-      }
-    }),
-    prisma.btwTarief.create({
-      data: {
-        naam: 'Vrijgesteld',
-        percentage: 0,
-        geldigVanaf: new Date('2001-01-01'),
-        bron: 'seed'
-      }
-    })
-  ])
+  const tarieven = await Promise.all(
+    BTW_TARIEVEN_DEFAULTS.map((t) =>
+      prisma.btwTarief.create({
+        data: {
+          naam: t.naam,
+          percentage: t.percentage,
+          geldigVanaf: new Date(t.geldigVanaf),
+          bron: 'seed'
+        }
+      })
+    )
+  )
+
+  const hoogTarief = tarieven.find((t) => t.naam === 'Hoog tarief')
+  const laagTarief = tarieven.find((t) => t.naam === 'Laag tarief')
+  if (!hoogTarief || !laagTarief) {
+    throw new Error('BTW-tarieven niet correct gevuld')
+  }
 
   // === Instellingen ===
   const instellingen = [
@@ -59,8 +62,11 @@ async function seed(): Promise<void> {
   }
 
   // === Testdata ===
-  const hoogTarief = tarieven[0]
-  const laagTarief = tarieven[1]
+  const installatie = rekenBtw(5500, laagTarief.percentage)
+  const levering = rekenBtw(3500, hoogTarief.percentage)
+  const inkoop = rekenBtw(2200, hoogTarief.percentage)
+  const dieselExcl = Math.round((96.8 / (1 + hoogTarief.percentage / 100)) * 100) / 100
+  const dieselBtw = Math.round((96.8 - dieselExcl) * 100) / 100
 
   await prisma.transactie.createMany({
     data: [
@@ -70,10 +76,10 @@ async function seed(): Promise<void> {
         bedrag: 5500,
         invoerwijze: 'exclusief',
         btwTariefId: laagTarief.id,
-        btwPercentage: 9,
-        bedragExcl: 5500,
-        btwBedrag: 495,
-        bedragIncl: 5995,
+        btwPercentage: laagTarief.percentage,
+        bedragExcl: installatie.bedragExcl,
+        btwBedrag: installatie.btwBedrag,
+        bedragIncl: installatie.bedragIncl,
         datum: new Date('2026-04-15'),
         categorie: 'arbeid'
       },
@@ -83,10 +89,10 @@ async function seed(): Promise<void> {
         bedrag: 3500,
         invoerwijze: 'exclusief',
         btwTariefId: hoogTarief.id,
-        btwPercentage: 21,
-        bedragExcl: 3500,
-        btwBedrag: 735,
-        bedragIncl: 4235,
+        btwPercentage: hoogTarief.percentage,
+        bedragExcl: levering.bedragExcl,
+        btwBedrag: levering.btwBedrag,
+        bedragIncl: levering.bedragIncl,
         datum: new Date('2026-04-15'),
         categorie: 'materiaal'
       },
@@ -96,10 +102,10 @@ async function seed(): Promise<void> {
         bedrag: 2200,
         invoerwijze: 'exclusief',
         btwTariefId: hoogTarief.id,
-        btwPercentage: 21,
-        bedragExcl: 2200,
-        btwBedrag: 462,
-        bedragIncl: 2662,
+        btwPercentage: hoogTarief.percentage,
+        bedragExcl: inkoop.bedragExcl,
+        btwBedrag: inkoop.btwBedrag,
+        bedragIncl: inkoop.bedragIncl,
         datum: new Date('2026-04-10'),
         categorie: 'materiaal'
       },
@@ -109,9 +115,9 @@ async function seed(): Promise<void> {
         bedrag: 96.8,
         invoerwijze: 'inclusief',
         btwTariefId: hoogTarief.id,
-        btwPercentage: 21,
-        bedragExcl: 80,
-        btwBedrag: 16.8,
+        btwPercentage: hoogTarief.percentage,
+        bedragExcl: dieselExcl,
+        btwBedrag: dieselBtw,
         bedragIncl: 96.8,
         datum: new Date('2026-04-12'),
         categorie: 'transport'

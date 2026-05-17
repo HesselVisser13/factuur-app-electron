@@ -7,8 +7,7 @@ import type { BtwTarief } from '@shared/types'
 import { FactuurRegelRow } from './FactuurRegelRow'
 import { type FactuurFormValues } from '../factuurFormSchema'
 import { emptyRegel } from '../types'
-
-const STANDAARD_BTW_PERCENTAGE = 21
+import { vindTariefOpNaam, STANDAARD_TARIEF_NAAM } from '@shared/constants'
 
 interface Props {
   tarieven: BtwTarief[]
@@ -26,8 +25,7 @@ export function FactuurRegelsSectie({ tarieven, readOnly }: Props) {
   const rootError = formState.errors.regels?.root?.message ?? formState.errors.regels?.message
 
   const handleAdd = () => {
-    const standaardTarief =
-      tarieven.find((t) => t.percentage === STANDAARD_BTW_PERCENTAGE) || tarieven[0]
+    const standaardTarief = vindTariefOpNaam(tarieven, STANDAARD_TARIEF_NAAM) ?? tarieven[0]
     if (!standaardTarief) return
     append(emptyRegel(standaardTarief))
   }

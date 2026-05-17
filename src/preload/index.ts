@@ -9,7 +9,9 @@ import type {
   KlantUpdate,
   FactuurInput,
   FactuurUpdate,
-  FactuurStatus
+  FactuurStatus,
+  BtwTariefInput,
+  BtwTariefUpdate
 } from '../shared/schemas'
 import type {
   BtwAangifte,
@@ -61,6 +63,11 @@ const api = {
 
   // BTW-tarieven
   getBtwTarieven: (): Promise<BtwTarief[]> => invoke(IPC_CHANNELS.BTW_TARIEVEN_GET_ACTIEF),
+  createBtwTarief: (input: BtwTariefInput): Promise<BtwTarief> =>
+    invoke(IPC_CHANNELS.BTW_TARIEVEN_CREATE, input),
+  updateBtwTarief: (input: BtwTariefUpdate): Promise<BtwTarief> =>
+    invoke(IPC_CHANNELS.BTW_TARIEVEN_UPDATE, input),
+  deleteBtwTarief: (id: number): Promise<boolean> => invoke(IPC_CHANNELS.BTW_TARIEVEN_DELETE, id),
 
   // Instellingen
   getInstellingen: (): Promise<Record<string, string>> => invoke(IPC_CHANNELS.INSTELLINGEN_GET_ALL),

@@ -266,6 +266,25 @@ export const FactuurStatusUpdateSchema = z.object({
 })
 
 // ============================================================
+// BTW-tarief schemas
+// ============================================================
+
+export const BtwTariefInputSchema = z.object({
+  naam: z.string().trim().min(1, 'Naam is verplicht').max(50, 'Max 50 tekens'),
+  percentage: z
+    .number()
+    .min(0, 'Percentage moet 0 of hoger zijn')
+    .max(100, 'Percentage moet 100 of lager zijn')
+})
+
+export const BtwTariefUpdateSchema = BtwTariefInputSchema.extend({
+  id: z.number().int().positive()
+})
+
+export type BtwTariefInput = z.infer<typeof BtwTariefInputSchema>
+export type BtwTariefUpdate = z.infer<typeof BtwTariefUpdateSchema>
+
+// ============================================================
 // TYPE EXPORTS
 // ============================================================
 
