@@ -195,3 +195,64 @@ export interface AutoBackupRunResult {
   reason?: string
   errorMsg?: string
 }
+
+// ============================================================
+// Cashflow types
+// ============================================================
+
+export interface CashflowKpis {
+  /** In cents */
+  gefactureerd: number
+  /** In cents */
+  ontvangen: number
+  /** In cents */
+  openstaand: number
+  /** In cents */
+  uitgaven: number
+  /** In cents */
+  resultaat: number
+
+  aantalFacturen: number
+  aantalTransacties: number
+}
+
+export interface MaandData {
+  maand: string
+  label: string
+  /** In cents */
+  inkomsten: number
+  /** In cents */
+  uitgaven: number
+  /** In cents */
+  saldo: number
+}
+
+export interface CategorieData {
+  categorie: string
+  label: string
+  /** In cents */
+  bedrag: number
+  /** Percentage met 1 decimaal */
+  percentage: number
+}
+
+export interface KlantOmzetData {
+  klantId: number
+  klantNaam: string
+  /** In cents */
+  bedrag: number
+  /** Percentage met 1 decimaal */
+  percentage: number
+}
+
+export interface CashflowOverview {
+  kpis: CashflowKpis
+  perMaand: MaandData[]
+  uitgavenPerCategorie: CategorieData[]
+  topKlanten: KlantOmzetData[]
+}
+
+export interface CashflowPeriod {
+  van: string // YYYY-MM-DD
+  tot: string // YYYY-MM-DD
+}

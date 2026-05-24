@@ -30,7 +30,9 @@ import type {
   BackupResult,
   RestoreResult,
   AutoBackupRunResult,
-  AutoBackupStatus
+  AutoBackupStatus,
+  CashflowOverview,
+  CashflowPeriod
 } from '../shared/types'
 import type { MailAuthStatus, MailResult, MailLogEntry } from '../shared/mail-types'
 
@@ -147,6 +149,10 @@ const api = {
   getAutoBackupStatus: (): Promise<AutoBackupStatus> => invoke(IPC_CHANNELS.BACKUP_GET_AUTO_STATUS),
   runAutoBackupNow: (): Promise<AutoBackupRunResult> => invoke(IPC_CHANNELS.BACKUP_RUN_AUTO_NOW),
   pickBackupFolder: (): Promise<string | null> => invoke(IPC_CHANNELS.BACKUP_PICK_FOLDER),
+
+  // Cashflow
+  getCashflowOverview: (period: CashflowPeriod): Promise<CashflowOverview> =>
+    invoke(IPC_CHANNELS.CASHFLOW_GET_OVERVIEW, period),
 
   getAppVersion: (): Promise<string> => invoke(IPC_CHANNELS.APP_GET_VERSION)
 }

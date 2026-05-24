@@ -69,7 +69,10 @@ export const IPC_CHANNELS = {
   BACKUP_PICK_OPEN_LOCATION: 'backup:pickOpenLocation',
   BACKUP_GET_AUTO_STATUS: 'backup:getAutoStatus',
   BACKUP_RUN_AUTO_NOW: 'backup:runAutoNow',
-  BACKUP_PICK_FOLDER: 'backup:pickFolder'
+  BACKUP_PICK_FOLDER: 'backup:pickFolder',
+
+  //cahsflow
+  CASHFLOW_GET_OVERVIEW: 'cashflow:getOverview'
 } as const
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS]

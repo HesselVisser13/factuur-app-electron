@@ -18,6 +18,7 @@ import { registerInstellingenHandlers } from './ipc/instellingen.ipc'
 import { registerKlantenHandlers } from './ipc/klanten.ipc'
 import { registerMailIpc } from './ipc/mail.ipc'
 import { registerTransactieHandlers } from './ipc/transacties.ipc'
+import { registerCashflowHandlers } from './ipc/cashflow.ipc'
 import { initLogger, log } from './logger'
 import { getFacturenDir, getKlantFotosDir, getKlantFotoThumbsDir, getLogosDir } from './paths'
 import { applyPendingRestore } from './services/backup/restore.service'
@@ -160,6 +161,7 @@ app.whenReady().then(async () => {
   registerMailIpc()
   registerFotosHandlers()
   registerBackupHandlers()
+  registerCashflowHandlers()
 
   createWindow()
 

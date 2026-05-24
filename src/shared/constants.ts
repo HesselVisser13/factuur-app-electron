@@ -131,3 +131,23 @@ export function vindTariefOpNaam<T extends { naam: string }>(
 
 /** Het hoofdtarief voor nieuwe regels (default selectie). */
 export const STANDAARD_TARIEF_NAAM: BtwTariefDefault['naam'] = 'Hoog tarief'
+
+// ============================================================
+// Cashflow / Status filtering
+// ============================================================
+
+/**
+ * Factuur-statussen die meetellen als "omzet" voor cashflow/dashboard.
+ * Concepten en geannuleerde facturen tellen niet mee.
+ */
+export const OMZET_STATUSSEN = ['verstuurd', 'betaald'] as const
+
+/**
+ * Factuur-statussen die meetellen als "ontvangen" (echt geld binnen).
+ */
+export const ONTVANGEN_STATUSSEN = ['betaald'] as const
+
+/**
+ * Factuur-statussen die "openstaand" betekenen (verzonden, nog niet betaald).
+ */
+export const OPENSTAAND_STATUSSEN = ['verstuurd'] as const

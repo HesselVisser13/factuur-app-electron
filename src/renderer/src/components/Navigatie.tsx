@@ -8,6 +8,7 @@ import {
   FileText,
   Receipt,
   Settings,
+  TrendingUp,
   Users,
   Wrench,
   type LucideIcon
@@ -26,6 +27,7 @@ const links: NavLink[] = [
   { href: '/transacties', label: 'Transacties', icon: Receipt },
   { href: '/facturen', label: 'Facturen', icon: FileText },
   { href: '/klanten', label: 'Klanten', icon: Users },
+  { href: '/cashflow', label: 'Cashflow', icon: TrendingUp },
   { href: '/btw-aangifte', label: 'BTW-aangifte', icon: Calculator },
   { href: '/instellingen', label: 'Instellingen', icon: Settings }
 ]
