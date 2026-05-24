@@ -1,9 +1,9 @@
 // src/renderer/src/pages/Instellingen/Instellingen.tsx
 
 import { zodResolver } from '@hookform/resolvers/zod'
+import { AlertTriangle, Loader2, Save, Settings } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
-import { Settings, AlertTriangle, Loader2, Save } from 'lucide-react'
 
 import { instellingenApi } from '@renderer/api'
 import { btwTarievenApi } from '@renderer/api/btw-tarieven'
@@ -11,15 +11,15 @@ import { useToast } from '@renderer/components/Toast'
 import type { BtwTarief } from '@shared/types'
 
 import { AdresSectie } from './components/AdresSectie'
+import { BackupSectie } from './components/BackupSectie'
 import { BedrijfsgegevensSectie } from './components/BedrijfsgegevensSectie'
+import { BtwTarievenSectie } from './components/BtwTarievenSectie'
 import { FactuurSectie } from './components/FactuurSectie'
 import { FinancieelSectie } from './components/FinancieelSectie'
-import { ReiskostenSectie } from './components/ReiskostenSectie'
 import { MailSectie } from './components/MailSectie'
-import { BackupSectie } from './components/BackupSectie'
+import { ReiskostenSectie } from './components/ReiskostenSectie'
 import { InstellingenFormSchema, type InstellingenFormValues } from './instellingenFormSchema'
 import { defaultInstellingen, mapToForm } from './types'
-import { BtwTarievenSectie } from './components/BtwTarievenSectie'
 
 export function Instellingen() {
   const toast = useToast()
@@ -69,7 +69,6 @@ export function Instellingen() {
     try {
       await instellingenApi.save(values)
       toast.success('Instellingen opgeslagen')
-      // Form opnieuw "schoon" markeren zodat isDirty resetten
       reset(values)
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Onbekende fout')
@@ -81,11 +80,11 @@ export function Instellingen() {
   }
 
   if (loading) {
-    return <div className="text-center text-gray-500 py-12">Laden...</div>
+    return <div className="max-w-6xl mx-auto text-center text-gray-500 py-12">Laden...</div>
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-6xl mx-auto space-y-6">
       <h1 className="text-2xl font-bold flex items-center gap-2">
         <Settings className="w-7 h-7 text-blue-600" aria-hidden="true" />
         Instellingen
@@ -93,13 +92,22 @@ export function Instellingen() {
 
       <FormProvider {...methods}>
         <form onSubmit={handleSubmit(onSubmit, onInvalid)} noValidate className="space-y-6">
-          <BedrijfsgegevensSectie />
-          <AdresSectie />
+          {/* Identiteit & administratie: 2 kolommen */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <BedrijfsgegevensSectie />
+            <AdresSectie />
+          </div>
+
           <FinancieelSectie />
+
+          {/* Factuur-instellingen */}
           <ReiskostenSectie tarieven={tarieven} />
-          <MailSectie />
           <FactuurSectie />
+          <MailSectie />
+
+          {/* Backup */}
           <BackupSectie />
+
           {isSubmitted && Object.keys(errors).length > 0 && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700 flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 shrink-0" aria-hidden="true" />
@@ -112,22 +120,21 @@ export function Instellingen() {
             disabled={isSubmitting}
             className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-8 rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
           >
-            <>
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
-                  Opslaan...
-                </>
-              ) : (
-                <>
-                  <Save className="w-4 h-4" aria-hidden="true" />
-                  Opslaan
-                </>
-              )}
-            </>
+            {isSubmitting ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+                Opslaan...
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4" aria-hidden="true" />
+                Opslaan
+              </>
+            )}
           </button>
         </form>
       </FormProvider>
+
       <BtwTarievenSectie />
     </div>
   )

@@ -1,5 +1,6 @@
-// src/renderer/src/pages/Instellingen/components/AdresSectie.ts
+// src/renderer/src/pages/Instellingen/components/AdresSectie.tsx
 
+import { MapPin } from 'lucide-react'
 import { useFormContext } from 'react-hook-form'
 
 import { FormError } from '@renderer/components/FormError'
@@ -15,7 +16,10 @@ export function AdresSectie() {
 
   return (
     <section className="bg-white rounded-xl border border-gray-200 p-6">
-      <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wide mb-4">Adres</h2>
+      <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wide mb-4 flex items-center gap-2">
+        <MapPin className="w-4 h-4" aria-hidden="true" />
+        Adres
+      </h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="md:col-span-2">

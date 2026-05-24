@@ -1,5 +1,6 @@
-// src/renderer/src/pages/Instellingen/components/FinancieelSectie.ts
+// src/renderer/src/pages/Instellingen/components/FinancieelSectie.tsx
 
+import { Landmark } from 'lucide-react'
 import { useFormContext } from 'react-hook-form'
 
 import { FormError } from '@renderer/components/FormError'
@@ -15,7 +16,8 @@ export function FinancieelSectie() {
 
   return (
     <section className="bg-white rounded-xl border border-gray-200 p-6">
-      <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wide mb-4">
+      <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wide mb-4 flex items-center gap-2">
+        <Landmark className="w-4 h-4" aria-hidden="true" />
         Financiële gegevens
       </h2>
 
@@ -50,7 +52,7 @@ export function FinancieelSectie() {
           <FormError message={errors.btw_nummer?.message} />
         </div>
 
-        <div>
+        <div className="md:col-span-2">
           <label htmlFor="banknaam" className="block text-sm font-medium text-gray-600 mb-1">
             Banknaam
           </label>
@@ -114,7 +116,7 @@ export function FinancieelSectie() {
           <FormError message={errors.betaaltermijn_dagen?.message} />
         </div>
 
-        <div className="md:col-span-2">
+        <div>
           <label htmlFor="is_starter" className="block text-sm font-medium text-gray-600 mb-1">
             Starter (kleineondernemersregeling)?
           </label>

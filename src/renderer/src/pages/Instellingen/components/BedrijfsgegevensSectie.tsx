@@ -1,5 +1,6 @@
-// src/renderer/src/pages/Instellingen/components/BedrijfsgegevensSectie.ts
+// src/renderer/src/pages/Instellingen/components/BedrijfsgegevensSectie.tsx
 
+import { Building2 } from 'lucide-react'
 import { useFormContext } from 'react-hook-form'
 
 import { FormError } from '@renderer/components/FormError'
@@ -15,7 +16,8 @@ export function BedrijfsgegevensSectie() {
 
   return (
     <section className="bg-white rounded-xl border border-gray-200 p-6">
-      <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wide mb-4">
+      <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wide mb-4 flex items-center gap-2">
+        <Building2 className="w-4 h-4" aria-hidden="true" />
         Bedrijfsgegevens
       </h2>
 
@@ -35,7 +37,7 @@ export function BedrijfsgegevensSectie() {
           <FormError message={errors.bedrijfsnaam?.message} />
         </div>
 
-        <div>
+        <div className="md:col-span-2">
           <label htmlFor="eigenaar_naam" className="block text-sm font-medium text-gray-600 mb-1">
             Naam eigenaar
           </label>
@@ -80,7 +82,7 @@ export function BedrijfsgegevensSectie() {
           <FormError message={errors.email?.message} />
         </div>
 
-        <div>
+        <div className="md:col-span-2">
           <label htmlFor="website" className="block text-sm font-medium text-gray-600 mb-1">
             Website
           </label>

@@ -1,3 +1,5 @@
+// src/renderer/src/pages/Instellingen/components/BackupSectie.tsx
+
 import {
   AlertTriangle,
   CheckCircle2,

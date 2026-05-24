@@ -1,11 +1,13 @@
 // src/renderer/src/pages/Instellingen/components/FactuurSectie.tsx
 
+import { FileText } from 'lucide-react'
 import { useFormContext } from 'react-hook-form'
 
 import { FormError } from '@renderer/components/FormError'
 import { inputClasses } from '@renderer/utils/inputClasses'
 
 import type { InstellingenFormValues } from '../instellingenFormSchema'
+
 import { LogoUpload } from './LogoUpload'
 
 export function FactuurSectie() {
@@ -16,7 +18,10 @@ export function FactuurSectie() {
 
   return (
     <section className="bg-white rounded-xl border border-gray-200 p-6">
-      <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wide mb-4">Factuur</h2>
+      <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wide mb-4 flex items-center gap-2">
+        <FileText className="w-4 h-4" aria-hidden="true" />
+        Factuur
+      </h2>
 
       <div className="space-y-4">
         <LogoUpload />
