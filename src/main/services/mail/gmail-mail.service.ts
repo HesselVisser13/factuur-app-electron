@@ -1,6 +1,6 @@
 // src/main/services/mail/gmail-mail.service.ts
 
-import { google } from 'googleapis'
+import { gmail as createGmailClient } from '@googleapis/gmail'
 import { OAuth2Client } from 'google-auth-library'
 
 import type { MailMessage, MailResult } from '@shared/mail-types'
@@ -80,10 +80,10 @@ export class GmailMailService {
   async send(message: MailMessage): Promise<MailResult> {
     try {
       const client = this.getOAuthClient()
-      const gmail = google.gmail({ version: 'v1', auth: client })
+      const gmailClient = createGmailClient({ version: 'v1', auth: client })
       const raw = buildRawMessage(message)
 
-      const response = await gmail.users.messages.send({
+      const response = await gmailClient.users.messages.send({
         userId: 'me',
         requestBody: { raw }
       })
@@ -97,7 +97,7 @@ export class GmailMailService {
       log.error('[mail] Mail verzenden mislukt', err)
       return {
         success: false,
-        error: getReadableMailError(err) // ← was: err instanceof Error ? err.message : 'Onbekende fout'
+        error: getReadableMailError(err)
       }
     }
   }

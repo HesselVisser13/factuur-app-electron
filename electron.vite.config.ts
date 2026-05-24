@@ -20,13 +20,7 @@ export default defineConfig(({ mode }) => {
       },
       build: {
         rollupOptions: {
-          external: [
-            'better-sqlite3',
-            '@prisma/adapter-better-sqlite3',
-            'adm-zip',
-            'sharp',
-            'exifr'
-          ]
+          external: ['better-sqlite3', '@prisma/adapter-better-sqlite3', 'sharp']
         }
       }
     },
