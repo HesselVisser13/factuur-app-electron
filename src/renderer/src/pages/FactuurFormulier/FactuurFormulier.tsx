@@ -284,12 +284,12 @@ export function FactuurFormulier() {
   }
 
   if (loading) {
-    return <div className="text-center text-gray-500 py-12">Laden...</div>
+    return <div className="max-w-5xl mx-auto text-center text-gray-500 py-12">Laden...</div>
   }
 
   return (
     <FormProvider {...methods}>
-      <div className="space-y-6">
+      <div className="max-w-5xl mx-auto space-y-6">
         <FactuurFormHeader
           editId={editId}
           factuurNummer={factuurNummer}

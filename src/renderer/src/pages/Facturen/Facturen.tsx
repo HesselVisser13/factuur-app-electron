@@ -182,7 +182,7 @@ export function Facturen() {
   }, [filtered])
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-6xl mx-auto space-y-6">
       <FacturenHeader onOpenFolder={handleOpenFolder} onNew={() => navigate('/facturen/nieuw')} />
 
       <FacturenStats {...stats} />

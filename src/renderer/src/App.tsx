@@ -20,7 +20,7 @@ export default function App() {
         <HashRouter>
           <div className="min-h-screen">
             <Navigatie />
-            <main className="max-w-5xl mx-auto px-4 py-8">
+            <main className="px-4 py-8">
               <Routes>
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/transacties" element={<Transacties />} />

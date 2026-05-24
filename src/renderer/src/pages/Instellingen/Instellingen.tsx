@@ -85,7 +85,7 @@ export function Instellingen() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6">
       <h1 className="text-2xl font-bold flex items-center gap-2">
         <Settings className="w-7 h-7 text-blue-600" aria-hidden="true" />
         Instellingen

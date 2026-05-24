@@ -29,7 +29,7 @@ export function BtwAangifte() {
   )
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-5xl mx-auto space-y-6">
       <h1 className="text-2xl font-bold flex items-center gap-2">
         <Calculator className="w-7 h-7 text-blue-600" aria-hidden="true" />
         BTW-aangifte

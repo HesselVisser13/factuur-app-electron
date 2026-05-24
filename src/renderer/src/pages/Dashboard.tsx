@@ -97,7 +97,7 @@ export function Dashboard() {
         </>
       )}
 
-      <div className="space-y-8 relative" style={{ zIndex: 2 }}>
+      <div className="max-w-6xl mx-auto space-y-8 relative" style={{ zIndex: 2 }}>
         <header className="flex items-start justify-between flex-wrap gap-3">
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
