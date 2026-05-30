@@ -1,12 +1,17 @@
 // src/main/ipc/instellingen.ipc.ts
 
-import { ipcMain, dialog, app } from 'electron'
-import { createHandler, validate } from './helpers'
-import { instellingenService } from '../services/instellingen.service'
-import { InstellingenSchema } from '../../shared/schemas'
+import { existsSync, mkdirSync } from 'node:fs'
+import { basename, join } from 'node:path'
+
+import { app, dialog, ipcMain } from 'electron'
+import sharp from 'sharp'
+
 import { IPC_CHANNELS } from '../../shared/ipc-channels'
-import { join, extname, basename } from 'path'
-import { mkdirSync, copyFileSync, existsSync } from 'fs'
+import { InstellingenSchema } from '../../shared/schemas'
+import { log } from '../logger'
+import { instellingenService } from '../services/instellingen.service'
+
+import { createHandler, validate } from './helpers'
 
 export function registerInstellingenHandlers(): void {
   ipcMain.handle(
@@ -45,13 +50,28 @@ export function registerInstellingenHandlers(): void {
         mkdirSync(logosDir, { recursive: true })
       }
 
-      const ext = extname(sourcePath).toLowerCase()
-      const fileName = `logo_${Date.now()}${ext}`
+      const fileName = `logo_${Date.now()}.png`
       const targetPath = join(logosDir, fileName)
 
-      copyFileSync(sourcePath, targetPath)
+      try {
+        await sharp(sourcePath)
+          .trim()
+          .resize(1024, 1024, {
+            fit: 'inside',
+            withoutEnlargement: true
+          })
+          .png({ quality: 90 })
+          .toFile(targetPath)
 
-      return { fileName, originalName: basename(sourcePath) }
+        log.info(`[logo] Verwerkt: ${fileName} (van ${basename(sourcePath)})`)
+
+        return { fileName, originalName: basename(sourcePath) }
+      } catch (err) {
+        log.error('[logo] Verwerking mislukt', err)
+        throw new Error(
+          err instanceof Error ? `Logo verwerken mislukt: ${err.message}` : 'Logo verwerken mislukt'
+        )
+      }
     })
   )
 }

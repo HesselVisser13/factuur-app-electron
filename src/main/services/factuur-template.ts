@@ -210,37 +210,61 @@ export async function renderFactuurHtml(
     print-color-adjust: exact;
   }
 
+ /* Body achtergrond met groot logo (watermark-style) */
+.page-watermark {
+  position: fixed;
+  top: 44%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 60vmin;
+  height: 60vmin;
+  opacity: 0.05;
+  z-index: 0;
+  pointer-events: none;
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: contain;
+}
+
+/* Zorg dat content boven watermark staat */
+.header,
+.addresses,
+.meta-table,
+.regels,
+.totalen-wrap,
+.betaal-block,
+.opmerkingen,
+.voorwaarden,
+.footer,
+.reistijd-block {
+  position: relative;
+  z-index: 1;
+}
+
   .muted { color: #666; }
   .small { font-size: 8.5pt; }
 
   /* Header */
-.header {
-  position: relative;
-  margin-bottom: 30px;
-  border-bottom: 2px solid #111;
-  padding-bottom: 15px;
-  min-height: 60px;
-}
-.header-left {
-  max-width: 55%;
-}
-.header-left h1 {
-  margin: 0 0 4px 0;
-  font-size: 16pt;
-  font-weight: 700;
-}
-.header-right {
-  position: absolute;
-  top: -40px;
-  right: 0;
-  max-width: 45%;
-  text-align: right;
-}
-.header-right img {
-  max-height: 200px;
-  max-width: 440px;
-  object-fit: contain;
-}
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 30px;
+    border-bottom: 2px solid #111;
+    padding-bottom: 15px;
+  }
+  .header-left { max-width: 55%; }
+  .header-left h1 {
+    margin: 0 0 4px 0;
+    font-size: 16pt;
+    font-weight: 700;
+  }
+  .header-right { text-align: right; max-width: 45%; }
+  .header-right img {
+    max-height: 70px;
+    max-width: 200px;
+    object-fit: contain;
+  }
 
   /* Adresblokken */
   .addresses {
@@ -481,6 +505,10 @@ export async function renderFactuurHtml(
 </style>
 </head>
 <body>
+
+${
+  logoData ? `<div class="page-watermark" style="background-image: url('${logoData}');"></div>` : ''
+}
 
 ${
   factuur.status === 'concept'
