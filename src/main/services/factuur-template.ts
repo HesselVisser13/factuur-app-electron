@@ -4,6 +4,7 @@ import { readFileSync, existsSync } from 'node:fs'
 import { extname } from 'node:path'
 import { getLogoPath } from '../paths'
 import type { Factuur } from '../../shared/types'
+import { generateEpcQrDataUrl } from './epc-qr'
 
 type Instellingen = Record<string, string>
 
@@ -107,6 +108,23 @@ function bedrijfFinancieelBlock(i: Instellingen): string {
   return items.join(' · ')
 }
 
+async function genereerBetaalQrDataUrl(factuur: Factuur, i: Instellingen): Promise<string | null> {
+  if (factuur.status === 'concept' || factuur.status === 'geannuleerd') {
+    return null
+  }
+  if (!i.iban || !i.bedrijfsnaam) {
+    return null
+  }
+
+  return generateEpcQrDataUrl({
+    iban: i.iban,
+    naamOntvanger: i.bedrijfsnaam,
+    bedrag: factuur.totaalIncl,
+    mededeling: factuur.factuurNummer,
+    bic: i.bic || undefined
+  })
+}
+
 // ============================================================
 // Totalen (splitsing per BTW-tarief)
 // ============================================================
@@ -153,8 +171,12 @@ function berekenBtwSplitsing(f: Factuur): Array<{
 // Main template
 // ============================================================
 
-export function renderFactuurHtml(factuur: Factuur, instellingen: Instellingen): string {
+export async function renderFactuurHtml(
+  factuur: Factuur,
+  instellingen: Instellingen
+): Promise<string> {
   const logoData = logoAsDataUrl(instellingen.logo_filename)
+  const qrData = await genereerBetaalQrDataUrl(factuur, instellingen)
   const splitsing = berekenBtwSplitsing(factuur)
   const betaaltermijn = instellingen.betaaltermijn_dagen || '14'
   const voorwaarden = (
@@ -192,26 +214,33 @@ export function renderFactuurHtml(factuur: Factuur, instellingen: Instellingen):
   .small { font-size: 8.5pt; }
 
   /* Header */
-  .header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 30px;
-    border-bottom: 2px solid #111;
-    padding-bottom: 15px;
-  }
-  .header-left { max-width: 55%; }
-  .header-left h1 {
-    margin: 0 0 4px 0;
-    font-size: 16pt;
-    font-weight: 700;
-  }
-  .header-right { text-align: right; max-width: 45%; }
-  .header-right img {
-    max-height: 70px;
-    max-width: 200px;
-    object-fit: contain;
-  }
+.header {
+  position: relative;
+  margin-bottom: 30px;
+  border-bottom: 2px solid #111;
+  padding-bottom: 15px;
+  min-height: 60px;
+}
+.header-left {
+  max-width: 55%;
+}
+.header-left h1 {
+  margin: 0 0 4px 0;
+  font-size: 16pt;
+  font-weight: 700;
+}
+.header-right {
+  position: absolute;
+  top: -40px;
+  right: 0;
+  max-width: 45%;
+  text-align: right;
+}
+.header-right img {
+  max-height: 200px;
+  max-width: 440px;
+  object-fit: contain;
+}
 
   /* Adresblokken */
   .addresses {
@@ -396,6 +425,59 @@ export function renderFactuurHtml(factuur: Factuur, instellingen: Instellingen):
   font-weight: 500;
   white-space: nowrap;
 }
+
+/* Betaal-blok met QR */
+.betaal-block {
+  margin: 20px 0;
+  padding: 14px 16px;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  page-break-inside: avoid;
+}
+
+.betaal-block .info {
+  flex: 1;
+}
+
+.betaal-block .info-title {
+  font-weight: 600;
+  font-size: 10pt;
+  margin-bottom: 6px;
+  color: #075985;
+}
+
+.betaal-block .info-line {
+  font-size: 9pt;
+  margin: 2px 0;
+}
+
+.betaal-block .info-label {
+  color: #666;
+  display: inline-block;
+  width: 80px;
+}
+
+.betaal-block .qr-wrap {
+  flex-shrink: 0;
+  text-align: center;
+}
+
+.betaal-block .qr-wrap img {
+  width: 110px;
+  height: 110px;
+  display: block;
+}
+
+.betaal-block .qr-caption {
+  font-size: 8pt;
+  color: #666;
+  margin-top: 4px;
+}
 </style>
 </head>
 <body>
@@ -508,6 +590,24 @@ ${
     </div>
   </div>
 </div>
+
+${
+  qrData
+    ? `<div class="betaal-block">
+        <div class="info">
+          <div class="info-title">Betaalgegevens</div>
+          <div class="info-line"><span class="info-label">IBAN:</span> ${escape(instellingen.iban || '')}</div>
+          <div class="info-line"><span class="info-label">T.n.v.:</span> ${escape(instellingen.bedrijfsnaam || '')}</div>
+          <div class="info-line"><span class="info-label">Bedrag:</span> ${formatBedrag(factuur.totaalIncl)}</div>
+          <div class="info-line"><span class="info-label">Vermelding:</span> ${escape(factuur.factuurNummer)}</div>
+        </div>
+        <div class="qr-wrap">
+          <img src="${qrData}" alt="QR-code voor betaling">
+          <div class="qr-caption">Scan met je<br>bank-app</div>
+        </div>
+      </div>`
+    : ''
+}
 
 ${
   factuur.opmerkingen

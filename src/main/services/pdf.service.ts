@@ -97,7 +97,7 @@ export class PdfService {
   async genereerFactuurPdf(factuurId: number): Promise<PdfResult> {
     const [factuur, instellingen] = await Promise.all([loadFactuur(factuurId), loadInstellingen()])
 
-    const html = renderFactuurHtml(factuur, instellingen)
+    const html = await renderFactuurHtml(factuur, instellingen)
     const pdfBuffer = await htmlToPdfBuffer(html)
 
     const filePath = getFactuurPdfPath(factuur.factuurNummer)
@@ -121,7 +121,7 @@ export class PdfService {
       ? { ...factuur, status: 'verstuurd' as const }
       : factuur
 
-    const html = renderFactuurHtml(factuurVoorRender, instellingen)
+    const html = await renderFactuurHtml(factuurVoorRender, instellingen)
     return htmlToPdfBuffer(html)
   }
 
@@ -130,7 +130,7 @@ export class PdfService {
    */
   async genereerFactuurHtml(factuurId: number): Promise<string> {
     const [factuur, instellingen] = await Promise.all([loadFactuur(factuurId), loadInstellingen()])
-    return renderFactuurHtml(factuur, instellingen)
+    return await renderFactuurHtml(factuur, instellingen)
   }
 }
 
