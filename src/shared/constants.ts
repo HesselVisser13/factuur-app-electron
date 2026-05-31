@@ -151,3 +151,42 @@ export const ONTVANGEN_STATUSSEN = ['betaald'] as const
  * Factuur-statussen die "openstaand" betekenen (verzonden, nog niet betaald).
  */
 export const OPENSTAAND_STATUSSEN = ['verstuurd'] as const
+
+// ============================================================
+// Inkomstenbelasting (NL, jaar 2026)
+// ============================================================
+
+/**
+ * IB-tarieven 2026 voor box 1 (werk en woning).
+ * Bron: Belastingdienst.
+ *
+ * Update bij elke wetswijziging — zie ook `IB_TARIEVEN_JAAR`.
+ */
+export const IB_SCHIJVEN_2026 = [
+  { tot: 38883, tarief: 35.75 },
+  { tot: 78426, tarief: 37.56 },
+  { tot: Infinity, tarief: 49.5 }
+] as const
+
+export const IB_TARIEVEN_JAAR = 2026
+
+/**
+ * MKB-winstvrijstelling 2026: 13.31% van winst (na zelfstandigenaftrek).
+ * Geldt automatisch voor alle ondernemers, geen voorwaarden.
+ */
+export const MKB_WINSTVRIJSTELLING_2026 = 13.31
+
+/**
+ * Zelfstandigenaftrek 2026: alleen als je voldoet aan urencriterium (>1.225 uur/jaar).
+ */
+export const ZELFSTANDIGENAFTREK_2026 = 2470
+
+/**
+ * Startersaftrek 2026: extra €2.123 in eerste 3 jaar (vereist urencriterium).
+ */
+export const STARTERSAFTREK_2026 = 2123
+
+/**
+ * Conservatief reservering-tarief. Voor wie geen risico wil nemen.
+ */
+export const RESERVERING_CONSERVATIEF = 40

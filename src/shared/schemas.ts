@@ -281,8 +281,21 @@ export const BtwTariefUpdateSchema = BtwTariefInputSchema.extend({
   id: z.number().int().positive()
 })
 
-export type BtwTariefInput = z.infer<typeof BtwTariefInputSchema>
-export type BtwTariefUpdate = z.infer<typeof BtwTariefUpdateSchema>
+// ============================================================
+// Belasting / IB-schatting
+// ============================================================
+
+export const BelastingInputSchema = z.object({
+  jaar: z.number().int().min(2020).max(2100),
+  /** Voldoet aan urencriterium >1.225u/jaar */
+  voldoetUrencriterium: z.boolean(),
+  /** Eerste 3 jaar als ondernemer */
+  isStarter: z.boolean(),
+  /** Bruto loon-inkomen uit andere bron (werkgever, etc.) per jaar */
+  loonInkomen: z.number().min(0),
+  /** Bedrag al gereserveerd (handmatig getrackt) */
+  alGereserveerd: z.number().min(0).optional()
+})
 
 // ============================================================
 // TYPE EXPORTS
@@ -299,3 +312,6 @@ export type FactuurInput = z.infer<typeof FactuurInputSchema>
 export type FactuurUpdate = z.infer<typeof FactuurUpdateSchema>
 export type FactuurStatusUpdate = z.infer<typeof FactuurStatusUpdateSchema>
 export type ReistijdInput = z.infer<typeof ReistijdInputSchema>
+export type BelastingInput = z.infer<typeof BelastingInputSchema>
+export type BtwTariefInput = z.infer<typeof BtwTariefInputSchema>
+export type BtwTariefUpdate = z.infer<typeof BtwTariefUpdateSchema>

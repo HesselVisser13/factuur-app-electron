@@ -18,6 +18,7 @@ import { FactuurSectie } from './components/FactuurSectie'
 import { FinancieelSectie } from './components/FinancieelSectie'
 import { MailSectie } from './components/MailSectie'
 import { ReiskostenSectie } from './components/ReiskostenSectie'
+import { BelastingProfielSectie } from './components/BelastingProfielSectie'
 import { InstellingenFormSchema, type InstellingenFormValues } from './instellingenFormSchema'
 import { defaultInstellingen, mapToForm } from './types'
 
@@ -99,6 +100,7 @@ export function Instellingen() {
           </div>
 
           <FinancieelSectie />
+          <BelastingProfielSectie />
 
           {/* Factuur-instellingen */}
           <ReiskostenSectie tarieven={tarieven} />

@@ -4,7 +4,7 @@ import { BarChart3 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import { btwAangifteApi, dashboardApi, instellingenApi } from '@renderer/api'
+import { belastingApi, btwAangifteApi, dashboardApi, instellingenApi } from '@renderer/api'
 import { BtwToggle } from '@renderer/components/BtwToggle'
 import { Card } from '@renderer/components/Card'
 import { DashboardSkeleton } from '@renderer/components/DashboardSkeleton'
@@ -16,7 +16,7 @@ import { useLocalStorage } from '@renderer/hooks/useLocalStorage'
 import { formatCurrency } from '@renderer/utils/formatters'
 import { getHuidigKwartaal } from '@renderer/utils/kwartaal'
 import { facturenLabel } from '@renderer/utils/pluralize'
-import type { BtwAangifte, DashboardStats } from '@shared/types'
+import type { BelastingSchatting, BtwAangifte, DashboardStats } from '@shared/types'
 
 const STORAGE_KEYS = {
   toonExcl: 'dashboard_toon_excl'
@@ -28,16 +28,45 @@ export function Dashboard() {
   const [toonExcl, setToonExcl] = useLocalStorage<boolean>(STORAGE_KEYS.toonExcl, false)
   const [logoFilename, setLogoFilename] = useState<string | null>(null)
 
-  // Logo ophalen voor achtergrond
+  // Belasting-state
+  const [belasting, setBelasting] = useState<BelastingSchatting | null>(null)
+  const [belastingProfielCompleet, setBelastingProfielCompleet] = useState(true)
+
+  // Logo + belastingprofiel ophalen
   useEffect(() => {
     let cancelled = false
-    void instellingenApi.getAll().then((data) => {
-      if (!cancelled) setLogoFilename(data.logo_filename || null)
-    })
+
+    ;(async () => {
+      try {
+        const data = await instellingenApi.getAll()
+        if (cancelled) return
+
+        setLogoFilename(data.logo_filename || null)
+
+        // Belastingprofiel-check + schatting
+        const heeftLoonInput = data.loon_inkomen !== undefined && data.loon_inkomen !== ''
+        if (!heeftLoonInput) {
+          setBelastingProfielCompleet(false)
+          return
+        }
+
+        const schatting = await belastingApi.bereken({
+          jaar,
+          voldoetUrencriterium: data.voldoet_urencriterium === 'true',
+          isStarter: data.is_starter_ib === 'true',
+          loonInkomen: parseFloat(data.loon_inkomen || '0') || 0
+        })
+        if (!cancelled) setBelasting(schatting)
+      } catch {
+        // Stil falen — Dashboard moet altijd werken
+        if (!cancelled) setBelasting(null)
+      }
+    })()
+
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [jaar])
 
   const {
     data: btw,
@@ -168,6 +197,16 @@ export function Dashboard() {
               </div>
             </section>
 
+            <section aria-label="Belasting-reservering">
+              <SectionHeader title={`Belasting (jaar ${jaar})`} />
+              <BelastingCard
+                profielCompleet={belastingProfielCompleet}
+                schatting={belasting}
+                onClick={() => navigate('/belasting')}
+                onProfielKlik={() => navigate('/instellingen')}
+              />
+            </section>
+
             {stats.laatsteFacturen.length > 0 && (
               <section aria-label="Laatste facturen">
                 <SectionHeader
@@ -189,5 +228,82 @@ export function Dashboard() {
         )}
       </div>
     </>
+  )
+}
+
+interface BelastingCardProps {
+  profielCompleet: boolean
+  schatting: BelastingSchatting | null
+  onClick: () => void
+  onProfielKlik: () => void
+}
+
+function BelastingCard({ profielCompleet, schatting, onClick, onProfielKlik }: BelastingCardProps) {
+  // Profiel niet ingevuld → CTA
+  if (!profielCompleet) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card
+          label="Reservering"
+          value="—"
+          sub="Vul belastingprofiel in →"
+          tone="accent"
+          onClick={onProfielKlik}
+        />
+      </div>
+    )
+  }
+
+  // Schatting nog laden
+  if (!schatting) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card label="Reservering" value="—" sub="Berekenen..." tone="accent" />
+      </div>
+    )
+  }
+
+  const isVerlies = schatting.zzpWinst === 0
+
+  if (isVerlies) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card
+          label="Reservering"
+          value="€ 0"
+          sub="Geen winst dit jaar"
+          tone="success"
+          onClick={onClick}
+        />
+      </div>
+    )
+  }
+
+  const ibGeschatEuro = schatting.ibGeschat / 100
+  const perMaandEuro = schatting.reserveringPerMaandGeschat / 100
+  const ibVeiligEuro = schatting.ibConservatief / 100
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <Card
+        label="Reserveer voor belasting"
+        value={formatCurrency(ibGeschatEuro)}
+        sub={`≈ ${formatCurrency(perMaandEuro)} per maand`}
+        tone="accent"
+        onClick={onClick}
+      />
+      <Card
+        label="Veilige marge (40%)"
+        value={formatCurrency(ibVeiligEuro)}
+        sub="Conservatief geschat"
+        tone="accent"
+      />
+      <Card
+        label="Marginaal tarief"
+        value={`${schatting.marginaalTarief}%`}
+        sub="O.b.v. loon-inkomen"
+        tone="accent"
+      />
+    </div>
   )
 }

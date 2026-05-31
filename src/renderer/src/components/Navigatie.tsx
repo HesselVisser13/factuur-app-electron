@@ -11,6 +11,7 @@ import {
   TrendingUp,
   Users,
   Wrench,
+  PiggyBank,
   type LucideIcon
 } from 'lucide-react'
 
@@ -29,6 +30,7 @@ const links: NavLink[] = [
   { href: '/klanten', label: 'Klanten', icon: Users },
   { href: '/cashflow', label: 'Cashflow', icon: TrendingUp },
   { href: '/btw-aangifte', label: 'BTW-aangifte', icon: Calculator },
+  { href: '/belasting', label: 'Belasting', icon: PiggyBank },
   { href: '/instellingen', label: 'Instellingen', icon: Settings }
 ]
 
@@ -42,7 +44,7 @@ export function Navigatie() {
 
   return (
     <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
-      <div className="max-w-6xl mx-auto px-4">
+      <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <Link to="/" className="flex items-center gap-2 group">
             <Wrench

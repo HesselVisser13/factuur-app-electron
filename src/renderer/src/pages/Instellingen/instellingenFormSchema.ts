@@ -103,7 +103,12 @@ export const InstellingenFormSchema = z.object({
 
   // Backup
   backup_auto_enabled: z.enum(['true', 'false']),
-  backup_auto_folder: z.string().trim().max(500, 'Pad te lang')
+  backup_auto_folder: z.string().trim().max(500, 'Pad te lang'),
+
+  // IB-schatting
+  voldoet_urencriterium: z.enum(['true', 'false']),
+  is_starter_ib: z.enum(['true', 'false']),
+  loon_inkomen: positiefBedragField('Loon-inkomen', 1000000)
 })
 
 export type InstellingenFormValues = z.infer<typeof InstellingenFormSchema>

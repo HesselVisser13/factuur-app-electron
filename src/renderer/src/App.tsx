@@ -12,6 +12,7 @@ import { Klanten } from './pages/Klanten'
 import { Facturen } from './pages/Facturen'
 import { FactuurFormulier } from './pages/FactuurFormulier'
 import { Cashflow } from './pages/Cashflow'
+import { Belasting } from './pages/Belasting'
 
 export default function App() {
   return (
@@ -31,6 +32,7 @@ export default function App() {
                 <Route path="/facturen/nieuw" element={<FactuurFormulier />} />
                 <Route path="/facturen/:id" element={<FactuurFormulier />} />
                 <Route path="/cashflow" element={<Cashflow />} />
+                <Route path="/belasting" element={<Belasting />} />
               </Routes>
             </main>
           </div>

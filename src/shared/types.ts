@@ -256,3 +256,33 @@ export interface CashflowPeriod {
   van: string // YYYY-MM-DD
   tot: string // YYYY-MM-DD
 }
+
+// ============================================================
+// Belasting / IB-schatting
+// ============================================================
+
+export interface BelastingSchatting {
+  /** Inkomen voor de periode */
+  jaar: number
+
+  /** Cijfers vanuit transacties/facturen */
+  zzpOmzet: number // cents
+  zzpUitgaven: number // cents
+  zzpWinst: number // cents
+
+  /** Aftrekposten (per jaar geldig) */
+  zelfstandigenaftrek: number // cents (0 als geen urencriterium)
+  startersaftrek: number // cents (0 als geen starter of geen urencriterium)
+  mkbVrijstelling: number // cents
+
+  belastbareWinst: number // cents (na alle aftrekposten)
+
+  /** Berekende IB-bedragen */
+  ibConservatief: number // cents (40% van winst, voor veiligheid)
+  ibGeschat: number // cents (marginaal tarief o.b.v. loon)
+  marginaalTarief: number // percentage (35.75 / 37.56 / 49.5)
+
+  /** Reservering per maand (op basis van geschat / 12) */
+  reserveringPerMaandConservatief: number // cents
+  reserveringPerMaandGeschat: number // cents
+}

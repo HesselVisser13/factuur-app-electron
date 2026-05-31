@@ -31,7 +31,10 @@ export const defaultInstellingen: InstellingenFormValues = {
   mail_onderwerp_template: DEFAULT_MAIL_ONDERWERP,
   mail_body_template: DEFAULT_MAIL_BODY,
   backup_auto_enabled: 'true',
-  backup_auto_folder: ''
+  backup_auto_folder: '',
+  voldoet_urencriterium: 'false',
+  is_starter_ib: 'false',
+  loon_inkomen: ''
 }
 
 /** Map server-data naar form-values, met fallbacks. */
@@ -61,6 +64,9 @@ export function mapToForm(data: Record<string, string>): InstellingenFormValues 
     mail_onderwerp_template: data.mail_onderwerp_template || DEFAULT_MAIL_ONDERWERP,
     mail_body_template: data.mail_body_template || DEFAULT_MAIL_BODY,
     backup_auto_enabled: data.backup_auto_enabled === 'false' ? 'false' : 'true',
-    backup_auto_folder: data.backup_auto_folder || ''
+    backup_auto_folder: data.backup_auto_folder || '',
+    voldoet_urencriterium: data.voldoet_urencriterium === 'true' ? 'true' : 'false',
+    is_starter_ib: data.is_starter_ib === 'true' ? 'true' : 'false',
+    loon_inkomen: data.loon_inkomen || ''
   }
 }

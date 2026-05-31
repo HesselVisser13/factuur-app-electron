@@ -43,6 +43,7 @@ export const IPC_CHANNELS = {
   FACTUREN_OPEN_PDF_FOLDER: 'facturen:open-pdf-folder',
 
   DASHBOARD_GET_STATS: 'dashboard:get-stats',
+  BELASTING_BEREKEN: 'belasting:bereken',
 
   APP_GET_VERSION: 'app:getVersion',
 
