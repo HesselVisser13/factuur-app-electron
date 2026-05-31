@@ -7,6 +7,7 @@ import { belastingApi, instellingenApi } from '@renderer/api'
 import { useToast } from '@renderer/components/Toast'
 import { formatCents, type Cents } from '@renderer/utils/money'
 import type { BelastingSchatting } from '@shared/types'
+import { InvesteringCalculator } from './components/InvesteringCalculator'
 
 export function Belasting() {
   const toast = useToast()
@@ -123,6 +124,7 @@ export function Belasting() {
       ) : (
         <SchattingContent schatting={schatting} />
       )}
+      <InvesteringCalculator />
     </div>
   )
 }

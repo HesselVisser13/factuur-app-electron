@@ -12,7 +12,8 @@ import type {
   FactuurStatus,
   BtwTariefInput,
   BtwTariefUpdate,
-  BelastingInput
+  BelastingInput,
+  InvesteringInput
 } from '../shared/schemas'
 import type {
   BtwAangifte,
@@ -34,7 +35,8 @@ import type {
   AutoBackupStatus,
   CashflowOverview,
   CashflowPeriod,
-  BelastingSchatting
+  BelastingSchatting,
+  InvesteringResultaat
 } from '../shared/types'
 import type { MailAuthStatus, MailResult, MailLogEntry } from '../shared/mail-types'
 
@@ -159,6 +161,8 @@ const api = {
   // Belasting
   berekenBelasting: (input: BelastingInput): Promise<BelastingSchatting> =>
     invoke(IPC_CHANNELS.BELASTING_BEREKEN, input),
+  berekenInvestering: (input: InvesteringInput): Promise<InvesteringResultaat> =>
+    invoke(IPC_CHANNELS.BELASTING_BEREKEN_INVESTERING, input),
 
   getAppVersion: (): Promise<string> => invoke(IPC_CHANNELS.APP_GET_VERSION)
 }

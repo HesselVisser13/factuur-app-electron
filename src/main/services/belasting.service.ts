@@ -8,8 +8,8 @@ import {
   ZELFSTANDIGENAFTREK_2026,
   OMZET_STATUSSEN
 } from '../../shared/constants'
-import type { BelastingInput } from '../../shared/schemas'
-import type { BelastingSchatting } from '../../shared/types'
+import type { BelastingInput, InvesteringInput } from '../../shared/schemas'
+import type { BelastingSchatting, InvesteringResultaat } from '../../shared/types'
 import { getDatabase } from '../db/client'
 import { log } from '../logger'
 
@@ -94,6 +94,41 @@ export class BelastingService {
       marginaalTarief,
       reserveringPerMaandConservatief: toCents(reserveringPerMaandConservatief),
       reserveringPerMaandGeschat: toCents(reserveringPerMaandGeschat)
+    }
+  }
+
+  /**
+   * Pure BTW-rekenmachine voor investeringen.
+   *
+   * Geen fiscaal advies — alleen rekensom: hoeveel BTW vorder je terug,
+   * en wat zijn de effectieve kosten?
+   *
+   * Werkt in cents intern voor precisie.
+   */
+  berekenInvestering(input: InvesteringInput): InvesteringResultaat {
+    const bedragCents = toCents(input.bedrag)
+    const factor = input.btwPercentage / 100
+
+    let bedragExclCents: number
+    let bedragInclCents: number
+
+    if (input.invoerwijze === 'inclusief') {
+      // bedrag is incl BTW → reken excl uit
+      bedragInclCents = bedragCents
+      bedragExclCents = Math.round(bedragInclCents / (1 + factor))
+    } else {
+      // bedrag is excl BTW → reken incl uit
+      bedragExclCents = bedragCents
+      bedragInclCents = Math.round(bedragExclCents * (1 + factor))
+    }
+
+    const btwTerugCents = bedragInclCents - bedragExclCents
+
+    return {
+      bedragExcl: bedragExclCents,
+      bedragIncl: bedragInclCents,
+      btwTerug: btwTerugCents,
+      btwPercentage: input.btwPercentage
     }
   }
 }

@@ -298,6 +298,16 @@ export const BelastingInputSchema = z.object({
 })
 
 // ============================================================
+// Investering calculator
+// ============================================================
+
+export const InvesteringInputSchema = z.object({
+  bedrag: z.number().min(0).max(10_000_000),
+  invoerwijze: z.enum(['inclusief', 'exclusief']),
+  btwPercentage: z.number().min(0).max(100)
+})
+
+// ============================================================
 // TYPE EXPORTS
 // ============================================================
 
@@ -315,3 +325,4 @@ export type ReistijdInput = z.infer<typeof ReistijdInputSchema>
 export type BelastingInput = z.infer<typeof BelastingInputSchema>
 export type BtwTariefInput = z.infer<typeof BtwTariefInputSchema>
 export type BtwTariefUpdate = z.infer<typeof BtwTariefUpdateSchema>
+export type InvesteringInput = z.infer<typeof InvesteringInputSchema>

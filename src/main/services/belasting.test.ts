@@ -9,6 +9,7 @@ import {
   STARTERSAFTREK_2026,
   ZELFSTANDIGENAFTREK_2026
 } from '../../shared/constants'
+import { BelastingService } from './belasting.service'
 
 // We testen de losse helper-functies. De volledige service vereist DB-mocks
 // (Prisma), wat te complex is voor MVP. Voor nu: pure berekenings-logica testen.
@@ -277,5 +278,76 @@ describe('belasting.berekenSchatting - realistisch scenario user (Hessel)', () =
     expect(r.marginaalTarief).toBe(35.75) // loon < 38883
     expect(r.ibGeschat).toBeCloseTo(2014.46, 0)
     expect(r.ibConservatief).toBe(2600) // 40% van 6500
+  })
+})
+
+describe('belasting.berekenInvestering', () => {
+  const service = new BelastingService()
+
+  it('berekent BTW correct bij invoerwijze "inclusief"', () => {
+    const r = service.berekenInvestering({
+      bedrag: 1210,
+      invoerwijze: 'inclusief',
+      btwPercentage: 21
+    })
+    expect(r.bedragIncl).toBe(121000) // €1210 in cents
+    expect(r.bedragExcl).toBe(100000) // €1000 in cents
+    expect(r.btwTerug).toBe(21000) // €210 in cents
+  })
+
+  it('berekent BTW correct bij invoerwijze "exclusief"', () => {
+    const r = service.berekenInvestering({
+      bedrag: 1000,
+      invoerwijze: 'exclusief',
+      btwPercentage: 21
+    })
+    expect(r.bedragExcl).toBe(100000)
+    expect(r.bedragIncl).toBe(121000)
+    expect(r.btwTerug).toBe(21000)
+  })
+
+  it('werkt met laag tarief 9%', () => {
+    const r = service.berekenInvestering({
+      bedrag: 109,
+      invoerwijze: 'inclusief',
+      btwPercentage: 9
+    })
+    expect(r.bedragIncl).toBe(10900)
+    expect(r.bedragExcl).toBe(10000)
+    expect(r.btwTerug).toBe(900)
+  })
+
+  it('werkt met 0% BTW', () => {
+    const r = service.berekenInvestering({
+      bedrag: 500,
+      invoerwijze: 'inclusief',
+      btwPercentage: 0
+    })
+    expect(r.bedragExcl).toBe(50000)
+    expect(r.bedragIncl).toBe(50000)
+    expect(r.btwTerug).toBe(0)
+  })
+
+  it('rondt correct af bij niet-ronde bedragen', () => {
+    const r = service.berekenInvestering({
+      bedrag: 99.99,
+      invoerwijze: 'inclusief',
+      btwPercentage: 21
+    })
+    expect(r.bedragIncl).toBe(9999)
+    // 99.99 / 1.21 = 82.6363... → rounded to 8264 cents
+    expect(r.bedragExcl).toBe(8264)
+    expect(r.btwTerug).toBe(1735)
+  })
+
+  it('bedrag 0 geeft 0 in alle velden', () => {
+    const r = service.berekenInvestering({
+      bedrag: 0,
+      invoerwijze: 'inclusief',
+      btwPercentage: 21
+    })
+    expect(r.bedragExcl).toBe(0)
+    expect(r.bedragIncl).toBe(0)
+    expect(r.btwTerug).toBe(0)
   })
 })

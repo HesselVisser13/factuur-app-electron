@@ -3,7 +3,7 @@
 import { ipcMain } from 'electron'
 
 import { IPC_CHANNELS } from '../../shared/ipc-channels'
-import { BelastingInputSchema } from '../../shared/schemas'
+import { BelastingInputSchema, InvesteringInputSchema } from '../../shared/schemas'
 import { log } from '../logger'
 import { belastingService } from '../services/belasting.service'
 
@@ -15,6 +15,14 @@ export function registerBelastingHandlers(): void {
     createHandler(async (_event, data: unknown) => {
       const validated = validate(BelastingInputSchema, data)
       return belastingService.berekenSchatting(validated)
+    })
+  )
+
+  ipcMain.handle(
+    IPC_CHANNELS.BELASTING_BEREKEN_INVESTERING,
+    createHandler(async (_event, data: unknown) => {
+      const validated = validate(InvesteringInputSchema, data)
+      return belastingService.berekenInvestering(validated)
     })
   )
 

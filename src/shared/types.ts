@@ -286,3 +286,15 @@ export interface BelastingSchatting {
   reserveringPerMaandConservatief: number // cents
   reserveringPerMaandGeschat: number // cents
 }
+
+// ============================================================
+// Investering calculator
+// ============================================================
+
+export interface InvesteringResultaat {
+  /** Alle bedragen in cents */
+  bedragExcl: number
+  bedragIncl: number
+  btwTerug: number
+  btwPercentage: number
+}
