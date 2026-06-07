@@ -50,7 +50,9 @@ export const MAIL_TEMPLATE_PLACEHOLDERS = [
   { key: 'betaaltermijn', label: 'Betaaltermijn (dagen)', voorbeeld: '14' },
   { key: 'bedrijfsnaam', label: 'Eigen bedrijfsnaam', voorbeeld: 'Mijn Bedrijf' },
   { key: 'eigenaarNaam', label: 'Eigen naam', voorbeeld: 'Jouw Naam' },
-  { key: 'iban', label: 'IBAN', voorbeeld: 'NL00 BANK 0000 0000 00' }
+  { key: 'iban', label: 'IBAN', voorbeeld: 'NL00 BANK 0000 0000 00' },
+  { key: 'offerteNummer', label: 'Offertenummer (bv. 2026-O001)' },
+  { key: 'geldigTot', label: 'Geldig-tot datum (offerte)' }
 ] as const
 
 // ============================================================
@@ -190,3 +192,41 @@ export const STARTERSAFTREK_2026 = 2123
  * Conservatief reservering-tarief. Voor wie geen risico wil nemen.
  */
 export const RESERVERING_CONSERVATIEF = 40
+
+// ============================================================
+// Offerte
+// ============================================================
+
+export const OFFERTE_GELDIGHEID_DAGEN_DEFAULT = 30
+
+/** Statussen die een offerte kan hebben. */
+export const OFFERTE_STATUSSEN = [
+  'concept',
+  'verzonden',
+  'geaccepteerd',
+  'afgewezen',
+  'verlopen',
+  'omgezet'
+] as const
+
+export type OfferteStatus = (typeof OFFERTE_STATUSSEN)[number]
+
+// ============================================================
+// Mail templates - offerte
+// ============================================================
+
+export const DEFAULT_MAIL_OFFERTE_ONDERWERP = 'Offerte {offerteNummer} – {bedrijfsnaam}'
+
+export const DEFAULT_MAIL_OFFERTE_BODY = `Beste {klantNaam},
+
+Hierbij ontvangt u onze offerte {offerteNummer} ter beoordeling.
+
+Het totaalbedrag bedraagt {totaalIncl}, geldig tot {geldigTot}.
+
+Mocht u akkoord gaan met deze offerte, kunt u dit per e-mail bevestigen of het bijgevoegde document ondertekend retourneren.
+
+Heeft u nog vragen of opmerkingen? Neem gerust contact op.
+
+Met vriendelijke groet,
+{eigenaarNaam}
+{bedrijfsnaam}`

@@ -1,4 +1,4 @@
-// src/renderer/src/pages/FactuurFormulier/components/ReistijdSectie.tsx
+// src/renderer/src/components/document-form/ReistijdSectie.tsx
 
 import { AlertTriangle, Car } from 'lucide-react'
 import { useFormContext, useWatch } from 'react-hook-form'
@@ -10,9 +10,8 @@ import { inputClasses } from '@renderer/utils/inputClasses'
 import { formatCents } from '@renderer/utils/money'
 import type { BtwTarief } from '@shared/types'
 
-import { berekenReistijd } from '../berekenen'
-import type { FactuurFormValues } from '../factuurFormSchema'
-import type { ReistijdInstellingen } from '../types'
+import { berekenReistijd } from './berekenen'
+import type { DocumentFormShape, ReistijdInstellingen } from './types'
 
 interface Props {
   tarieven: BtwTarief[]
@@ -27,7 +26,7 @@ export function ReistijdSectie({ tarieven, instellingen, readOnly }: Props) {
     setValue,
     control,
     formState: { errors }
-  } = useFormContext<FactuurFormValues>()
+  } = useFormContext<DocumentFormShape>()
 
   const reistijd = useWatch({ control, name: 'reistijd' })
   const bedrag = berekenReistijd(reistijd, instellingen)
@@ -50,7 +49,7 @@ export function ReistijdSectie({ tarieven, instellingen, readOnly }: Props) {
 
       {!reistijd.enabled ? (
         <p className="text-sm text-gray-500">
-          Vink &quot;Reistijd toepassen&quot; aan om reistijd toe te voegen aan deze factuur.
+          Vink &quot;Reistijd toepassen&quot; aan om reistijd toe te voegen.
         </p>
       ) : (
         <>

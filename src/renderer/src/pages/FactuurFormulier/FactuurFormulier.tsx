@@ -1,4 +1,4 @@
-// src/renderer/src/pages/FactuurFormulier/FactuurFormulier.ts
+// src/renderer/src/pages/FactuurFormulier/FactuurFormulier.tsx
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useEffect, useState } from 'react'
@@ -9,32 +9,35 @@ import { btwTarievenApi } from '@renderer/api/btw-tarieven'
 import { facturenApi } from '@renderer/api/facturen'
 import { instellingenApi } from '@renderer/api/instellingen'
 import { klantenApi } from '@renderer/api/klanten'
+import {
+  emptyRegel,
+  OpmerkingenSectie,
+  RegelsSectie,
+  ReistijdSectie,
+  TotalenSectie,
+  type ReistijdInstellingen
+} from '@renderer/components/document-form'
 import { PdfPreviewModal } from '@renderer/components/PdfPreviewModal'
 import { useToast } from '@renderer/components/Toast'
+import { MailVersturenModal } from '@renderer/pages/Facturen/components/MailVersturenModal'
 import {
   datumInputUit,
   isGeldigeDatumString,
   toDatumInput,
   voegDagenToe
 } from '@renderer/utils/datum'
-import type { BtwTarief, Factuur, Klant } from '@shared/types'
+import { STANDAARD_TARIEF_NAAM, vindTariefOpNaam } from '@shared/constants'
 import type { FactuurInput, FactuurRegelInput, ReistijdInput } from '@shared/schemas'
-import { MailVersturenModal } from '@renderer/pages/Facturen/components/MailVersturenModal'
+import type { BtwTarief, Factuur, Klant } from '@shared/types'
 
 import { BasisgegevensSectie } from './components/BasisgegevensSectie'
 import { FactuurFormHeader } from './components/FactuurFormHeader'
-import { FactuurRegelsSectie } from './components/FactuurRegelsSectie'
-import { OpmerkingenSectie } from './components/OpmerkingenSectie'
-import { ReistijdSectie } from './components/ReistijdSectie'
-import { TotalenSectie } from './components/TotalenSectie'
 import {
   FactuurFormSchema,
-  type FactuurFormValues,
   type FactuurFormOutput,
+  type FactuurFormValues,
   type RegelFormValues
 } from './factuurFormSchema'
-import { emptyRegel, type ReistijdInstellingen } from './types'
-import { vindTariefOpNaam, STANDAARD_TARIEF_NAAM } from '@shared/constants'
 
 const DEFAULT_BETAALTERMIJN_DAGEN = 14
 
@@ -61,7 +64,6 @@ export function FactuurFormulier() {
   const editId = params.id ? parseInt(params.id, 10) : null
   const toast = useToast()
 
-  // Server state
   const [klanten, setKlanten] = useState<Klant[]>([])
   const [tarieven, setTarieven] = useState<BtwTarief[]>([])
   const [factuurNummer, setFactuurNummer] = useState('')
@@ -72,11 +74,10 @@ export function FactuurFormulier() {
     kmtarief: 0
   })
 
-  // UI state
   const [loading, setLoading] = useState(true)
   const [previewOpen, setPreviewOpen] = useState(false)
+  const [mailModalOpen, setMailModalOpen] = useState(false)
 
-  // RHF
   const methods = useForm<FactuurFormValues, unknown, FactuurFormOutput>({
     resolver: zodResolver(FactuurFormSchema),
     defaultValues: initialDefaults,
@@ -92,7 +93,6 @@ export function FactuurFormulier() {
   } = methods
 
   const readOnly = bestaandeFactuur !== null && bestaandeFactuur.status !== 'concept'
-  const [mailModalOpen, setMailModalOpen] = useState(false)
 
   // ============================================================
   // Initiële data laden
@@ -189,7 +189,7 @@ export function FactuurFormulier() {
   }, [editId])
 
   // ============================================================
-  // Auto-update vervaldatum + factuurnummer bij datum-wijziging (alleen new)
+  // Auto-update vervaldatum + factuurnummer
   // ============================================================
   const datum = watch('datum')
 
@@ -215,7 +215,7 @@ export function FactuurFormulier() {
   // ============================================================
   // Submit
   // ============================================================
-  const onSubmit = async (values: FactuurFormOutput) => {
+  const onSubmit = async (values: FactuurFormOutput): Promise<void> => {
     try {
       const reistijdInput: ReistijdInput | null =
         values.reistijd.enabled && values.reistijd.btwTariefId
@@ -258,12 +258,12 @@ export function FactuurFormulier() {
     }
   }
 
-  const onInvalid = () => {
+  const onInvalid = (): void => {
     toast.error('Controleer de gemarkeerde velden')
   }
 
   // PDF actions
-  const handlePdfOpen = async () => {
+  const handlePdfOpen = async (): Promise<void> => {
     if (!editId) return
     try {
       await facturenApi.openPdf(editId)
@@ -273,7 +273,7 @@ export function FactuurFormulier() {
     }
   }
 
-  const handlePdfSaveAs = async () => {
+  const handlePdfSaveAs = async (): Promise<void> => {
     if (!editId) return
     try {
       const result = await facturenApi.opslaanPdfAls(editId)
@@ -313,7 +313,7 @@ export function FactuurFormulier() {
             readOnly={readOnly}
           />
 
-          <FactuurRegelsSectie tarieven={tarieven} readOnly={readOnly} />
+          <RegelsSectie tarieven={tarieven} readOnly={readOnly} title="Factuurregels" />
 
           <ReistijdSectie
             tarieven={tarieven}
@@ -321,16 +321,29 @@ export function FactuurFormulier() {
             readOnly={readOnly}
           />
 
-          <TotalenSectie instellingen={reistijdInstellingen} />
+          <TotalenSectie instellingen={reistijdInstellingen} totaalLabel="Te betalen" />
 
-          <OpmerkingenSectie readOnly={readOnly} />
+          <OpmerkingenSectie
+            readOnly={readOnly}
+            placeholder="Optionele opmerkingen voor op de factuur..."
+          />
         </form>
 
         <PdfPreviewModal
-          factuurId={previewOpen ? editId : null}
-          factuurNummer={factuurNummer}
+          documentNummer={previewOpen && editId ? factuurNummer : null}
+          documentType="Factuur"
+          fetchPdfBase64={() =>
+            editId ? facturenApi.getPdfBuffer(editId) : Promise.reject(new Error('No editId'))
+          }
+          onOpenExternal={() =>
+            editId ? facturenApi.openPdf(editId).then(() => undefined) : Promise.resolve()
+          }
+          onSaveAs={() =>
+            editId ? facturenApi.opslaanPdfAls(editId).then(() => undefined) : Promise.resolve()
+          }
           onClose={() => setPreviewOpen(false)}
         />
+
         {mailModalOpen && bestaandeFactuur && (
           <MailVersturenModal
             factuur={bestaandeFactuur}

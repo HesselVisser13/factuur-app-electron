@@ -11,9 +11,18 @@ import { mailLogService } from '../services/mail-log.service'
 import { getMailService } from '../services/mail'
 import { pdfService } from '../services/pdf.service'
 import { getReadableMailError } from '../services/mail/error-mapper'
+import { offertePdfService } from '../services/offerte-pdf.service'
+import { offertesService } from '../services/offertes.service'
 
 interface SendMailRequest {
   factuurId: number
+  ontvanger: string
+  onderwerp: string
+  body: string
+}
+
+interface SendOfferteMailRequest {
+  offerteId: number
   ontvanger: string
   onderwerp: string
   body: string
@@ -183,6 +192,106 @@ export function registerMailIpc(): void {
         return ok(logs)
       } catch (err) {
         log.error('[mail-ipc] getLog mislukt', err)
+        return fail(err)
+      }
+    }
+  )
+
+  // ============================================================
+  // Offerte mail versturen
+  // ============================================================
+  ipcMain.handle(
+    IPC_CHANNELS.MAIL_SEND_OFFERTE,
+    async (_event, request: SendOfferteMailRequest): Promise<Envelope<MailResult>> => {
+      try {
+        const service = getMailService()
+
+        if (!service.isAuthenticated()) {
+          return ok({
+            success: false,
+            error: 'Niet verbonden met Gmail. Configureer eerst je mail-account in Instellingen.'
+          })
+        }
+
+        const offerte = await offertesService.getById(request.offerteId)
+        if (!offerte) {
+          return ok({ success: false, error: 'Offerte niet gevonden' })
+        }
+
+        let pdfBuffer: Buffer
+        try {
+          pdfBuffer = await offertePdfService.genereerOffertePdfBuffer(request.offerteId)
+        } catch (err) {
+          const errorMsg = err instanceof Error ? err.message : 'PDF genereren mislukt'
+          log.error('[mail-ipc] Offerte-PDF genereren mislukt', err)
+          await mailLogService.create({
+            offerteId: request.offerteId,
+            ontvanger: request.ontvanger,
+            onderwerp: request.onderwerp,
+            body: request.body,
+            status: 'failed',
+            errorMsg
+          })
+          return ok({
+            success: false,
+            error: 'PDF genereren mislukt — controleer de offertegegevens en probeer opnieuw.'
+          })
+        }
+
+        const sendResult = await service.send({
+          to: request.ontvanger,
+          subject: request.onderwerp,
+          body: request.body,
+          attachments: [
+            {
+              filename: `${offerte.offerteNummer}.pdf`,
+              content: pdfBuffer,
+              contentType: 'application/pdf'
+            }
+          ]
+        })
+
+        await mailLogService.create({
+          offerteId: request.offerteId,
+          ontvanger: request.ontvanger,
+          onderwerp: request.onderwerp,
+          body: request.body,
+          status: sendResult.success ? 'sent' : 'failed',
+          errorMsg: sendResult.error ?? null,
+          messageId: sendResult.messageId ?? null
+        })
+
+        // Auto-status: concept → verzonden
+        if (sendResult.success && offerte.status === 'concept') {
+          try {
+            await offertesService.updateStatus(request.offerteId, 'verzonden')
+            log.info(
+              `[mail-ipc] Status automatisch op verzonden gezet voor offerte ${offerte.offerteNummer}`
+            )
+          } catch (err) {
+            log.warn('[mail-ipc] Auto-status update mislukt (mail wel verzonden)', err)
+          }
+        }
+
+        return ok(sendResult)
+      } catch (err) {
+        log.error('[mail-ipc] sendOfferte mislukt', err)
+        return fail(err)
+      }
+    }
+  )
+
+  // ============================================================
+  // Offerte mail-log ophalen
+  // ============================================================
+  ipcMain.handle(
+    IPC_CHANNELS.MAIL_GET_LOG_OFFERTE,
+    async (_event, offerteId: number): Promise<Envelope<MailLogEntry[]>> => {
+      try {
+        const logs = await mailLogService.listByOfferte(offerteId)
+        return ok(logs)
+      } catch (err) {
+        log.error('[mail-ipc] getLogOfferte mislukt', err)
         return fail(err)
       }
     }

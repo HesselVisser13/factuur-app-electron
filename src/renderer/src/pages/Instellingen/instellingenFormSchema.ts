@@ -91,6 +91,9 @@ export const InstellingenFormSchema = z.object({
   // Factuur
   factuur_voorwaarden: z.string().trim().max(1000, 'Maximaal 1000 tekens'),
 
+  // Offerte
+  offerte_voorwaarden: z.string().trim().max(2000, 'Maximaal 2000 tekens'),
+
   // Reiskosten
   reiskosten_uurtarief: positiefBedragField('Uurtarief'),
   reiskosten_kmtarief: positiefBedragField('Km-tarief'),
@@ -100,6 +103,8 @@ export const InstellingenFormSchema = z.object({
   // Mail templates
   mail_onderwerp_template: z.string().trim().max(200, 'Maximaal 200 tekens'),
   mail_body_template: z.string().trim().max(2000, 'Maximaal 2000 tekens'),
+  mail_offerte_onderwerp_template: z.string().trim().max(200, 'Maximaal 200 tekens'),
+  mail_offerte_body_template: z.string().trim().max(2000, 'Maximaal 2000 tekens'),
 
   // Backup
   backup_auto_enabled: z.enum(['true', 'false']),

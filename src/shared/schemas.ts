@@ -308,6 +308,51 @@ export const InvesteringInputSchema = z.object({
 })
 
 // ============================================================
+// Offerte schemas
+// ============================================================
+
+export const OfferteStatusSchema = z.enum([
+  'concept',
+  'verzonden',
+  'geaccepteerd',
+  'afgewezen',
+  'verlopen',
+  'omgezet'
+])
+
+export type OfferteStatus = z.infer<typeof OfferteStatusSchema>
+
+export const OfferteRegelInputSchema = z.object({
+  datum: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  omschrijving: z.string().trim().min(1, 'Omschrijving is verplicht').max(200),
+  aantal: z.number().min(0),
+  prijsPerStuk: z.number().min(0),
+  btwTariefId: z.number().int().positive(),
+  btwPercentage: z.number().min(0).max(100)
+})
+
+export type OfferteRegelInput = z.infer<typeof OfferteRegelInputSchema>
+
+export const OfferteInputSchema = z.object({
+  klantId: z.number().int().positive(),
+  datum: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  geldigTot: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  referentie: z.string().trim().max(100).optional(),
+  opmerkingen: z.string().trim().max(2000).optional(),
+  toonAkkoordBlok: z.boolean(),
+  regels: z.array(OfferteRegelInputSchema).min(1, 'Minstens één regel vereist'),
+  reistijd: z
+    .object({
+      uren: z.number().min(0),
+      km: z.number().min(0).nullable(),
+      btwTariefId: z.number().int().positive(),
+      btwPercentage: z.number().min(0).max(100),
+      omschrijving: z.string().trim().min(1).max(100)
+    })
+    .nullable()
+})
+
+// ============================================================
 // TYPE EXPORTS
 // ============================================================
 
@@ -326,3 +371,8 @@ export type BelastingInput = z.infer<typeof BelastingInputSchema>
 export type BtwTariefInput = z.infer<typeof BtwTariefInputSchema>
 export type BtwTariefUpdate = z.infer<typeof BtwTariefUpdateSchema>
 export type InvesteringInput = z.infer<typeof InvesteringInputSchema>
+export type OfferteInput = z.infer<typeof OfferteInputSchema>
+export const OfferteUpdateSchema = OfferteInputSchema.extend({
+  id: z.number().int().positive()
+})
+export type OfferteUpdate = z.infer<typeof OfferteUpdateSchema>

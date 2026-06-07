@@ -35,6 +35,7 @@ export const IPC_CHANNELS = {
   FACTUREN_DELETE: 'facturen:delete',
   FACTUREN_UPDATE_STATUS: 'facturen:updateStatus',
   FACTUREN_GET_NEXT_NUMMER: 'facturen:getNextNummer',
+  FACTUREN_PDF_BUFFER: 'facturen:pdfBuffer',
 
   // PDF
   FACTUREN_GENEREER_PDF: 'facturen:genereer-pdf',
@@ -52,6 +53,8 @@ export const IPC_CHANNELS = {
   MAIL_DISCONNECT: 'mail:disconnect',
   MAIL_SEND: 'mail:send',
   MAIL_GET_LOG: 'mail:get-log',
+  MAIL_SEND_OFFERTE: 'mail:sendOfferte',
+  MAIL_GET_LOG_OFFERTE: 'mail:getLogOfferte',
 
   //fotos
   FOTOS_LIST_BY_KLANT: 'fotos:listByKlant',
@@ -76,7 +79,24 @@ export const IPC_CHANNELS = {
 
   // Belasting
   BELASTING_BEREKEN: 'belasting:bereken',
-  BELASTING_BEREKEN_INVESTERING: 'belasting:berekenInvestering'
+  BELASTING_BEREKEN_INVESTERING: 'belasting:berekenInvestering',
+
+  // Offertes
+  OFFERTES_GET_ALL: 'offertes:getAll',
+  OFFERTES_GET_BY_ID: 'offertes:getById',
+  OFFERTES_GET_NEXT_NUMMER: 'offertes:getNextNummer',
+  OFFERTES_CREATE: 'offertes:create',
+  OFFERTES_UPDATE: 'offertes:update',
+  OFFERTES_UPDATE_STATUS: 'offertes:updateStatus',
+  OFFERTES_DELETE: 'offertes:delete',
+  OFFERTES_CONVERTEER_NAAR_FACTUUR: 'offertes:converteerNaarFactuur',
+  OFFERTES_MARKEER_VERLOPEN: 'offertes:markeerVerlopen',
+  OFFERTES_GENEREER_PDF: 'offertes:genereerPdf',
+  OFFERTES_OPEN_PDF: 'offertes:openPdf',
+  OFFERTES_PDF_BUFFER: 'offertes:pdfBuffer',
+  OFFERTES_OPSLAAN_PDF_ALS: 'offertes:opslaanPdfAls',
+  OFFERTES_OPEN_FOLDER: 'offertes:openFolder',
+  OFFERTES_GENEREER_HTML: 'offertes:genereerHtml'
 } as const
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS]

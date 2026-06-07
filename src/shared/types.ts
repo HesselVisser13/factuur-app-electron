@@ -298,3 +298,56 @@ export interface InvesteringResultaat {
   btwTerug: number
   btwPercentage: number
 }
+
+// ============================================================
+// Offerte
+// ============================================================
+
+import type { OfferteStatus } from './schemas'
+
+export interface OfferteRegel {
+  id: number
+  offerteId: number
+  datum: string
+  omschrijving: string
+  aantal: number
+  prijsPerStuk: number
+  btwTariefId: number
+  btwPercentage: number
+  bedragExcl: number
+  btwBedrag: number
+  bedragIncl: number
+  volgorde: number
+}
+
+export interface Offerte {
+  id: number
+  offerteNummer: string
+  klantId: number
+  klant: Klant
+  datum: string
+  geldigTot: string
+  referentie: string | null
+  status: OfferteStatus
+  opmerkingen: string | null
+  toonAkkoordBlok: boolean
+
+  totaalExcl: number
+  totaalBtw: number
+  totaalIncl: number
+
+  reistijdUren: number | null
+  reistijdKm: number | null
+  reistijdBedragExcl: number | null
+  reistijdBtwBedrag: number | null
+  reistijdBtwPercentage: number | null
+  reistijdBtwTariefId: number | null
+  reistijdOmschrijving: string | null
+
+  regels: OfferteRegel[]
+
+  factuurId: number | null
+
+  createdAt: string
+  updatedAt: string
+}

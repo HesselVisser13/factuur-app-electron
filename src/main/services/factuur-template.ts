@@ -1,112 +1,25 @@
 // src/main/services/factuur-template.ts
 
-import { readFileSync, existsSync } from 'node:fs'
-import { extname } from 'node:path'
-import { getLogoPath } from '../paths'
+import {
+  bedrijfAdresBlock,
+  bedrijfFinancieelBlock,
+  escape,
+  formatBedrag,
+  formatDatum,
+  formatReistijdDetails,
+  klantAdresBlock,
+  logoAsDataUrl,
+  nl2br,
+  SHARED_TEMPLATE_STYLES
+} from './document-template'
 import type { Factuur } from '../../shared/types'
 import { generateEpcQrDataUrl } from './epc-qr'
 
 type Instellingen = Record<string, string>
 
 // ============================================================
-// Helpers
+// Factuur-specifieke helpers
 // ============================================================
-
-function formatBedrag(bedrag: number): string {
-  return new Intl.NumberFormat('nl-NL', {
-    style: 'currency',
-    currency: 'EUR',
-    minimumFractionDigits: 2
-  }).format(bedrag)
-}
-
-function formatDatum(iso: string): string {
-  return new Date(iso).toLocaleDateString('nl-NL', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric'
-  })
-}
-
-function formatReistijdDetails(factuur: Factuur): string {
-  if (!factuur.reistijdUren) return ''
-  const parts: string[] = [`${factuur.reistijdUren} uur`]
-  if (factuur.reistijdKm && factuur.reistijdKm > 0) {
-    parts.push(`${factuur.reistijdKm} km`)
-  }
-  return parts.join(' · ')
-}
-
-function escape(s: string | null | undefined): string {
-  if (!s) return ''
-  return s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;')
-}
-
-function nl2br(s: string | null | undefined): string {
-  return escape(s).replace(/\n/g, '<br>')
-}
-
-function logoAsDataUrl(logoFilename: string | undefined): string | null {
-  if (!logoFilename) return null
-  const path = getLogoPath(logoFilename)
-  if (!existsSync(path)) return null
-  const ext = extname(logoFilename).toLowerCase().replace('.', '')
-  const mime =
-    ext === 'jpg' || ext === 'jpeg'
-      ? 'image/jpeg'
-      : ext === 'png'
-        ? 'image/png'
-        : ext === 'svg'
-          ? 'image/svg+xml'
-          : 'image/png'
-  const data = readFileSync(path).toString('base64')
-  return `data:${mime};base64,${data}`
-}
-
-function klantAdresBlock(f: Factuur): string {
-  const k = f.klant
-  const lines: string[] = []
-  if (k.type === 'zakelijk' && k.bedrijfsnaam) {
-    lines.push(`<strong>${escape(k.bedrijfsnaam)}</strong>`)
-  }
-  const naamLine = [k.aanhef, k.voornaam, k.achternaam].filter(Boolean).join(' ')
-  if (naamLine) lines.push(escape(naamLine))
-  if (k.adres) lines.push(escape(k.adres))
-  if (k.postcode || k.plaats) {
-    lines.push(`${escape(k.postcode || '')} ${escape(k.plaats || '')}`.trim())
-  }
-  if (k.type === 'zakelijk' && k.btwNummer) {
-    lines.push(`<span class="muted">BTW: ${escape(k.btwNummer)}</span>`)
-  }
-  return lines.join('<br>')
-}
-
-function bedrijfAdresBlock(i: Instellingen): string {
-  const lines: string[] = []
-  if (i.adres) lines.push(escape(i.adres))
-  if (i.postcode || i.plaats) {
-    lines.push(`${escape(i.postcode || '')} ${escape(i.plaats || '')}`.trim())
-  }
-  if (i.telefoon) lines.push(`Tel: ${escape(i.telefoon)}`)
-  if (i.email) lines.push(escape(i.email))
-  if (i.website) lines.push(escape(i.website))
-  return lines.join('<br>')
-}
-
-function bedrijfFinancieelBlock(i: Instellingen): string {
-  const items: string[] = []
-  if (i.kvk_nummer) items.push(`KvK: ${escape(i.kvk_nummer)}`)
-  if (i.btw_nummer) items.push(`BTW: ${escape(i.btw_nummer)}`)
-  if (i.iban) items.push(`IBAN: ${escape(i.iban)}`)
-  if (i.bic) items.push(`BIC: ${escape(i.bic)}`)
-  if (i.banknaam) items.push(escape(i.banknaam))
-  return items.join(' · ')
-}
 
 async function genereerBetaalQrDataUrl(factuur: Factuur, i: Instellingen): Promise<string | null> {
   if (factuur.status === 'concept' || factuur.status === 'geannuleerd') {
@@ -125,10 +38,6 @@ async function genereerBetaalQrDataUrl(factuur: Factuur, i: Instellingen): Promi
   })
 }
 
-// ============================================================
-// Totalen (splitsing per BTW-tarief)
-// ============================================================
-
 function berekenBtwSplitsing(f: Factuur): Array<{
   percentage: number
   over: number
@@ -136,7 +45,6 @@ function berekenBtwSplitsing(f: Factuur): Array<{
 }> {
   const map = new Map<number, { over: number; btw: number }>()
 
-  // Regels
   for (const regel of f.regels) {
     const huidig = map.get(regel.btwPercentage) || { over: 0, btw: 0 }
     map.set(regel.btwPercentage, {
@@ -145,7 +53,6 @@ function berekenBtwSplitsing(f: Factuur): Array<{
     })
   }
 
-  // Reistijd toevoegen aan splitsing
   if (
     f.reistijdBedragExcl &&
     f.reistijdBtwPercentage !== null &&
@@ -166,6 +73,54 @@ function berekenBtwSplitsing(f: Factuur): Array<{
     }))
     .sort((a, b) => a.percentage - b.percentage)
 }
+
+// ============================================================
+// Factuur-specifieke styles
+// ============================================================
+
+const FACTUUR_SPECIFIC_STYLES = `
+/* Betaal-blok met QR */
+.betaal-block {
+  margin: 20px 0;
+  padding: 14px 16px;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  page-break-inside: avoid;
+}
+
+.betaal-block .info { flex: 1; }
+.betaal-block .info-title {
+  font-weight: 600;
+  font-size: 10pt;
+  margin-bottom: 6px;
+  color: #075985;
+}
+.betaal-block .info-line { font-size: 9pt; margin: 2px 0; }
+.betaal-block .info-label {
+  color: #666;
+  display: inline-block;
+  width: 80px;
+}
+.betaal-block .qr-wrap {
+  flex-shrink: 0;
+  text-align: center;
+}
+.betaal-block .qr-wrap img {
+  width: 110px;
+  height: 110px;
+  display: block;
+}
+.betaal-block .qr-caption {
+  font-size: 8pt;
+  color: #666;
+  margin-top: 4px;
+}
+`
 
 // ============================================================
 // Main template
@@ -192,316 +147,8 @@ export async function renderFactuurHtml(
 <meta charset="UTF-8">
 <title>Factuur ${escape(factuur.factuurNummer)}</title>
 <style>
-  @page {
-    size: A4;
-    margin: 20mm 18mm 20mm 18mm;
-  }
-
-  * { box-sizing: border-box; }
-
-  html, body {
-    margin: 0;
-    padding: 0;
-    font-family: -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-    font-size: 10pt;
-    color: #111;
-    line-height: 1.4;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-
- /* Body achtergrond met groot logo (watermark-style) */
-.page-watermark {
-  position: fixed;
-  top: 44%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 60vmin;
-  height: 60vmin;
-  opacity: 0.05;
-  z-index: 0;
-  pointer-events: none;
-  background-repeat: no-repeat;
-  background-position: center center;
-  background-size: contain;
-}
-
-/* Zorg dat content boven watermark staat */
-.header,
-.addresses,
-.meta-table,
-.regels,
-.totalen-wrap,
-.betaal-block,
-.opmerkingen,
-.voorwaarden,
-.footer,
-.reistijd-block {
-  position: relative;
-  z-index: 1;
-}
-
-  .muted { color: #666; }
-  .small { font-size: 8.5pt; }
-
-  /* Header */
-  .header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 30px;
-    border-bottom: 2px solid #111;
-    padding-bottom: 15px;
-  }
-  .header-left { max-width: 55%; }
-  .header-left h1 {
-    margin: 0 0 4px 0;
-    font-size: 16pt;
-    font-weight: 700;
-  }
-  .header-right { text-align: right; max-width: 45%; }
-  .header-right img {
-    max-height: 70px;
-    max-width: 200px;
-    object-fit: contain;
-  }
-
-  /* Adresblokken */
-  .addresses {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 25px;
-  }
-  .address-block {
-    width: 48%;
-  }
-  .address-block h3 {
-    margin: 0 0 6px 0;
-    font-size: 8.5pt;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: #666;
-    font-weight: 600;
-  }
-
-  /* Factuur meta */
-  .meta-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 25px;
-    background: #f8f9fa;
-    border: 1px solid #e5e7eb;
-    border-radius: 4px;
-    overflow: hidden;
-  }
-  .meta-table td {
-    padding: 8px 12px;
-    border-bottom: 1px solid #e5e7eb;
-  }
-  .meta-table tr:last-child td { border-bottom: none; }
-  .meta-table .label {
-    color: #666;
-    width: 30%;
-    font-size: 9pt;
-  }
-  .meta-table .value {
-    font-weight: 500;
-  }
-
-  /* Regels */
-  .regels {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 20px;
-  }
-  .regels thead th {
-    text-align: left;
-    font-size: 8.5pt;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: #666;
-    padding: 8px 6px;
-    border-bottom: 2px solid #111;
-  }
-  .regels thead th.num { text-align: right; }
-  .regels tbody td {
-    padding: 8px 6px;
-    border-bottom: 1px solid #eee;
-    vertical-align: top;
-  }
-  .regels tbody td.num { text-align: right; white-space: nowrap; }
-  .regels .datum { width: 70px; color: #666; font-size: 9pt; }
-  .regels .omschrijving { width: auto; }
-  .regels .aantal { width: 40px; }
-  .regels .prijs { width: 80px; }
-  .regels .btw { width: 40px; color: #666; }
-  .regels .totaal { width: 90px; font-weight: 500; }
-
-  /* Totalen */
-  .totalen-wrap {
-    display: flex;
-    justify-content: flex-end;
-    margin-bottom: 30px;
-  }
-  .totalen {
-    min-width: 280px;
-  }
-  .totalen .row {
-    display: flex;
-    justify-content: space-between;
-    padding: 4px 0;
-  }
-  .totalen .row.subtotaal {
-    border-top: 1px solid #ccc;
-    padding-top: 8px;
-    margin-top: 4px;
-  }
-  .totalen .row.btw-regel {
-    font-size: 9pt;
-    color: #666;
-  }
-  .totalen .row.totaal {
-    border-top: 2px solid #111;
-    padding-top: 8px;
-    margin-top: 6px;
-    font-size: 12pt;
-    font-weight: 700;
-  }
-
-  /* Opmerkingen */
-  .opmerkingen {
-    background: #fffbeb;
-    border: 1px solid #fde68a;
-    border-radius: 4px;
-    padding: 10px 12px;
-    margin-bottom: 20px;
-    font-size: 9pt;
-  }
-  .opmerkingen-title {
-    font-weight: 600;
-    margin-bottom: 4px;
-  }
-
-  /* Voorwaarden */
-  .voorwaarden {
-    margin-top: 30px;
-    padding-top: 15px;
-    border-top: 1px solid #e5e7eb;
-    font-size: 9pt;
-    color: #333;
-  }
-
-  /* Footer */
-  .footer {
-    margin-top: 40px;
-    padding-top: 10px;
-    border-top: 1px solid #e5e7eb;
-    font-size: 8pt;
-    color: #666;
-    text-align: center;
-  }
-
-  /* Page break avoidance */
-  .regels tr, .totalen, .opmerkingen {
-    page-break-inside: avoid;
-  }
-
-  /* Status-watermark voor concept/geannuleerd */
-  .watermark {
-    position: fixed;
-    top: 40%;
-    left: 50%;
-    transform: translate(-50%, -50%) rotate(-30deg);
-    font-size: 80pt;
-    font-weight: 900;
-    color: rgba(200, 0, 0, 0.08);
-    z-index: 0;
-    pointer-events: none;
-    letter-spacing: 10px;
-  }
-
-  /* Reistijd blok */
-.reistijd-block {
-  margin: 0 0 20px 0;
-  padding: 10px 12px;
-  background: #f8f9fa;
-  border-left: 3px solid #111;
-  border-radius: 0 4px 4px 0;
-  page-break-inside: avoid;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 12px;
-}
-
-.reistijd-block .label {
-  font-weight: 600;
-  margin-bottom: 2px;
-}
-
-.reistijd-block .details {
-  color: #666;
-  font-size: 9pt;
-}
-
-.reistijd-block .bedrag {
-  text-align: right;
-  font-weight: 500;
-  white-space: nowrap;
-}
-
-/* Betaal-blok met QR */
-.betaal-block {
-  margin: 20px 0;
-  padding: 14px 16px;
-  background: #f0f9ff;
-  border: 1px solid #bae6fd;
-  border-radius: 6px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  page-break-inside: avoid;
-}
-
-.betaal-block .info {
-  flex: 1;
-}
-
-.betaal-block .info-title {
-  font-weight: 600;
-  font-size: 10pt;
-  margin-bottom: 6px;
-  color: #075985;
-}
-
-.betaal-block .info-line {
-  font-size: 9pt;
-  margin: 2px 0;
-}
-
-.betaal-block .info-label {
-  color: #666;
-  display: inline-block;
-  width: 80px;
-}
-
-.betaal-block .qr-wrap {
-  flex-shrink: 0;
-  text-align: center;
-}
-
-.betaal-block .qr-wrap img {
-  width: 110px;
-  height: 110px;
-  display: block;
-}
-
-.betaal-block .qr-caption {
-  font-size: 8pt;
-  color: #666;
-  margin-top: 4px;
-}
+${SHARED_TEMPLATE_STYLES}
+${FACTUUR_SPECIFIC_STYLES}
 </style>
 </head>
 <body>
@@ -531,7 +178,7 @@ ${
 <div class="addresses">
   <div class="address-block">
     <h3>Factuur voor</h3>
-    <div>${klantAdresBlock(factuur)}</div>
+    <div>${klantAdresBlock(factuur.klant)}</div>
   </div>
   <div class="address-block" style="text-align: right;">
     <h3>Factuur</h3>

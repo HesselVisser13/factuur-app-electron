@@ -3,37 +3,52 @@
 import { ExternalLink, FileText, Save, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
-import { facturenApi } from '../api/facturen'
 import { useToast } from './Toast'
 
-type Props = {
-  factuurId: number | null
-  factuurNummer?: string
+interface Props {
+  /** `null` = modal niet open. Anders: nummer voor in titel. */
+  documentNummer: string | null
+  /** Titel-prefix, bv. "Factuur" of "Offerte" */
+  documentType: string
+  /** Roept de backend om PDF als base64 te krijgen */
+  fetchPdfBase64: () => Promise<string>
+  /** Open in externe viewer */
+  onOpenExternal: () => Promise<void>
+  /** Save as dialog */
+  onSaveAs: () => Promise<void>
   onClose: () => void
 }
 
-export function PdfPreviewModal({ factuurId, factuurNummer, onClose }: Props) {
+export function PdfPreviewModal({
+  documentNummer,
+  documentType,
+  fetchPdfBase64,
+  onOpenExternal,
+  onSaveAs,
+  onClose
+}: Props) {
   const [pdfUrl, setPdfUrl] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const toast = useToast()
 
   useEffect(() => {
-    if (factuurId === null) {
+    if (documentNummer === null) {
       setPdfUrl(null)
       return
     }
 
     let cancelled = false
+    let createdUrl: string | null = null
+
     setLoading(true)
     setPdfUrl(null)
 
-    facturenApi
-      .genereerPdf(factuurId)
-      .then((result) => {
-        if (!cancelled) {
-          const url = `app-pdf://local/${encodeURIComponent(result.factuurNummer)}.pdf?t=${Date.now()}`
-          setPdfUrl(url)
-        }
+    fetchPdfBase64()
+      .then((base64) => {
+        if (cancelled) return
+        const blob = base64ToBlob(base64, 'application/pdf')
+        createdUrl = URL.createObjectURL(blob)
+        setPdfUrl(createdUrl)
       })
       .catch((err) => {
         if (!cancelled) {
@@ -47,39 +62,35 @@ export function PdfPreviewModal({ factuurId, factuurNummer, onClose }: Props) {
 
     return () => {
       cancelled = true
+      if (createdUrl) URL.revokeObjectURL(createdUrl)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [factuurId])
+  }, [documentNummer])
 
   useEffect(() => {
-    if (factuurId === null) return
+    if (documentNummer === null) return
     function onKey(e: KeyboardEvent): void {
       if (e.key === 'Escape') onClose()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [factuurId, onClose])
+  }, [documentNummer, onClose])
 
-  if (factuurId === null) return null
+  if (documentNummer === null) return null
 
-  async function handleDownload(): Promise<void> {
-    if (factuurId === null) return
+  async function handleOpenExternal(): Promise<void> {
     try {
-      const result = await facturenApi.opslaanPdfAls(factuurId)
-      if (result.saved) {
-        toast.success('PDF opgeslagen')
-      }
+      await onOpenExternal()
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Opslaan mislukt')
+      toast.error(err instanceof Error ? err.message : 'Openen mislukt')
     }
   }
 
-  async function handleOpenExternal(): Promise<void> {
-    if (factuurId === null) return
+  async function handleSaveAs(): Promise<void> {
     try {
-      await facturenApi.openPdf(factuurId)
+      await onSaveAs()
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Openen mislukt')
+      toast.error(err instanceof Error ? err.message : 'Opslaan mislukt')
     }
   }
 
@@ -88,7 +99,7 @@ export function PdfPreviewModal({ factuurId, factuurNummer, onClose }: Props) {
       <div className="flex items-center justify-between bg-white rounded-t-xl px-4 py-3 border-b border-gray-200">
         <div className="font-bold flex items-center gap-2">
           <FileText className="w-5 h-5 text-blue-600" aria-hidden="true" />
-          Voorbeeld{factuurNummer ? ` – ${factuurNummer}` : ''}
+          Voorbeeld – {documentType} {documentNummer}
         </div>
         <div className="flex gap-2">
           <button
@@ -102,7 +113,7 @@ export function PdfPreviewModal({ factuurId, factuurNummer, onClose }: Props) {
           </button>
           <button
             type="button"
-            onClick={handleDownload}
+            onClick={handleSaveAs}
             className="px-3 py-1.5 text-sm font-medium rounded-lg border border-gray-300 hover:bg-gray-50 flex items-center gap-2"
           >
             <Save className="w-4 h-4" aria-hidden="true" />
@@ -126,10 +137,21 @@ export function PdfPreviewModal({ factuurId, factuurNummer, onClose }: Props) {
             PDF genereren...
           </div>
         )}
-        {pdfUrl && (
-          <iframe src={pdfUrl} title="Factuur PDF preview" className="w-full h-full border-0" />
-        )}
+        {pdfUrl && <iframe src={pdfUrl} title="PDF voorbeeld" className="w-full h-full border-0" />}
       </div>
     </div>
   )
+}
+
+// ============================================================
+// Helpers
+// ============================================================
+
+function base64ToBlob(base64: string, mimeType: string): Blob {
+  const byteChars = atob(base64)
+  const byteNumbers = new Array(byteChars.length)
+  for (let i = 0; i < byteChars.length; i++) {
+    byteNumbers[i] = byteChars.charCodeAt(i)
+  }
+  return new Blob([new Uint8Array(byteNumbers)], { type: mimeType })
 }

@@ -1,18 +1,21 @@
-// src/renderer/src/pages/FactuurFormulier/components/TotalenSectie.ts
+// src/renderer/src/components/document-form/TotalenSectie.tsx
 
 import { useMemo } from 'react'
 import { useFormContext, useWatch } from 'react-hook-form'
-import { berekenReistijd, berekenTotalen } from '../berekenen'
-import type { FactuurFormValues } from '../factuurFormSchema'
-import type { ReistijdInstellingen } from '../types'
+
 import { formatCents } from '@renderer/utils/money'
+
+import { berekenReistijd, berekenTotalen } from './berekenen'
+import type { DocumentFormShape, ReistijdInstellingen } from './types'
 
 interface Props {
   instellingen: ReistijdInstellingen
+  /** Label onderaan: "Te betalen" voor factuur, "Totaal" voor offerte */
+  totaalLabel?: string
 }
 
-export function TotalenSectie({ instellingen }: Props) {
-  const { control } = useFormContext<FactuurFormValues>()
+export function TotalenSectie({ instellingen, totaalLabel = 'Totaal' }: Props) {
+  const { control } = useFormContext<DocumentFormShape>()
   const regels = useWatch({ control, name: 'regels' })
   const reistijd = useWatch({ control, name: 'reistijd' })
 
@@ -50,7 +53,7 @@ export function TotalenSectie({ instellingen }: Props) {
         </div>
 
         <div className="flex justify-between text-lg font-bold border-t-2 border-gray-900 pt-2">
-          <span>Te betalen</span>
+          <span>{totaalLabel}</span>
           <span>{formatCents(totalen.totaalInclCents)}</span>
         </div>
       </div>

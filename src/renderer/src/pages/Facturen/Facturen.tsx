@@ -212,8 +212,23 @@ export function Facturen() {
       />
 
       <PdfPreviewModal
-        factuurId={previewFactuur?.id ?? null}
-        factuurNummer={previewFactuur?.factuurNummer}
+        documentNummer={previewFactuur?.factuurNummer ?? null}
+        documentType="Factuur"
+        fetchPdfBase64={() =>
+          previewFactuur
+            ? facturenApi.getPdfBuffer(previewFactuur.id)
+            : Promise.reject(new Error('No factuur'))
+        }
+        onOpenExternal={() =>
+          previewFactuur
+            ? facturenApi.openPdf(previewFactuur.id).then(() => undefined)
+            : Promise.resolve()
+        }
+        onSaveAs={() =>
+          previewFactuur
+            ? facturenApi.opslaanPdfAls(previewFactuur.id).then(() => undefined)
+            : Promise.resolve()
+        }
         onClose={() => setPreviewFactuur(null)}
       />
 

@@ -1,18 +1,22 @@
-// src/renderer/src/pages/FactuurFormulier/components/OpmerkingenSectie.ts
+// src/renderer/src/components/document-form/OpmerkingenSectie.tsx
 
 import { useFormContext } from 'react-hook-form'
+
 import { FormError } from '@renderer/components/FormError'
-import type { FactuurFormValues } from '../factuurFormSchema'
+
+import type { DocumentFormShape } from './types'
 
 interface Props {
   readOnly: boolean
+  /** Placeholder-tekst — varieert per type */
+  placeholder?: string
 }
 
-export function OpmerkingenSectie({ readOnly }: Props) {
+export function OpmerkingenSectie({ readOnly, placeholder = 'Optionele opmerkingen...' }: Props) {
   const {
     register,
     formState: { errors }
-  } = useFormContext<FactuurFormValues>()
+  } = useFormContext<DocumentFormShape>()
 
   const hasError = !!errors.opmerkingen
 
@@ -22,7 +26,7 @@ export function OpmerkingenSectie({ readOnly }: Props) {
       <textarea
         disabled={readOnly}
         rows={3}
-        placeholder="Optionele opmerkingen voor op de factuur..."
+        placeholder={placeholder}
         {...register('opmerkingen')}
         className={`w-full border rounded-lg px-4 py-2 text-sm disabled:bg-gray-50 ${
           hasError ? 'border-red-500 bg-red-50' : 'border-gray-300'

@@ -1,4 +1,4 @@
-// src/renderer/src/pages/FactuurFormulier/components/FactuurRegelRow.tsx
+// src/renderer/src/components/document-form/RegelRow.tsx
 
 import { ChevronDown, ChevronUp, Trash2 } from 'lucide-react'
 import { Controller, useFormContext, useWatch } from 'react-hook-form'
@@ -8,8 +8,8 @@ import { INPUT_BASE_SMALL, inputClasses } from '@renderer/utils/inputClasses'
 import { formatCents } from '@renderer/utils/money'
 import type { BtwTarief } from '@shared/types'
 
-import { berekenRegel } from '../berekenen'
-import type { FactuurFormValues } from '../factuurFormSchema'
+import { berekenRegel } from './berekenen'
+import type { DocumentFormShape } from './types'
 
 interface Props {
   index: number
@@ -20,12 +20,13 @@ interface Props {
   onRemove: () => void
 }
 
-export function FactuurRegelRow({ index, total, tarieven, readOnly, onMove, onRemove }: Props) {
+export function RegelRow({ index, total, tarieven, readOnly, onMove, onRemove }: Props) {
   const {
     register,
     control,
+    setValue,
     formState: { errors }
-  } = useFormContext<FactuurFormValues>()
+  } = useFormContext<DocumentFormShape>()
 
   const regel = useWatch({ control, name: `regels.${index}` })
   const bedragen = berekenRegel(regel)
@@ -104,6 +105,10 @@ export function FactuurRegelRow({ index, total, tarieven, readOnly, onMove, onRe
                   const tarief = tarieven.find((t) => t.id === id)
                   if (!tarief) return
                   field.onChange(tarief.id)
+                  setValue(`regels.${index}.btwPercentage`, tarief.percentage, {
+                    shouldValidate: true,
+                    shouldDirty: true
+                  })
                 }}
                 className={cls(!!regelErrors?.btwTariefId)}
                 aria-invalid={!!regelErrors?.btwTariefId}

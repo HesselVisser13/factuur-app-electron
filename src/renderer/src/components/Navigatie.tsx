@@ -5,6 +5,7 @@ import { Link, useLocation } from 'react-router-dom'
 import {
   BarChart3,
   Calculator,
+  ClipboardList,
   FileText,
   Receipt,
   Settings,
@@ -26,6 +27,7 @@ interface NavLink {
 const links: NavLink[] = [
   { href: '/', label: 'Dashboard', icon: BarChart3 },
   { href: '/transacties', label: 'Transacties', icon: Receipt },
+  { href: '/offertes', label: 'Offertes', icon: ClipboardList },
   { href: '/facturen', label: 'Facturen', icon: FileText },
   { href: '/klanten', label: 'Klanten', icon: Users },
   { href: '/cashflow', label: 'Cashflow', icon: TrendingUp },
@@ -44,9 +46,9 @@ export function Navigatie() {
 
   return (
     <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
-          <Link to="/" className="flex items-center gap-2 group">
+      <div className="max-w-8xl mx-auto px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16 gap-6">
+          <Link to="/" className="flex items-center gap-2 group shrink-0">
             <Wrench
               className="w-5 h-5 text-blue-600 group-hover:text-blue-700"
               aria-hidden="true"
@@ -63,7 +65,7 @@ export function Navigatie() {
             )}
           </Link>
 
-          <div className="flex gap-1">
+          <div className="flex gap-1 flex-wrap justify-end">
             {links.map((link) => {
               const Icon = link.icon
               const isActive = location.pathname === link.href
@@ -73,12 +75,13 @@ export function Navigatie() {
                   key={link.href}
                   to={link.href}
                   aria-current={isActive ? 'page' : undefined}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  title={link.label}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     isActive ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-100'
                   }`}
                 >
-                  <Icon className="w-4 h-4" aria-hidden="true" />
-                  {link.label}
+                  <Icon className="w-4 h-4 shrink-0" aria-hidden="true" />
+                  <span className="hidden xl:inline">{link.label}</span>
                 </Link>
               )
             })}

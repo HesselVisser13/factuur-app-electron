@@ -19,6 +19,7 @@ model BtwTarief {
 
   transacties   Transactie[]
   factuurRegels FactuurRegel[]
+  offerteRegels  OfferteRegel[]
 
   createdAt    DateTime  @default(now())
 }
@@ -77,6 +78,7 @@ model Klant {
   btwNummer      String?
 
   facturen       Factuur[]
+  offertes       Offerte[]
   fotos     Foto[]
 
   createdAt      DateTime  @default(now())
@@ -109,6 +111,7 @@ model Factuur {
   reistijdOmschrijving   String?
 
   regels         FactuurRegel[]
+  offerte        Offerte?
 
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
@@ -145,18 +148,23 @@ model Instelling {
 
 model MailLog {
   id           Int      @id @default(autoincrement())
-  factuurId    Int
-  factuur      Factuur  @relation(fields: [factuurId], references: [id], onDelete: Cascade)
+
+  /** Exact één van factuurId / offerteId is gezet */
+  factuurId    Int?
+  factuur      Factuur? @relation(fields: [factuurId], references: [id], onDelete: Cascade)
+  offerteId    Int?
+  offerte      Offerte? @relation(fields: [offerteId], references: [id], onDelete: Cascade)
 
   verzondenOp  DateTime @default(now())
   ontvanger    String
   onderwerp    String
   body         String
-  status       String   // 'sent' | 'failed'
+  status       String
   errorMsg     String?
-  messageId    String?  // Gmail message ID voor referentie
+  messageId    String?
 
   @@index([factuurId])
+  @@index([offerteId])
   @@index([verzondenOp])
 }
 
@@ -188,4 +196,66 @@ model BackupLog {
 
   @@index([type])
   @@index([createdAt])
+}
+
+model Offerte {
+  id             Int            @id @default(autoincrement())
+  offerteNummer  String         @unique
+
+  klantId        Int
+  klant          Klant          @relation(fields: [klantId], references: [id])
+
+  datum          DateTime
+  geldigTot      DateTime
+  referentie     String?
+  status         String         @default("concept")
+  opmerkingen    String?
+  toonAkkoordBlok Boolean       @default(false)
+
+  totaalExcl     Float          @default(0)
+  totaalBtw      Float          @default(0)
+  totaalIncl     Float          @default(0)
+
+  reistijdUren           Float?
+  reistijdKm             Float?
+  reistijdBedragExcl     Float?
+  reistijdBtwBedrag      Float?
+  reistijdBtwPercentage  Float?
+  reistijdBtwTariefId    Int?
+  reistijdOmschrijving   String?
+
+  regels         OfferteRegel[]
+
+  // Link bij omzetten naar factuur
+  factuurId      Int?           @unique
+  factuur        Factuur?       @relation(fields: [factuurId], references: [id])
+  mailLogs       MailLog[]
+
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@index([klantId])
+  @@index([status])
+  @@index([datum])
+}
+
+model OfferteRegel {
+  id            Int       @id @default(autoincrement())
+  offerteId     Int
+  offerte       Offerte   @relation(fields: [offerteId], references: [id], onDelete: Cascade)
+
+  datum         DateTime
+  omschrijving  String
+  aantal        Float
+  prijsPerStuk  Float
+
+  btwTariefId   Int
+  btwTarief     BtwTarief @relation(fields: [btwTariefId], references: [id])
+  btwPercentage Float
+
+  bedragExcl    Float
+  btwBedrag     Float
+  bedragIncl    Float
+
+  volgorde      Int       @default(0)
 }

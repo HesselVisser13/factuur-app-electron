@@ -175,6 +175,44 @@ export function MailSectie() {
           <FormError message={errors.mail_body_template?.message} />
         </div>
 
+        <div className="pt-4 border-t border-gray-100">
+          <h4 className="text-sm font-medium text-gray-700 mb-3">Voor offertes</h4>
+
+          <div className="mb-4">
+            <label
+              htmlFor="mail_offerte_onderwerp_template"
+              className="block text-sm font-medium text-gray-600 mb-1"
+            >
+              Onderwerp (offerte)
+            </label>
+            <input
+              id="mail_offerte_onderwerp_template"
+              type="text"
+              {...register('mail_offerte_onderwerp_template')}
+              className={inputClasses(!!errors.mail_offerte_onderwerp_template)}
+              aria-invalid={!!errors.mail_offerte_onderwerp_template}
+            />
+            <FormError message={errors.mail_offerte_onderwerp_template?.message} />
+          </div>
+
+          <div>
+            <label
+              htmlFor="mail_offerte_body_template"
+              className="block text-sm font-medium text-gray-600 mb-1"
+            >
+              Bericht (offerte)
+            </label>
+            <textarea
+              id="mail_offerte_body_template"
+              rows={8}
+              {...register('mail_offerte_body_template')}
+              className={inputClasses(!!errors.mail_offerte_body_template)}
+              aria-invalid={!!errors.mail_offerte_body_template}
+            />
+            <FormError message={errors.mail_offerte_body_template?.message} />
+          </div>
+        </div>
+
         <details className="text-sm">
           <summary className="cursor-pointer text-gray-600 hover:text-gray-800 font-medium">
             Beschikbare placeholders

@@ -20,10 +20,12 @@ import { registerMailIpc } from './ipc/mail.ipc'
 import { registerTransactieHandlers } from './ipc/transacties.ipc'
 import { registerCashflowHandlers } from './ipc/cashflow.ipc'
 import { registerBelastingHandlers } from './ipc/belasting.ipc'
+import { registerOffertesHandlers } from './ipc/offertes.ipc'
 import { initLogger, log } from './logger'
 import { getFacturenDir, getKlantFotosDir, getKlantFotoThumbsDir, getLogosDir } from './paths'
 import { applyPendingRestore } from './services/backup/restore.service'
 import { maybeRunAutoBackup } from './services/backup/auto-backup.service'
+import { offertesService } from './services/offertes.service'
 
 protocol.registerSchemesAsPrivileged([
   {
@@ -151,6 +153,11 @@ app.whenReady().then(async () => {
     }
   })
 
+  // Markeer verlopen offertes (silent, op achtergrond)
+  offertesService.markeerVerlopen().catch((err) => {
+    log.error('[offertes] Auto-markeer verlopen mislukt', err)
+  })
+
   registerTransactieHandlers()
   registerBtwAangifteHandlers()
   registerBtwTarievenHandlers()
@@ -164,6 +171,7 @@ app.whenReady().then(async () => {
   registerBackupHandlers()
   registerCashflowHandlers()
   registerBelastingHandlers()
+  registerOffertesHandlers()
 
   createWindow()
 

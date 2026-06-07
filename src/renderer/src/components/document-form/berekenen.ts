@@ -1,4 +1,4 @@
-// src/renderer/src/pages/FactuurFormulier/berekenen.ts
+// src/renderer/src/components/document-form/berekenen.ts
 
 import {
   type Cents,
@@ -8,10 +8,8 @@ import {
   parseEuroString,
   sumCents
 } from '@renderer/utils/money'
-import type { FactuurFormValues, RegelFormValues } from './factuurFormSchema'
-import type { ReistijdInstellingen } from './types'
 
-type ReistijdValues = FactuurFormValues['reistijd']
+import type { RegelFormValues, ReistijdFormValues, ReistijdInstellingen } from './types'
 
 export type RegelBedragen = {
   bedragExclCents: Cents
@@ -29,7 +27,7 @@ export function berekenRegel(regel: RegelFormValues): RegelBedragen {
 }
 
 export function berekenReistijd(
-  reistijd: ReistijdValues,
+  reistijd: ReistijdFormValues,
   instellingen: ReistijdInstellingen
 ): RegelBedragen {
   if (!reistijd.enabled) {
@@ -40,7 +38,6 @@ export function berekenReistijd(
   const uren = parseFloat(reistijd.uren) || 0
   const km = parseFloat(reistijd.km) || 0
 
-  // Tarieven zijn in euros (uit instellingen) → eerst naar cents, dan vermenigvuldigen
   const uurtariefCents = euroToCents(instellingen.uurtarief)
   const kmtariefCents = euroToCents(instellingen.kmtarief)
 
@@ -69,7 +66,7 @@ export type Totalen = {
 
 export function berekenTotalen(
   regels: RegelFormValues[],
-  reistijd: ReistijdValues,
+  reistijd: ReistijdFormValues,
   reistijdBedrag: RegelBedragen
 ): Totalen {
   const regelBedragen = regels.map(berekenRegel)
@@ -78,7 +75,6 @@ export function berekenTotalen(
   let totaalBtwCents = sumCents(regelBedragen.map((b) => b.btwBedragCents))
   let totaalInclCents = sumCents(regelBedragen.map((b) => b.bedragInclCents))
 
-  // Groeperen per BTW-tarief
   const perTariefMap = new Map<number, { overCents: Cents; btwCents: Cents }>()
 
   regels.forEach((regel, i) => {

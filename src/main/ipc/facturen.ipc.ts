@@ -129,4 +129,13 @@ export function registerFactuurHandlers(): void {
       return { folder: dir }
     })
   )
+
+  ipcMain.handle(
+    IPC_CHANNELS.FACTUREN_PDF_BUFFER,
+    createHandler(async (_event, id: unknown) => {
+      const validated = validate(z.number().int().positive(), id)
+      const buffer = await pdfService.genereerFactuurPdfBuffer(validated)
+      return buffer.toString('base64')
+    })
+  )
 }

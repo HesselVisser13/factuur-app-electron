@@ -48,6 +48,28 @@ export function FactuurSectie() {
             </p>
           )}
         </div>
+        <div>
+          <label
+            htmlFor="offerte_voorwaarden"
+            className="block text-sm font-medium text-gray-600 mb-1"
+          >
+            Voorwaardentekst onderaan offerte
+          </label>
+          <textarea
+            id="offerte_voorwaarden"
+            rows={3}
+            {...register('offerte_voorwaarden')}
+            className={inputClasses(!!errors.offerte_voorwaarden)}
+            aria-invalid={!!errors.offerte_voorwaarden}
+          />
+          <FormError message={errors.offerte_voorwaarden?.message} />
+          {!errors.offerte_voorwaarden && (
+            <p className="text-xs text-gray-500 mt-1">
+              Tip: gebruik <code className="bg-gray-100 px-1 rounded">{'{geldigTot}'}</code> voor
+              automatische geldigheidsdatum.
+            </p>
+          )}
+        </div>
       </div>
     </section>
   )

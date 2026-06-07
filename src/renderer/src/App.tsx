@@ -13,6 +13,8 @@ import { Facturen } from './pages/Facturen'
 import { FactuurFormulier } from './pages/FactuurFormulier'
 import { Cashflow } from './pages/Cashflow'
 import { Belasting } from './pages/Belasting'
+import { Offertes } from './pages/Offertes'
+import { OfferteFormulier } from './pages/OfferteFormulier'
 
 export default function App() {
   return (
@@ -28,6 +30,9 @@ export default function App() {
                 <Route path="/btw-aangifte" element={<BtwAangifte />} />
                 <Route path="/instellingen" element={<Instellingen />} />
                 <Route path="/klanten" element={<Klanten />} />
+                <Route path="/offertes" element={<Offertes />} />
+                <Route path="/offertes/nieuw" element={<OfferteFormulier />} />
+                <Route path="/offertes/:id" element={<OfferteFormulier />} />
                 <Route path="/facturen" element={<Facturen />} />
                 <Route path="/facturen/nieuw" element={<FactuurFormulier />} />
                 <Route path="/facturen/:id" element={<FactuurFormulier />} />

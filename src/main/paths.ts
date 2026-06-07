@@ -47,3 +47,17 @@ export function getKlantFotoPath(klantId: number, filename: string): string {
 export function getKlantFotoThumbPath(klantId: number, filename: string): string {
   return join(getKlantFotoThumbsDir(klantId), filename)
 }
+
+export function getOffertesDir(): string {
+  const dir = join(app.getPath('userData'), 'offertes')
+  if (!existsSync(dir)) {
+    mkdirSync(dir, { recursive: true })
+  }
+  return dir
+}
+
+export function getOffertePdfPath(offerteNummer: string): string {
+  // Sanitize: vervang slashes en andere onveilige chars
+  const safe = offerteNummer.replace(/[/\\?%*:|"<>]/g, '-')
+  return join(getOffertesDir(), `${safe}.pdf`)
+}

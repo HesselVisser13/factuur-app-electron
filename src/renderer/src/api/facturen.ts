@@ -13,5 +13,6 @@ export const facturenApi = {
   genereerPdf: (id: number) => window.api.genereerFactuurPdf(id),
   opslaanPdfAls: (id: number) => window.api.opslaanFactuurPdfAls(id),
   openPdf: (id: number) => window.api.openFactuurPdf(id),
-  openFolder: () => window.api.openFacturenFolder()
+  openFolder: () => window.api.openFacturenFolder(),
+  getPdfBuffer: (id: number) => window.api.getFactuurPdfBuffer(id) // ← NIEUW
 }

@@ -9,10 +9,25 @@ export interface SendMailRequest {
   body: string
 }
 
+export interface SendOfferteMailRequest {
+  offerteId: number
+  ontvanger: string
+  onderwerp: string
+  body: string
+}
+
 export const mailApi = {
   getAuthStatus: (): Promise<MailAuthStatus> => window.api.getMailAuthStatus(),
   authenticate: (): Promise<MailAuthStatus> => window.api.authenticateMail(),
   disconnect: (): Promise<void> => window.api.disconnectMail(),
+
+  // Factuur
   send: (request: SendMailRequest): Promise<MailResult> => window.api.sendMail(request),
-  getLog: (factuurId: number): Promise<MailLogEntry[]> => window.api.getMailLog(factuurId)
+  getLog: (factuurId: number): Promise<MailLogEntry[]> => window.api.getMailLog(factuurId),
+
+  // Offerte
+  sendOfferte: (request: SendOfferteMailRequest): Promise<MailResult> =>
+    window.api.sendOfferteMail(request),
+  getOfferteLog: (offerteId: number): Promise<MailLogEntry[]> =>
+    window.api.getOfferteMailLog(offerteId)
 }

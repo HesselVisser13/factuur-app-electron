@@ -31,8 +31,9 @@ export interface MailAuthStatus {
 
 export interface MailLogEntry {
   id: number
-  factuurId: number
-  verzondenOp: string // ISO datetime
+  factuurId: number | null
+  offerteId: number | null
+  verzondenOp: string
   ontvanger: string
   onderwerp: string
   body: string

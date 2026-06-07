@@ -1,14 +1,19 @@
-//src/renderer/src/pages/Facturen/components/FacturenTabel.tsx
+// src/renderer/src/pages/Facturen/components/FacturenTabel.tsx
 
-import { formatCurrency, formatDate } from '@renderer/utils/formatters'
-import { klantDisplayNaam } from '@shared/klant-utils'
+import { AlertTriangle, FileText } from 'lucide-react'
+
+import {
+  DocumentTabel,
+  type DocumentAdapter,
+  type DocumentEmptyState,
+  type ExtraColumn
+} from '@renderer/components/document-list'
 import type { FactuurStatus } from '@shared/schemas'
 import type { Factuur } from '@shared/types'
-import { AlertTriangle, FileText, Plus } from 'lucide-react'
 
 import { STATUS_CONFIG } from '../statusConfig'
+
 import { FactuurActieMenu } from './FactuurActieMenu'
-import { EmptyState } from '@renderer/components/EmptyState'
 
 interface Props {
   facturen: Factuur[]
@@ -25,6 +30,24 @@ interface Props {
   onMail: (f: Factuur) => void
   onShowMailHistory: (f: Factuur) => void
   onAddNew?: () => void
+}
+
+const FACTUUR_ADAPTER: DocumentAdapter<Factuur, FactuurStatus> = {
+  getKey: (f) => f.id,
+  getNummer: (f) => f.factuurNummer,
+  getDatum: (f) => f.datum,
+  getKlant: (f) => f.klant,
+  getStatus: (f) => f.status,
+  getTotaal: (f) => f.totaalIncl
+}
+
+const EMPTY_STATE: DocumentEmptyState = {
+  icon: FileText,
+  title: 'Nog geen facturen',
+  description:
+    'Maak je eerste factuur aan voor een klant. Vul regels in, voeg eventueel reistijd toe, en verstuur de PDF direct naar je klant.',
+  actionLabel: 'Eerste factuur maken',
+  noResultsText: 'Geen facturen gevonden met deze filters.'
 }
 
 function isVervallen(f: Factuur): boolean {
@@ -48,110 +71,49 @@ export function FacturenTabel({
   onShowMailHistory,
   onAddNew
 }: Props) {
-  if (loading) {
-    return (
-      <div className="bg-white rounded-xl border border-gray-200 p-8 text-center text-gray-500 text-sm">
-        Laden...
-      </div>
-    )
-  }
+  const busyIds = new Set<number>()
+  if (pendingStatusId !== null) busyIds.add(pendingStatusId)
+  if (deletingId !== null) busyIds.add(deletingId)
 
-  if (facturen.length === 0) {
-    if (totalCount === 0 && onAddNew) {
-      return (
-        <EmptyState
-          icon={FileText}
-          title="Nog geen facturen"
-          description="Maak je eerste factuur aan voor een klant. Vul regels in, voeg eventueel reistijd toe, en verstuur de PDF direct naar je klant."
-          action={{
-            label: 'Eerste factuur maken',
-            onClick: onAddNew,
-            icon: Plus
-          }}
-        />
-      )
-    }
+  const renderBadges = (f: Factuur) =>
+    isVervallen(f) ? (
+      <span className="ml-2 text-xs px-2 py-0.5 rounded-full font-medium bg-red-100 text-red-700 inline-flex items-center gap-1">
+        <AlertTriangle className="w-3 h-3" aria-hidden="true" />
+        Vervallen
+      </span>
+    ) : null
 
-    return (
-      <div className="bg-white rounded-xl border border-gray-200 p-8 text-center text-gray-500 text-sm">
-        Geen facturen gevonden met deze filters.
-      </div>
-    )
-  }
+  const renderActions = (f: Factuur) => (
+    <FactuurActieMenu
+      factuur={f}
+      busy={busyIds.has(f.id)}
+      onEdit={() => onEdit(f)}
+      onStatusChange={(status) => onStatusChange(f, status)}
+      onDelete={() => onDelete(f)}
+      onPdfOpen={() => onPdfOpen(f)}
+      onPdfSaveAs={() => onPdfSaveAs(f)}
+      onPdfPreview={() => onPdfPreview(f)}
+      onMail={() => onMail(f)}
+      onShowMailHistory={() => onShowMailHistory(f)}
+    />
+  )
+
+  // Geen extra kolommen voor Facturen
+  const extraColumns: ExtraColumn<Factuur>[] = []
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-      <table className="w-full text-sm">
-        <thead className="bg-gray-50 text-gray-600 uppercase text-xs">
-          <tr>
-            <th scope="col" className="text-left px-4 py-3">
-              Nummer
-            </th>
-            <th scope="col" className="text-left px-4 py-3">
-              Datum
-            </th>
-            <th scope="col" className="text-left px-4 py-3">
-              Klant
-            </th>
-            <th scope="col" className="text-left px-4 py-3">
-              Status
-            </th>
-            <th scope="col" className="text-right px-4 py-3">
-              Bedrag
-            </th>
-            <th scope="col" className="text-right px-4 py-3">
-              <span className="sr-only">Acties</span>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {facturen.map((f) => {
-            const status = STATUS_CONFIG[f.status]
-            const vervallen = isVervallen(f)
-            const busy = pendingStatusId === f.id || deletingId === f.id
-
-            return (
-              <tr
-                key={f.id}
-                className={`border-t border-gray-100 hover:bg-gray-50 ${busy ? 'opacity-50' : ''}`}
-              >
-                <td className="px-4 py-3 font-medium font-mono">{f.factuurNummer}</td>
-                <td className="px-4 py-3 text-gray-600">{formatDate(f.datum)}</td>
-                <td className="px-4 py-3">{klantDisplayNaam(f.klant)}</td>
-                <td className="px-4 py-3">
-                  <span
-                    className={`text-xs px-2 py-0.5 rounded-full font-medium ${status.classes} inline-flex items-center gap-1`}
-                  >
-                    <status.icon className="w-3 h-3" aria-hidden="true" />
-                    {status.label}
-                  </span>
-                  {vervallen && (
-                    <span className="ml-2 text-xs px-2 py-0.5 rounded-full font-medium bg-red-100 text-red-700 inline-flex items-center gap-1">
-                      <AlertTriangle className="w-3 h-3" aria-hidden="true" />
-                      Vervallen
-                    </span>
-                  )}
-                </td>
-                <td className="px-4 py-3 text-right font-medium">{formatCurrency(f.totaalIncl)}</td>
-                <td className="px-4 py-3 text-right">
-                  <FactuurActieMenu
-                    factuur={f}
-                    busy={busy}
-                    onEdit={() => onEdit(f)}
-                    onStatusChange={(status) => onStatusChange(f, status)}
-                    onDelete={() => onDelete(f)}
-                    onPdfOpen={() => onPdfOpen(f)}
-                    onPdfSaveAs={() => onPdfSaveAs(f)}
-                    onPdfPreview={() => onPdfPreview(f)}
-                    onMail={() => onMail(f)}
-                    onShowMailHistory={() => onShowMailHistory(f)}
-                  />
-                </td>
-              </tr>
-            )
-          })}
-        </tbody>
-      </table>
-    </div>
+    <DocumentTabel<Factuur, FactuurStatus>
+      items={facturen}
+      totalCount={totalCount}
+      loading={loading}
+      busyIds={busyIds}
+      adapter={FACTUUR_ADAPTER}
+      statusConfig={STATUS_CONFIG}
+      extraColumns={extraColumns}
+      renderBadges={renderBadges}
+      renderActions={renderActions}
+      emptyState={EMPTY_STATE}
+      onAddNew={onAddNew}
+    />
   )
 }

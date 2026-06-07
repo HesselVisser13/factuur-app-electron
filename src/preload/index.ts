@@ -13,7 +13,10 @@ import type {
   BtwTariefInput,
   BtwTariefUpdate,
   BelastingInput,
-  InvesteringInput
+  InvesteringInput,
+  OfferteInput,
+  OfferteUpdate,
+  OfferteStatus
 } from '../shared/schemas'
 import type {
   BtwAangifte,
@@ -36,7 +39,8 @@ import type {
   CashflowOverview,
   CashflowPeriod,
   BelastingSchatting,
-  InvesteringResultaat
+  InvesteringResultaat,
+  Offerte
 } from '../shared/types'
 import type { MailAuthStatus, MailResult, MailLogEntry } from '../shared/mail-types'
 
@@ -104,6 +108,8 @@ const api = {
   // PDF
   genereerFactuurPdf: (id: number): Promise<PdfResult> =>
     invoke(IPC_CHANNELS.FACTUREN_GENEREER_PDF, id),
+  getFactuurPdfBuffer: (id: number): Promise<string> =>
+    invoke(IPC_CHANNELS.FACTUREN_PDF_BUFFER, id),
   opslaanFactuurPdfAls: (id: number): Promise<PdfSaveAsResult> =>
     invoke(IPC_CHANNELS.FACTUREN_OPSLAAN_PDF_ALS, id),
   openFactuurPdf: (id: number): Promise<PdfOpenResult> =>
@@ -126,6 +132,14 @@ const api = {
   }): Promise<MailResult> => invoke(IPC_CHANNELS.MAIL_SEND, request),
   getMailLog: (factuurId: number): Promise<MailLogEntry[]> =>
     invoke(IPC_CHANNELS.MAIL_GET_LOG, factuurId),
+  sendOfferteMail: (request: {
+    offerteId: number
+    ontvanger: string
+    onderwerp: string
+    body: string
+  }): Promise<MailResult> => invoke(IPC_CHANNELS.MAIL_SEND_OFFERTE, request),
+  getOfferteMailLog: (offerteId: number): Promise<MailLogEntry[]> =>
+    invoke(IPC_CHANNELS.MAIL_GET_LOG_OFFERTE, offerteId),
 
   // Foto's
   listFotosByKlant: (klantId: number): Promise<FotoRecord[]> =>
@@ -163,6 +177,34 @@ const api = {
     invoke(IPC_CHANNELS.BELASTING_BEREKEN, input),
   berekenInvestering: (input: InvesteringInput): Promise<InvesteringResultaat> =>
     invoke(IPC_CHANNELS.BELASTING_BEREKEN_INVESTERING, input),
+
+  // Offertes
+  getOffertes: (): Promise<Offerte[]> => invoke(IPC_CHANNELS.OFFERTES_GET_ALL),
+  getOfferteById: (id: number): Promise<Offerte> => invoke(IPC_CHANNELS.OFFERTES_GET_BY_ID, id),
+  getNextOfferteNummer: (datum?: string): Promise<string> =>
+    invoke(IPC_CHANNELS.OFFERTES_GET_NEXT_NUMMER, datum),
+  createOfferte: (input: OfferteInput): Promise<Offerte> =>
+    invoke(IPC_CHANNELS.OFFERTES_CREATE, input),
+  updateOfferte: (input: OfferteUpdate): Promise<Offerte> =>
+    invoke(IPC_CHANNELS.OFFERTES_UPDATE, input),
+  updateOfferteStatus: (id: number, status: OfferteStatus): Promise<Offerte> =>
+    invoke(IPC_CHANNELS.OFFERTES_UPDATE_STATUS, { id, status }),
+  deleteOfferte: (id: number): Promise<boolean> => invoke(IPC_CHANNELS.OFFERTES_DELETE, id),
+  converteerOfferteNaarFactuur: (id: number): Promise<{ offerte: Offerte; factuurId: number }> =>
+    invoke(IPC_CHANNELS.OFFERTES_CONVERTEER_NAAR_FACTUUR, id),
+  markeerOffertesVerlopen: (): Promise<number> => invoke(IPC_CHANNELS.OFFERTES_MARKEER_VERLOPEN),
+
+  // Offerte PDF
+  genereerOffertePdf: (id: number): Promise<{ filePath: string; offerteNummer: string }> =>
+    invoke(IPC_CHANNELS.OFFERTES_GENEREER_PDF, id),
+  openOffertePdf: (id: number): Promise<{ filePath: string; offerteNummer: string }> =>
+    invoke(IPC_CHANNELS.OFFERTES_OPEN_PDF, id),
+  getOffertePdfBuffer: (id: number): Promise<string> =>
+    invoke(IPC_CHANNELS.OFFERTES_PDF_BUFFER, id),
+  getOfferteHtml: (id: number): Promise<string> => invoke(IPC_CHANNELS.OFFERTES_GENEREER_HTML, id),
+  opslaanOffertePdfAls: (id: number): Promise<{ saved: boolean; filePath?: string }> =>
+    invoke(IPC_CHANNELS.OFFERTES_OPSLAAN_PDF_ALS, id),
+  openOffertesFolder: (): Promise<{ opened: boolean }> => invoke(IPC_CHANNELS.OFFERTES_OPEN_FOLDER),
 
   getAppVersion: (): Promise<string> => invoke(IPC_CHANNELS.APP_GET_VERSION)
 }
