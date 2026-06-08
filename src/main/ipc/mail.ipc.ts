@@ -220,7 +220,9 @@ export function registerMailIpc(): void {
 
         let pdfBuffer: Buffer
         try {
-          pdfBuffer = await offertePdfService.genereerOffertePdfBuffer(request.offerteId)
+          pdfBuffer = await offertePdfService.genereerOffertePdfBuffer(request.offerteId, {
+            forceFinal: true
+          })
         } catch (err) {
           const errorMsg = err instanceof Error ? err.message : 'PDF genereren mislukt'
           log.error('[mail-ipc] Offerte-PDF genereren mislukt', err)

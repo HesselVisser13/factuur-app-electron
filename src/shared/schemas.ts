@@ -193,9 +193,9 @@ export const FactuurRegelInputSchema = z.object({
     .max(500, 'Omschrijving te lang (max 500 tekens)'),
   aantal: z
     .number()
-    .int('Aantal moet een heel getal zijn')
     .positive('Aantal moet groter zijn dan 0')
-    .max(10_000, 'Aantal te hoog (max 10.000)'),
+    .max(10_000, 'Aantal te hoog (max 10.000)')
+    .refine((v) => (v * 2) % 1 === 0, 'Alleen hele of halve waarden'),
   prijsPerStuk: bedragSchema,
   btwTariefId: z.number().int().positive(),
   btwPercentage: z.number().min(0, 'BTW kan niet negatief zijn').max(100, 'BTW max 100%')
@@ -325,7 +325,11 @@ export type OfferteStatus = z.infer<typeof OfferteStatusSchema>
 export const OfferteRegelInputSchema = z.object({
   datum: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   omschrijving: z.string().trim().min(1, 'Omschrijving is verplicht').max(200),
-  aantal: z.number().min(0),
+  aantal: z
+    .number()
+    .positive('Aantal moet groter zijn dan 0')
+    .max(10_000)
+    .refine((v) => (v * 2) % 1 === 0, 'Alleen hele of halve waarden'),
   prijsPerStuk: z.number().min(0),
   btwTariefId: z.number().int().positive(),
   btwPercentage: z.number().min(0).max(100)

@@ -66,8 +66,8 @@ export function RegelRow({ index, total, tarieven, readOnly, onMove, onRemove }:
           <label className="block text-xs text-gray-500 mb-0.5">Aantal</label>
           <input
             type="number"
-            step="1"
-            min="1"
+            step="0.5"
+            min="0.5"
             disabled={readOnly}
             {...register(`regels.${index}.aantal`)}
             className={cls(!!regelErrors?.aantal)}

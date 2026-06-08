@@ -223,7 +223,7 @@ export const SHARED_TEMPLATE_STYLES = `
     page-break-inside: avoid;
   }
 
-  /* Status-watermark voor concept/geannuleerd/etc */
+  /* Status-watermark voor concept/geannuleerd/etc — boven content */
   .watermark {
     position: fixed;
     top: 40%;
@@ -232,7 +232,7 @@ export const SHARED_TEMPLATE_STYLES = `
     font-size: 80pt;
     font-weight: 900;
     color: rgba(200, 0, 0, 0.08);
-    z-index: 0;
+    z-index: 10;
     pointer-events: none;
     letter-spacing: 10px;
   }

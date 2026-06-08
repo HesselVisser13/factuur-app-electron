@@ -245,4 +245,15 @@ describe('berekenTotalen', () => {
     expect(result.totaalInclCents).toBe(0)
     expect(result.perTarief).toHaveLength(0)
   })
+  it('werkt met decimale aantallen (uren)', () => {
+    const r = berekenRegel(makeRegel({ aantal: '1.5', prijsPerStuk: '80', btwPercentage: 21 }))
+    expect(r.bedragExclCents).toBe(12_000) // 1.5 × €80 = €120
+    expect(r.btwBedragCents).toBe(2_520) // 21% van €120
+    expect(r.bedragInclCents).toBe(14_520)
+  })
+
+  it('accepteert komma als decimaal', () => {
+    const r = berekenRegel(makeRegel({ aantal: '0,5', prijsPerStuk: '100', btwPercentage: 21 }))
+    expect(r.bedragExclCents).toBe(5_000) // 0.5 × €100
+  })
 })

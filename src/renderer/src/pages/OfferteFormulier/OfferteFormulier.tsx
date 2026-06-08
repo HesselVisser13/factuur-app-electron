@@ -234,7 +234,7 @@ export function OfferteFormulier() {
         regels: values.regels.map((r) => ({
           datum: r.datum,
           omschrijving: r.omschrijving,
-          aantal: parseInt(r.aantal, 10) || 0,
+          aantal: parseFloat(r.aantal.replace(',', '.')) || 0,
           prijsPerStuk: parseFloat(r.prijsPerStuk) || 0,
           btwTariefId: r.btwTariefId,
           btwPercentage: r.btwPercentage

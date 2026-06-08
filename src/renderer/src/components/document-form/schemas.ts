@@ -13,13 +13,21 @@ export const datumString = z
   .min(1, 'Verplicht')
   .refine(isGeldigeDatumString, 'Ongeldige datum')
 
-const wholeNumberString = (label = 'Aantal', max = 10_000) =>
+const aantalString = (max = 10_000) =>
   z
     .string()
     .min(1, 'Vereist')
-    .regex(/^\d+$/, 'Heel getal')
-    .refine((v) => parseInt(v, 10) >= 1, `${label} min 1`)
-    .refine((v) => parseInt(v, 10) <= max, `${label} max ${max.toLocaleString('nl-NL')}`)
+    .refine((v) => !isNaN(parseFloat(v.replace(',', '.'))), 'Geen geldig getal')
+    .refine((v) => parseFloat(v.replace(',', '.')) > 0, 'Aantal moet groter zijn dan 0')
+    .refine(
+      (v) => parseFloat(v.replace(',', '.')) <= max,
+      `Aantal max ${max.toLocaleString('nl-NL')}`
+    )
+    .refine((v) => {
+      // Alleen hele of halve getallen (1, 1.5, 2, 2.5, etc.)
+      const num = parseFloat(v.replace(',', '.'))
+      return (num * 2) % 1 === 0
+    }, 'Alleen hele of halve waarden toegestaan (bv. 1, 1,5, 2)')
 
 const decimalNumberString = (label = 'Bedrag', max = 1_000_000) =>
   z
@@ -37,7 +45,7 @@ export const RegelFormSchema = z.object({
   _uid: z.string(),
   datum: datumString,
   omschrijving: z.string().trim().min(1, 'Verplicht').max(500, 'Max 500 tekens'),
-  aantal: wholeNumberString('Aantal', 10_000),
+  aantal: aantalString(10_000),
   prijsPerStuk: decimalNumberString('Prijs', 1_000_000),
   btwTariefId: z.number().int().positive('Kies tarief'),
   btwPercentage: z.number().min(0).max(100)

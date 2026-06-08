@@ -18,7 +18,7 @@ export type RegelBedragen = {
 }
 
 export function berekenRegel(regel: RegelFormValues): RegelBedragen {
-  const aantal = parseInt(regel.aantal, 10) || 0
+  const aantal = parseFloat(regel.aantal.replace(',', '.')) || 0
   const prijsCents = parseEuroString(regel.prijsPerStuk)
   const bedragExclCents = multiplyCents(prijsCents, aantal)
   const btwBedragCents = btwInCents(bedragExclCents, regel.btwPercentage)

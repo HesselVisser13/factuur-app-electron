@@ -237,7 +237,7 @@ export function FactuurFormulier() {
         regels: values.regels.map<FactuurRegelInput>((r) => ({
           datum: r.datum,
           omschrijving: r.omschrijving,
-          aantal: parseInt(r.aantal, 10) || 0,
+          aantal: parseFloat(r.aantal.replace(',', '.')) || 0,
           prijsPerStuk: parseFloat(r.prijsPerStuk) || 0,
           btwTariefId: r.btwTariefId,
           btwPercentage: r.btwPercentage

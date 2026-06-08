@@ -109,10 +109,20 @@ export class OffertePdfService {
    * Geeft de PDF terug als Buffer (zonder opslaan).
    * Voor preview of 'Save as...'.
    */
-  async genereerOffertePdfBuffer(offerteId: number): Promise<Buffer> {
+  async genereerOffertePdfBuffer(
+    offerteId: number,
+    options?: { forceFinal?: boolean }
+  ): Promise<Buffer> {
     const [offerte, instellingen] = await Promise.all([loadOfferte(offerteId), loadInstellingen()])
 
-    const html = renderOfferteHtml(offerte, instellingen)
+    // Bij verzenden via mail: forceer status weg van 'concept'
+    // zodat watermark niet op de PDF verschijnt
+    const offerteVoorPdf =
+      options?.forceFinal && offerte.status === 'concept'
+        ? { ...offerte, status: 'verzonden' as const }
+        : offerte
+
+    const html = renderOfferteHtml(offerteVoorPdf, instellingen)
     return htmlToPdfBuffer(html)
   }
 
