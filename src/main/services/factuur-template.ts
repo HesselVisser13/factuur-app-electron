@@ -278,7 +278,12 @@ ${
         </div>
         <div class="qr-wrap">
           <img src="${qrData}" alt="QR-code voor betaling">
-          <div class="qr-caption">Scan met je<br>bank-app</div>
+          <div class="qr-caption">
+            Scan met je bank-app<br>
+            <span style="font-size:7pt; color:#777;">
+              iDEAL niet ondersteund
+            </span>
+          </div>
         </div>
       </div>`
     : ''

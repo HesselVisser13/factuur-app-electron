@@ -64,13 +64,6 @@ export function OfferteActieMenu({
             title="Markeer als verzonden"
             color="blue"
           />
-          <ActionButton
-            onClick={onDelete}
-            disabled={busy}
-            icon={Trash2}
-            title="Verwijderen"
-            color="red"
-          />
         </>
       )}
 
@@ -101,6 +94,16 @@ export function OfferteActieMenu({
           title="Omzetten naar factuur"
           color="green"
           label="Omzetten"
+        />
+      )}
+
+      {(status === 'concept' || status === 'afgewezen') && (
+        <ActionButton
+          onClick={onDelete}
+          disabled={busy}
+          icon={Trash2}
+          title="Verwijderen"
+          color="red"
         />
       )}
 
