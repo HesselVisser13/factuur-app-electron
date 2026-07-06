@@ -351,3 +351,12 @@ export interface Offerte {
   createdAt: string
   updatedAt: string
 }
+
+export interface BoekhouderAdvies {
+  id: string
+  type: 'tip' | 'waarschuwing' | 'actie' | 'succes'
+  titel: string
+  bericht: string
+  actieLabel?: string
+  actieRoute?: string
+}

@@ -11,6 +11,7 @@ import { DashboardSkeleton } from '@renderer/components/DashboardSkeleton'
 import { ErrorMessage } from '@renderer/components/ErrorMessage'
 import { LaatsteFacturenTable } from '@renderer/components/LaatsteFacturenTable'
 import { SectionHeader } from '@renderer/components/SectionHeader'
+import { BoekhouderBot } from '@renderer/components/BoekhouderBot'
 import { useApi } from '@renderer/hooks/useApi'
 import { useLocalStorage } from '@renderer/hooks/useLocalStorage'
 import { formatCurrency } from '@renderer/utils/formatters'
@@ -145,6 +146,9 @@ export function Dashboard() {
 
         {!loading && !error && btw && stats && (
           <>
+            <section aria-label="Boekhouder Advies">
+              <BoekhouderBot jaar={jaar} />
+            </section>
             <section aria-label="Facturen overzicht">
               <SectionHeader title="Facturen" />
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

@@ -40,7 +40,8 @@ import type {
   CashflowPeriod,
   BelastingSchatting,
   InvesteringResultaat,
-  Offerte
+  Offerte,
+  BoekhouderAdvies
 } from '../shared/types'
 import type { MailAuthStatus, MailResult, MailLogEntry } from '../shared/mail-types'
 
@@ -119,6 +120,8 @@ const api = {
 
   // Dashboard
   getDashboardStats: (): Promise<DashboardStats> => invoke(IPC_CHANNELS.DASHBOARD_GET_STATS),
+  getAdviezen: (jaar: number): Promise<BoekhouderAdvies[]> =>
+    invoke(IPC_CHANNELS.ADVIES_GET_ALL, jaar),
 
   // Mail
   getMailAuthStatus: (): Promise<MailAuthStatus> => invoke(IPC_CHANNELS.MAIL_GET_AUTH_STATUS),
