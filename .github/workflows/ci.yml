@@ -70,4 +70,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: windows-release
-          path: release/*.exe
+          path: |
+            release/*.exe
+            release/*.yml
+            release/*.blockmap
