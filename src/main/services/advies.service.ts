@@ -41,7 +41,7 @@ export class AdviesService {
     ])
 
     const totaleOmzetExcl = facturen
-      .filter((f) => OMZET_STATUSSEN.includes(f.status as any))
+      .filter((f) => OMZET_STATUSSEN.includes(f.status as (typeof OMZET_STATUSSEN)[number]))
       .reduce((sum, f) => sum + f.totaalExcl, 0)
 
     const totaleUitgavenExcl = uitgaven.reduce((sum, u) => sum + u.bedragExcl, 0)
@@ -90,7 +90,9 @@ export class AdviesService {
 
     const nu = new Date()
     const openstaandeFacturen = facturen.filter(
-      (f) => OPENSTAAND_STATUSSEN.includes(f.status as any) && f.vervalDatum < nu
+      (f) =>
+        OPENSTAAND_STATUSSEN.includes(f.status as (typeof OPENSTAAND_STATUSSEN)[number]) &&
+        f.vervalDatum < nu
     )
 
     if (openstaandeFacturen.length > 0) {
