@@ -143,5 +143,8 @@
       "owner": "HesselVisser13",
       "repo": "factuur-app-electron"
     }
+  },
+  "optionalDependencies": {
+    "@img/sharp-win32-x64": "^0.35.3"
   }
 }
