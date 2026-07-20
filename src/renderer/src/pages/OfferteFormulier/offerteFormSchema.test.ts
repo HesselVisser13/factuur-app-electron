@@ -11,6 +11,7 @@ const validInput: OfferteFormValues = {
   referentie: '',
   opmerkingen: '',
   toonAkkoordBlok: false,
+  isPrijsopgave: false,
   regels: [
     {
       _uid: 'test',

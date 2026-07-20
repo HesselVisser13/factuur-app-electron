@@ -33,6 +33,4 @@ export function transactieToFormValues(t: Transactie): TransactieFormValues {
  * Voorkomt bugs van "twee booleans tegelijk".
  */
 export type FormState =
-  | { mode: 'closed' }
-  | { mode: 'create' }
-  | { mode: 'edit'; transactie: Transactie }
+  { mode: 'closed' } | { mode: 'create' } | { mode: 'edit'; transactie: Transactie }
