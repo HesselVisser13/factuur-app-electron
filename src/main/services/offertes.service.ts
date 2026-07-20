@@ -54,6 +54,7 @@ type DbOfferte = {
   status: string
   opmerkingen: string | null
   toonAkkoordBlok: boolean
+  isPrijsopgave: boolean
   totaalExcl: number
   totaalBtw: number
   totaalIncl: number
@@ -222,6 +223,7 @@ export class OffertesService {
         referentie: input.referentie || null,
         opmerkingen: input.opmerkingen || null,
         toonAkkoordBlok: input.toonAkkoordBlok,
+        isPrijsopgave: input.isPrijsopgave,
         status: 'concept',
         totaalExcl,
         totaalBtw,
@@ -305,6 +307,7 @@ export class OffertesService {
           referentie: input.referentie || null,
           opmerkingen: input.opmerkingen || null,
           toonAkkoordBlok: input.toonAkkoordBlok,
+          isPrijsopgave: input.isPrijsopgave,
           totaalExcl,
           totaalBtw,
           totaalIncl,

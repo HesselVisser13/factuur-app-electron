@@ -201,6 +201,7 @@ model BackupLog {
 model Offerte {
   id             Int            @id @default(autoincrement())
   offerteNummer  String         @unique
+  isPrijsopgave   Boolean  @default(false)
 
   klantId        Int
   klant          Klant          @relation(fields: [klantId], references: [id])

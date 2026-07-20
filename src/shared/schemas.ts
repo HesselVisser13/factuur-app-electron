@@ -344,6 +344,7 @@ export const OfferteInputSchema = z.object({
   referentie: z.string().trim().max(100).optional(),
   opmerkingen: z.string().trim().max(2000).optional(),
   toonAkkoordBlok: z.boolean(),
+  isPrijsopgave: z.boolean(),
   regels: z.array(OfferteRegelInputSchema).min(1, 'Minstens één regel vereist'),
   reistijd: z
     .object({

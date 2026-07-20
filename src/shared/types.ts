@@ -331,6 +331,7 @@ export interface Offerte {
   status: OfferteStatus
   opmerkingen: string | null
   toonAkkoordBlok: boolean
+  isPrijsopgave: boolean
 
   totaalExcl: number
   totaalBtw: number

@@ -17,7 +17,8 @@ export const OfferteFormSchema = z
   .object({
     ...documentBaseFields,
     geldigTot: datumString,
-    toonAkkoordBlok: z.boolean()
+    toonAkkoordBlok: z.boolean(),
+    isPrijsopgave: z.boolean()
   })
   .superRefine((data, ctx) => {
     // GeldigTot >= datum

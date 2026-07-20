@@ -100,13 +100,20 @@ export function OffertesTabel({
       onViewFactuur={() => onViewFactuur(o)}
       onPdfOpen={() => onPdfOpen(o)}
       onPdfSaveAs={() => onPdfSaveAs(o)}
-      onPdfPreview={() => onPdfPreview(o)} // ← NIEUW
+      onPdfPreview={() => onPdfPreview(o)}
       onMail={() => onMail(o)}
     />
   )
 
-  // Extra kolom: "Geldig tot" tussen datum en klant
   const extraColumns: ExtraColumn<Offerte>[] = [
+    {
+      key: 'type',
+      header: 'Type',
+      align: 'left',
+      render: (o) => (
+        <span className="text-gray-500 text-sm">{o.isPrijsopgave ? 'Prijsopgave' : 'Offerte'}</span>
+      )
+    },
     {
       key: 'geldigTot',
       header: 'Geldig tot',

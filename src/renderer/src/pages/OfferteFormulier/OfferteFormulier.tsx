@@ -29,6 +29,7 @@ import type { BtwTarief, Klant, Offerte } from '@shared/types'
 
 import { BasisgegevensSectie } from './components/BasisgegevensSectie'
 import { OfferteFormHeader } from './components/OfferteFormHeader'
+import { DocumentTypeSectie } from './components/DocumentTypeSectie'
 import {
   OfferteFormSchema,
   type OfferteFormOutput,
@@ -47,6 +48,7 @@ const initialDefaults: OfferteFormValues = {
   referentie: '',
   opmerkingen: '',
   toonAkkoordBlok: false,
+  isPrijsopgave: false,
   regels: [],
   reistijd: {
     enabled: false,
@@ -133,6 +135,7 @@ export function OfferteFormulier() {
             referentie: offerte.referentie || '',
             opmerkingen: offerte.opmerkingen || '',
             toonAkkoordBlok: offerte.toonAkkoordBlok,
+            isPrijsopgave: offerte.isPrijsopgave ?? false,
             regels: offerte.regels.map<RegelFormValues>((r) => ({
               _uid: crypto.randomUUID(),
               datum: datumInputUit(r.datum),
@@ -231,6 +234,7 @@ export function OfferteFormulier() {
         referentie: values.referentie || undefined,
         opmerkingen: values.opmerkingen || undefined,
         toonAkkoordBlok: values.toonAkkoordBlok,
+        isPrijsopgave: values.isPrijsopgave,
         regels: values.regels.map((r) => ({
           datum: r.datum,
           omschrijving: r.omschrijving,
@@ -308,6 +312,8 @@ export function OfferteFormulier() {
             offerteNummer={offerteNummer}
             readOnly={readOnly}
           />
+
+          <DocumentTypeSectie readOnly={readOnly} />
 
           <RegelsSectie tarieven={tarieven} readOnly={readOnly} title="Offerteregels" />
 

@@ -100,10 +100,20 @@ const OFFERTE_SPECIFIC_STYLES = `
 export function renderOfferteHtml(offerte: Offerte, instellingen: Instellingen): string {
   const logoData = logoAsDataUrl(instellingen.logo_filename)
   const splitsing = berekenBtwSplitsing(offerte)
-  const voorwaarden = (
-    instellingen.offerte_voorwaarden ||
-    'Deze offerte is geldig tot {geldigTot}. Bij akkoord vragen wij u dit document ondertekend te retourneren.'
-  ).replace('{geldigTot}', formatDatum(offerte.geldigTot))
+
+  const docType = offerte.isPrijsopgave ? 'Prijsopgave' : 'Offerte'
+
+  const standaardVoorwaarden = offerte.isPrijsopgave
+    ? 'Dit is een vrijblijvende prijsopgave, de genoemde bedragen zijn een indicatie. De uiteindelijke factuur wordt opgesteld op basis van nacalculatie. Deze prijsopgave is geldig tot {geldigTot}.'
+    : 'Deze offerte is geldig tot {geldigTot}. Bij akkoord vragen wij u dit document ondertekend te retourneren.'
+
+  let basisVoorwaarden = instellingen.offerte_voorwaarden || standaardVoorwaarden
+
+  if (offerte.isPrijsopgave && instellingen.offerte_voorwaarden) {
+    basisVoorwaarden = basisVoorwaarden.replace(/offerte/gi, 'prijsopgave')
+  }
+
+  const voorwaarden = basisVoorwaarden.replace('{geldigTot}', formatDatum(offerte.geldigTot))
 
   const bedrijfsnaam = escape(instellingen.bedrijfsnaam || 'Mijn Bedrijf')
 
@@ -111,7 +121,7 @@ export function renderOfferteHtml(offerte: Offerte, instellingen: Instellingen):
 <html lang="nl">
 <head>
 <meta charset="UTF-8">
-<title>Offerte ${escape(offerte.offerteNummer)}</title>
+<title>${docType} ${escape(offerte.offerteNummer)}</title>
 <style>
 ${SHARED_TEMPLATE_STYLES}
 ${OFFERTE_SPECIFIC_STYLES}
@@ -145,18 +155,18 @@ ${
 
 <div class="addresses">
   <div class="address-block">
-    <h3>Offerte voor</h3>
+    <h3>${docType} voor</h3>
     <div>${klantAdresBlock(offerte.klant)}</div>
   </div>
   <div class="address-block" style="text-align: right;">
-    <h3>Offerte</h3>
+    <h3>${docType}</h3>
     <div style="font-size: 14pt; font-weight: 700;">${escape(offerte.offerteNummer)}</div>
   </div>
 </div>
 
 <table class="meta-table">
   <tr>
-    <td class="label">Offertedatum</td>
+    <td class="label">Datum</td>
     <td class="value">${formatDatum(offerte.datum)}</td>
   </tr>
   <tr>

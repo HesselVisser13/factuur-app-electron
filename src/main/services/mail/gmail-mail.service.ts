@@ -80,7 +80,6 @@ export class GmailMailService {
   async send(message: MailMessage): Promise<MailResult> {
     try {
       const client = this.getOAuthClient()
-      // @ts-ignore: Negeer de type mismatch tussen de twee google libraries
       const gmailClient = createGmailClient({ version: 'v1', auth: client })
       const raw = buildRawMessage(message)
 
